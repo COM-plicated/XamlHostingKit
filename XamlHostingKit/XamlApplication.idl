@@ -1,0 +1,36 @@
+import "XamlWindow.idl";
+
+namespace XamlHostingKit
+{
+    static runtimeclass XamlConfig
+    {
+        [static_name("IXamlConfigStatics", 4E5F4743-0130-F00D-AA27-15B544BF3005)]
+        {
+            static Boolean EnableWebView { get; set; };
+            static Boolean DisableRedirectionLayer { get; set; };
+        }
+    }
+
+    unsealed runtimeclass XamlApplication : Windows.UI.Xaml.Application
+    {
+        XamlApplication();
+
+        [static_name("IXamlApplicationStatics", 5533DD55-DEAD-BEEF-8F32-D3185E0C6241)]
+        {
+            static XamlWindow MainWindow { get; };
+            static IVectorView<XamlWindow> Windows { get; };
+
+            static void Start(Windows.UI.Xaml.ApplicationInitializationCallback initCallback);
+            [method_name("StartWithPriPath"), default_overload]
+            static void Start(Windows.UI.Xaml.ApplicationInitializationCallback initCallback, String priPath);
+            [method_name("StartWithPriBuffer")]
+            static void Start(Windows.UI.Xaml.ApplicationInitializationCallback initCallback, Windows.Storage.Streams.IBuffer priBuffer);
+
+            static XamlWindow CreateWindow();
+            static XamlWindow CreateWindow(WindowCreationOptions options);
+            static XamlWindow CreateWindow(WindowCreationOptions options, Windows.UI.Xaml.ApplicationInitializationCallback windowCallback);
+
+            static void Close();
+        }
+    }
+}

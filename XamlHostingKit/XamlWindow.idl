@@ -1,0 +1,52 @@
+namespace XamlHostingKit
+{
+    runtimeclass WindowCreationOptions
+    {
+        WindowCreationOptions();
+
+        [interface_name("IWindowCreationOptions", 4D4A4925-D702-C0DE-9689-16CA3D201BA1)]
+        {
+            String Title          { get; set; };
+            Int32  Left           { get; set; };
+            Int32  Top            { get; set; };
+            Int32  Width          { get; set; };
+            Int32  Height         { get; set; };
+            UInt32 Styles         { get; set; };
+            UInt32 ExtendedStyles { get; set; };
+        }
+    };
+
+    runtimeclass XamlWindow
+    {
+        [interface_name("IXamlWindow", 55B829F3-C545-CAFE-B440-410527C2C569)]
+        {
+            String                  Title          { get; set; };
+            Windows.Foundation.Rect Bounds         { get; set; };
+            UInt32                  Styles         { get; set; };
+            UInt32                  ExtendedStyles { get; set; };
+
+            Boolean                                           IsVisible    { get; };
+            Windows.UI.WindowId                               WindowHandle { get; };
+            Windows.UI.Xaml.Window                            SystemWindow { get; };
+            Windows.ApplicationModel.Core.CoreApplicationView View         { get; };
+
+            Windows.UI.Core.CoreDispatcher    Dispatcher      { get; };
+            Windows.System.DispatcherQueue    DispatcherQueue { get; };
+            Windows.UI.Core.CoreWindow        CoreWindow      { get; };
+            Windows.UI.Composition.Compositor Compositor      { get; };
+            Windows.UI.UIContext              UIContext       { get; };
+            Windows.UI.Xaml.UIElement         Content         { get; set; };
+
+            void Show();
+            void Hide();
+            void Close();
+
+            event Windows.Foundation.TypedEventHandler<XamlWindow, Boolean> VisibilityChanged;
+        }
+
+        [static_name("IXamlWindowStatics", EA4FDB40-8A4F-BABE-8BFD-61BD568785B0)]
+        {
+            static XamlWindow Current { get; };
+        }
+    };
+}
