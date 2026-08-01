@@ -6,71 +6,71 @@ namespace winrt::XamlHostingKit::implementation
 {
     hstring WindowCreationOptions::Title()
     {
-        throw hresult_not_implemented();
+        return m_title;
     }
 
     void WindowCreationOptions::Title(hstring const& value)
     {
-        throw hresult_not_implemented();
+        m_title = value;
     }
 
-    std::int32_t WindowCreationOptions::Left()
+    std::int32_t WindowCreationOptions::Left() const
     {
-        throw hresult_not_implemented();
+        return m_left;
     }
 
     void WindowCreationOptions::Left(std::int32_t value)
     {
-        throw hresult_not_implemented();
+        m_left = value;
     }
 
-    std::int32_t WindowCreationOptions::Top()
+    std::int32_t WindowCreationOptions::Top() const
     {
-        throw hresult_not_implemented();
+        return m_top;
     }
 
     void WindowCreationOptions::Top(std::int32_t value)
     {
-        throw hresult_not_implemented();
+        m_top = value;
     }
 
-    std::int32_t WindowCreationOptions::Width()
+    std::int32_t WindowCreationOptions::Width() const
     {
-        throw hresult_not_implemented();
+        return m_width;
     }
 
     void WindowCreationOptions::Width(std::int32_t value)
     {
-        throw hresult_not_implemented();
+        m_width = value;
     }
 
-    std::int32_t WindowCreationOptions::Height()
+    std::int32_t WindowCreationOptions::Height() const
     {
-        throw hresult_not_implemented();
+        return m_height;
     }
 
     void WindowCreationOptions::Height(std::int32_t value)
     {
-        throw hresult_not_implemented();
+        m_height = value;
     }
 
-    std::uint32_t WindowCreationOptions::Styles()
+    std::uint32_t WindowCreationOptions::Styles() const
     {
-        throw hresult_not_implemented();
+        return m_styles;
     }
 
     void WindowCreationOptions::Styles(std::uint32_t value)
     {
-        throw hresult_not_implemented();
+        m_styles = value;
     }
 
-    std::uint32_t WindowCreationOptions::ExtendedStyles()
+    std::uint32_t WindowCreationOptions::ExtendedStyles() const
     {
-        throw hresult_not_implemented();
+        return m_extendedStyles;
     }
 
     void WindowCreationOptions::ExtendedStyles(std::uint32_t value)
     {
-        throw hresult_not_implemented();
+        m_extendedStyles = value;
     }
 }

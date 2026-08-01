@@ -5,12 +5,9 @@ namespace winrt::XamlHostingKit::implementation
 {
     struct XamlConfig
     {
-    private:
+        static bool s_isInitialized;
         static bool s_enableWebView;
         static bool s_disableRedirectionLayer;
-
-    public:
-        static bool IsInitialized;
 
         XamlConfig() = default;
 

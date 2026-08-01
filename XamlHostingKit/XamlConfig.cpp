@@ -4,7 +4,7 @@
 
 namespace winrt::XamlHostingKit::implementation
 {
-    bool XamlConfig::IsInitialized = false;
+    bool XamlConfig::s_isInitialized = false;
     bool XamlConfig::s_enableWebView = true;
     bool XamlConfig::s_disableRedirectionLayer = true;
 
@@ -15,7 +15,7 @@ namespace winrt::XamlHostingKit::implementation
 
     void XamlConfig::EnableWebView(bool value)
     {
-        if (IsInitialized)
+        if (s_isInitialized)
         {
             throw hresult_illegal_method_call
             (L"Changing EnableWebView after calling XamlApplication.Start() is not supported.");
@@ -31,7 +31,7 @@ namespace winrt::XamlHostingKit::implementation
 
     void XamlConfig::DisableRedirectionLayer(bool value)
     {
-        if (IsInitialized)
+        if (s_isInitialized)
         {
             throw hresult_illegal_method_call
             (L"Changing DisableRedirectionLayer after calling XamlApplication.Start() is not supported.");
