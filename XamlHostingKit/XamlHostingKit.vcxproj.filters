@@ -15,6 +15,7 @@
     <ClCompile Include="XamlConfig.cpp" />
     <ClCompile Include="XamlWindow.cpp" />
     <ClCompile Include="WindowCreationOptions.cpp" />
+    <ClCompile Include="LegacyNonImmersiveView.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -24,6 +25,9 @@
     <ClInclude Include="Helpers.h" />
     <ClInclude Include="IWindowNative.h" />
     <ClInclude Include="Privates.h" />
+    <ClInclude Include="Features.h" />
+    <ClInclude Include="LegacyNonImmersiveView.h" />
+    <ClInclude Include="mrm_private.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="XamlApplication.idl" />
@@ -32,8 +36,13 @@
   <ItemGroup>
     <None Include="XamlHostingKit.def" />
     <None Include="packages.config" />
+    <None Include="vcpkg.json" />
   </ItemGroup>
   <ItemGroup>
     <None Include="PropertySheet.props" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="$(MSBuildThisFileDirectory)..\..\natvis\wil.natvis" />
+    <Natvis Include="$(MSBuildThisFileDirectory)..\..\natvis\wil.natstepfilter" />
   </ItemGroup>
 </Project>

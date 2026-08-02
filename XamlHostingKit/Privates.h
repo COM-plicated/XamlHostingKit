@@ -81,6 +81,8 @@ struct WindowCreationParameters
     char TransparentBackground, IsCoreNavigationClient;
 };
 
+// References: https://gist.github.com/diversenok/930600b5aec5e8d15664662b9176a691, https://ntdoc.m417z.com/peb
+
 struct SWITCH_CONTEXT_ATTRIBUTE
 {
     uint64_t ContextUpdateCounter;
@@ -166,3 +168,37 @@ inline static const constexpr uintptr_t OffsetOfAppCompatShimData()
 inline static const constexpr auto OFFSET_OF_SHIM_DATA = OffsetOfAppCompatShimData();
 
 inline static const constexpr GUID Windows10_PlatformID = { 0x8e0f7a12, 0xbfb3, 0x4fe8, 0xb9a5, 0x48, 0xfd, 0x50, 0xa1, 0x5a, 0x9a };
+
+MIDL_INTERFACE("6090202d-2843-4ba5-9b0d-fc88eecd9ce5")
+ICoreApplicationPrivate2 : public ::IInspectable
+{
+    STDMETHOD(__stub0)() PURE;
+    STDMETHOD(__stub1)() PURE;
+    STDMETHOD(CreateNonImmersiveView)(void** ppView) PURE;
+};
+
+MIDL_INTERFACE("c45f3f8c-61e6-4f9a-be88-fe4fe6e64f5f")
+IFrameworkApplicationStaticsPrivate : public ::IInspectable
+{
+    STDMETHOD(StartInCoreWindowHostingMode)(WindowCreationParameters windowParams, void* callback) PURE;
+};
+
+MIDL_INTERFACE("4a8eac58-b652-459d-8de1-239471e8b22b")
+IResourceManagerStaticInternal : public ::IInspectable
+{
+    STDMETHOD(__stub0)() PURE;
+    STDMETHOD(GetCurrentResourceManagerForSystemProfile)(void** ppResourceManager) PURE;
+};
+
+MIDL_INTERFACE("7d9da47a-8bc7-49d3-97aa-f7db06049172")
+IResourceManagerStaticInternalOld : public ::IInspectable
+{
+    STDMETHOD(__stub0)() PURE;
+    STDMETHOD(GetCurrentResourceManagerForSystemProfile)(void** ppResourceManager) PURE;
+};
+
+MIDL_INTERFACE("8c25e859-1042-4da0-9232-bf2aa8ff3726")
+ISystemResourceManagerExtensions2 : public ::IInspectable
+{
+    STDMETHOD(LoadPriFileForSystemUse)(PCWSTR path) PURE;
+};

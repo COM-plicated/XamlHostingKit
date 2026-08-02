@@ -53,4 +53,9 @@ namespace winrt::XamlHostingKit::implementation
     {
         throw hresult_not_implemented();
     }
+
+    void XamlApplication::RemoveWindow(winrt::XamlHostingKit::XamlWindow const& window)
+    {
+        throw hresult_not_implemented();
+    }
 }
