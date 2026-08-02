@@ -163,6 +163,8 @@ namespace winrt::XamlHostingKit::implementation
 
     HRESULT XamlWindow::get_WindowHandle(HWND* hwnd)
     {
+        if (hwnd == nullptr)
+            return E_POINTER;
         *hwnd = m_hwnd;
         return S_OK;
     }
