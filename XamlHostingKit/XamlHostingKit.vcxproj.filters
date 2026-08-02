@@ -22,6 +22,7 @@
     <ClInclude Include="XamlConfig.h" />
     <ClInclude Include="XamlWindow.h" />
     <ClInclude Include="Helpers.h" />
+    <ClInclude Include="IWindowNative.h" />
     <ClInclude Include="Privates.h" />
   </ItemGroup>
   <ItemGroup>

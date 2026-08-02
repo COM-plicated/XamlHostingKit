@@ -126,6 +126,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Helpers.h" />
+    <ClInclude Include="IWindowNative.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Privates.h" />
     <ClInclude Include="WindowCreationOptions.h" />

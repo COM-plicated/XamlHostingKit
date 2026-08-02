@@ -161,6 +161,12 @@ namespace winrt::XamlHostingKit::implementation
         m_visibilityChanged.remove(token);
     }
 
+    HRESULT XamlWindow::get_WindowHandle(HWND* hwnd)
+    {
+        *hwnd = m_hwnd;
+        return S_OK;
+    }
+
     LPCWSTR const XamlWindow::RegisterWindowClass(WNDPROC wndProc)
     {
         const auto constexpr className = L"COMplicated.XamlHostingKit.Window";

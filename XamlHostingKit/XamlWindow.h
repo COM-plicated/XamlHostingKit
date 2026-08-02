@@ -2,6 +2,7 @@
 #include "XamlWindow.g.h"
 #include <winrt/Windows.UI.Core.h>
 #include <winrt/Windows.UI.Xaml.h>
+#include "IWindowNative.h"
 
 namespace winrt::XamlHostingKit::implementation
 {
@@ -11,7 +12,7 @@ namespace winrt::XamlHostingKit::implementation
     using namespace winrt::Windows::Foundation;
     using namespace winrt::Windows::ApplicationModel::Core;
 
-    struct XamlWindow : XamlWindowT<XamlWindow>
+    struct XamlWindow : XamlWindowT<XamlWindow, IWindowNative>
     {
     private:
         static const LPCWSTR s_windowClassName;
@@ -72,6 +73,8 @@ namespace winrt::XamlHostingKit::implementation
 
         winrt::event_token VisibilityChanged(winrt::Windows::Foundation::TypedEventHandler<winrt::XamlHostingKit::XamlWindow, bool> const& handler);
         void VisibilityChanged(winrt::event_token const& token) noexcept;
+
+        HRESULT STDMETHODCALLTYPE get_WindowHandle(HWND* hwnd);
     };
 }
 
