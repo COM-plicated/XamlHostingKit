@@ -1,10 +1,41 @@
 #pragma once
 #include "XamlWindow.g.h"
+#include <winrt/Windows.UI.Core.h>
+#include <winrt/Windows.UI.Xaml.h>
 
 namespace winrt::XamlHostingKit::implementation
 {
+    using namespace winrt::Windows::System;
+    using namespace winrt::Windows::UI::Xaml;
+    using namespace winrt::Windows::UI::Core;
+    using namespace winrt::Windows::Foundation;
+    using namespace winrt::Windows::ApplicationModel::Core;
+
     struct XamlWindow : XamlWindowT<XamlWindow>
     {
+    private:
+        static const LPCWSTR s_windowClassName;
+        static thread_local XamlWindow* s_currentWindow;
+        static const constexpr auto XHK_WINDOW_OBJECT_PROP = L"COMplicated.XamlHostingKit.WindowObject";
+
+        HWND m_hwnd { nullptr };
+        HWND m_coreWindowHwnd { nullptr };
+        hstring m_title;
+        uint32_t m_styles { 0 };
+        uint32_t m_extendedStyles { 0 };
+        Window m_systemWindow { nullptr };
+        CoreApplicationView m_view { nullptr };
+        CoreDispatcher m_dispatcher { nullptr };
+        DispatcherQueue m_dispatcherQueue { nullptr };
+        CoreWindow m_coreWindow { nullptr };
+        winrt::event<winrt::Windows::Foundation::TypedEventHandler<winrt::XamlHostingKit::XamlWindow, bool>> m_visibilityChanged;
+
+        static LPCWSTR const RegisterWindowClass(WNDPROC wndProc);
+        static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+    public:
+
+
         XamlWindow() = default;
 
         static winrt::XamlHostingKit::XamlWindow Current();
@@ -24,7 +55,7 @@ namespace winrt::XamlHostingKit::implementation
         bool IsVisible();
         winrt::Windows::UI::WindowId WindowHandle();
         winrt::Windows::UI::Xaml::Window SystemWindow();
-        winrt::Windows::ApplicationModel::Core::CoreApplicationView View();
+        winrt::Windows::ApplicationModel::Core::CoreApplicationView CoreApplicationView();
 
         winrt::Windows::UI::Core::CoreDispatcher Dispatcher();
         winrt::Windows::System::DispatcherQueue DispatcherQueue();

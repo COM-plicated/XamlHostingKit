@@ -25,10 +25,10 @@ namespace XamlHostingKit
             UInt32                  Styles         { get; set; };
             UInt32                  ExtendedStyles { get; set; };
 
-            Boolean                                           IsVisible    { get; };
-            Windows.UI.WindowId                               WindowHandle { get; };
-            Windows.UI.Xaml.Window                            SystemWindow { get; };
-            Windows.ApplicationModel.Core.CoreApplicationView View         { get; };
+            Boolean                                           IsVisible           { get; };
+            Windows.UI.WindowId                               WindowHandle        { get; };
+            Windows.UI.Xaml.Window                            SystemWindow        { get; };
+            Windows.ApplicationModel.Core.CoreApplicationView CoreApplicationView { get; };
 
             Windows.UI.Core.CoreDispatcher    Dispatcher      { get; };
             Windows.System.DispatcherQueue    DispatcherQueue { get; };

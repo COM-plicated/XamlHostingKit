@@ -127,6 +127,7 @@
   <ItemGroup>
     <ClInclude Include="Helpers.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="Privates.h" />
     <ClInclude Include="WindowCreationOptions.h" />
     <ClInclude Include="XamlApplication.h">
       <DependentUpon>XamlApplication.idl</DependentUpon>
@@ -160,6 +161,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\COMplicated.CppWinRT.3.0.260715.2\build\native\COMplicated.CppWinRT.targets" Condition="Exists('..\packages\COMplicated.CppWinRT.3.0.260715.2\build\native\COMplicated.CppWinRT.targets')" />
+    <Import Project="..\packages\Microsoft.Windows.ImplementationLibrary.1.0.260126.7\build\native\Microsoft.Windows.ImplementationLibrary.targets" Condition="Exists('..\packages\Microsoft.Windows.ImplementationLibrary.1.0.260126.7\build\native\Microsoft.Windows.ImplementationLibrary.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -167,5 +169,6 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\COMplicated.CppWinRT.3.0.260715.2\build\native\COMplicated.CppWinRT.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\COMplicated.CppWinRT.3.0.260715.2\build\native\COMplicated.CppWinRT.props'))" />
     <Error Condition="!Exists('..\packages\COMplicated.CppWinRT.3.0.260715.2\build\native\COMplicated.CppWinRT.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\COMplicated.CppWinRT.3.0.260715.2\build\native\COMplicated.CppWinRT.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Windows.ImplementationLibrary.1.0.260126.7\build\native\Microsoft.Windows.ImplementationLibrary.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.ImplementationLibrary.1.0.260126.7\build\native\Microsoft.Windows.ImplementationLibrary.targets'))" />
   </Target>
 </Project>

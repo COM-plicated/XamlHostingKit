@@ -11,7 +11,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="Class.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="XamlConfig.cpp" />
     <ClCompile Include="XamlWindow.cpp" />
@@ -22,6 +21,8 @@
     <ClInclude Include="WindowCreationOptions.h" />
     <ClInclude Include="XamlConfig.h" />
     <ClInclude Include="XamlWindow.h" />
+    <ClInclude Include="Helpers.h" />
+    <ClInclude Include="Privates.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="XamlApplication.idl" />

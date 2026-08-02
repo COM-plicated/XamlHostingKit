@@ -15,7 +15,7 @@ namespace XamlHostingKit
     {
         XamlApplication();
 
-        [static_name("IXamlApplicationStatics", 5533DD55-DEAD-BEEF-8F32-D3185E0C6241)]
+        [static_name("IXamlApplicationStatics", 5533DD55-4D93-DEAD-8F32-D3185E0C6241)]
         {
             static XamlWindow MainWindow { get; };
             static IVectorView<XamlWindow> Windows { get; };
@@ -31,6 +31,11 @@ namespace XamlHostingKit
             static XamlWindow CreateWindow(WindowCreationOptions options, Windows.UI.Xaml.ApplicationInitializationCallback windowCallback);
 
             static void Close();
+        }
+
+        [interface_name("IXamlApplication", D0389C8D-A104-BEEF-91A4-46FF1BFB5C1C)]
+        {
+            Boolean IsWebViewAvailable { get; };
         }
     }
 }

@@ -8,6 +8,8 @@ namespace winrt::XamlHostingKit::implementation
     {
         XamlApplication() = default;
 
+        bool IsWebViewAvailable();
+
         static winrt::XamlHostingKit::XamlWindow MainWindow();
         static winrt::Windows::Foundation::Collections::IVectorView<winrt::XamlHostingKit::XamlWindow> Windows();
         

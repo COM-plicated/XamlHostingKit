@@ -48,4 +48,9 @@ namespace winrt::XamlHostingKit::implementation
     {
         throw hresult_not_implemented();
     }
+
+    bool XamlApplication::IsWebViewAvailable()
+    {
+        throw hresult_not_implemented();
+    }
 }

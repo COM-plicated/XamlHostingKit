@@ -2,130 +2,237 @@
 #include "XamlWindow.h"
 #include "XamlWindow.g.cpp"
 
+#include "XamlConfig.h"
+#include "Helpers.h"
+
 namespace winrt::XamlHostingKit::implementation
 {
+    const LPCWSTR XamlWindow::s_windowClassName = RegisterWindowClass(WndProc);
+    thread_local XamlWindow* XamlWindow::s_currentWindow = nullptr;
+
     winrt::XamlHostingKit::XamlWindow XamlWindow::Current()
     {
-        throw hresult_not_implemented();
+        if (auto window = s_currentWindow)
+        {
+            return *window;
+        }
+
+        return nullptr;
     }
 
     hstring XamlWindow::Title()
     {
-        throw hresult_not_implemented();
+        return m_title;
     }
 
     void XamlWindow::Title(hstring const& value)
     {
-        throw hresult_not_implemented();
+        m_title = value;
+        SetWindowTextW(m_hwnd, value.c_str());
     }
 
     winrt::Windows::Foundation::Rect XamlWindow::Bounds()
     {
-        throw hresult_not_implemented();
+        RECT rect { };
+        GetWindowRect(m_hwnd, &rect);
+
+        return
+        {
+            static_cast<float>(rect.left),
+            static_cast<float>(rect.top),
+            static_cast<float>(rect.right - rect.left),
+            static_cast<float>(rect.bottom - rect.top)
+        };
     }
 
     void XamlWindow::Bounds(winrt::Windows::Foundation::Rect const& value)
     {
-        throw hresult_not_implemented();
+        SetWindowPos(m_hwnd, NULL, value.X, value.Y, value.Width, value.Height, SWP_NOZORDER | SWP_NOACTIVATE);
     }
 
     std::uint32_t XamlWindow::Styles()
     {
-        throw hresult_not_implemented();
+        return m_styles;
     }
 
     void XamlWindow::Styles(std::uint32_t value)
     {
-        throw hresult_not_implemented();
+        SetWindowLongPtrW(m_hwnd, GWL_STYLE, value);
+        m_styles = static_cast<uint32_t>(GetWindowLongPtrW(m_hwnd, GWL_STYLE));
     }
 
     std::uint32_t XamlWindow::ExtendedStyles()
     {
-        throw hresult_not_implemented();
+        return m_extendedStyles;
     }
 
     void XamlWindow::ExtendedStyles(std::uint32_t value)
     {
-        throw hresult_not_implemented();
+        SetWindowLongPtrW(m_hwnd, GWL_EXSTYLE, value);
+        m_extendedStyles = static_cast<uint32_t>(GetWindowLongPtrW(m_hwnd, GWL_EXSTYLE));
     }
 
     bool XamlWindow::IsVisible()
     {
-        throw hresult_not_implemented();
+        return IsWindowVisible(m_hwnd) != FALSE;
     }
 
     winrt::Windows::UI::WindowId XamlWindow::WindowHandle()
     {
-        throw hresult_not_implemented();
+        return { (uint64_t)m_hwnd };
     }
 
     winrt::Windows::UI::Xaml::Window XamlWindow::SystemWindow()
     {
-        throw hresult_not_implemented();
+        return m_systemWindow;
     }
 
-    winrt::Windows::ApplicationModel::Core::CoreApplicationView XamlWindow::View()
+    winrt::Windows::ApplicationModel::Core::CoreApplicationView XamlWindow::CoreApplicationView()
     {
-        throw hresult_not_implemented();
+        return m_view;
     }
 
     winrt::Windows::UI::Core::CoreDispatcher XamlWindow::Dispatcher()
     {
-        throw hresult_not_implemented();
+        return m_dispatcher;
     }
 
     winrt::Windows::System::DispatcherQueue XamlWindow::DispatcherQueue()
     {
-        throw hresult_not_implemented();
+        return m_dispatcherQueue;
     }
 
     winrt::Windows::UI::Core::CoreWindow XamlWindow::CoreWindow()
     {
-        throw hresult_not_implemented();
+        return m_coreWindow;
     }
 
     winrt::Windows::UI::Composition::Compositor XamlWindow::Compositor()
     {
-        throw hresult_not_implemented();
+        return m_systemWindow.Compositor();
     }
 
     winrt::Windows::UI::UIContext XamlWindow::UIContext()
     {
-        throw hresult_not_implemented();
+        return m_systemWindow.UIContext();
     }
 
     winrt::Windows::UI::Xaml::UIElement XamlWindow::Content()
     {
-        throw hresult_not_implemented();
+        return m_systemWindow.Content();
     }
 
     void XamlWindow::Content(winrt::Windows::UI::Xaml::UIElement const& value)
     {
-        throw hresult_not_implemented();
+        m_systemWindow.Content(value);
     }
 
     void XamlWindow::Show()
     {
-        throw hresult_not_implemented();
+        ShowWindow(m_hwnd, SW_SHOW);
     }
 
     void XamlWindow::Hide()
     {
-        throw hresult_not_implemented();
+        ShowWindow(m_hwnd, SW_HIDE);
     }
 
     void XamlWindow::Close()
     {
-        throw hresult_not_implemented();
+        CloseWindow(m_hwnd);
+
+        try
+        {
+            m_dispatcher.StopProcessEvents();
+        }
+        catch (...)
+        {
+            // nothing to do here, WM_DESTROY -> PostQuitMessage will take care of the message loop
+        }
     }
 
     winrt::event_token XamlWindow::VisibilityChanged(winrt::Windows::Foundation::TypedEventHandler<winrt::XamlHostingKit::XamlWindow, bool> const& handler)
     {
-        throw hresult_not_implemented();
+        return m_visibilityChanged.add(handler);
     }
 
     void XamlWindow::VisibilityChanged(winrt::event_token const& token) noexcept
     {
-        throw hresult_not_implemented();
+        m_visibilityChanged.remove(token);
+    }
+
+    LPCWSTR const XamlWindow::RegisterWindowClass(WNDPROC wndProc)
+    {
+        const auto constexpr className = L"COMplicated.XamlHostingKit.Window";
+
+        WNDCLASSEXW wcex = { };
+        wcex.cbSize = sizeof(WNDCLASSEXW);
+        wcex.style = XamlConfig::s_disableRedirectionLayer ? NULL : CS_HREDRAW | CS_VREDRAW;
+        wcex.lpfnWndProc = wndProc;
+        wcex.hInstance = GetModuleHandleW(nullptr);
+        wcex.lpszClassName = className;
+
+        if (!RegisterClassExW(&wcex))
+        {
+            throw winrt::hresult_error(HRESULT_FROM_WIN32(GetLastError()), L"Failed to register window class");
+        }
+
+        return className;
+    }
+
+    LRESULT XamlWindow::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+    {
+        auto _this = reinterpret_cast<XamlWindow*>(GetPropW(hwnd, XHK_WINDOW_OBJECT_PROP));
+
+        if (msg == WM_CREATE)
+        {
+            Helpers::EnableDarkModeSupport(hwnd);
+            Helpers::EnsureTitleBarTheme(hwnd);
+        }
+        else if (msg == WM_SETTINGCHANGE)
+        {
+            if ((BOOL)lParam && std::wstring_view((wchar_t*)lParam) == L"ImmersiveColorSet")
+                Helpers::EnsureTitleBarTheme(hwnd);
+
+            if (_this)
+            {
+                SendMessageW(_this->m_coreWindowHwnd, msg, wParam, lParam);
+            }
+        }
+        else if (msg == WM_DESTROY)
+        {
+            PostQuitMessage(0);
+        }
+        else if (_this)
+        {
+            if (msg == WM_SIZE)
+            {
+                SetWindowPos(_this->m_coreWindowHwnd, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam), SWP_NOZORDER | SWP_SHOWWINDOW | SWP_NOACTIVATE);
+                SendMessageW(_this->m_coreWindowHwnd, msg, wParam, lParam);
+            }
+            else if (msg == WM_SHOWWINDOW && _this->m_visibilityChanged)
+            {
+                _this->m_dispatcher.RunAsync(CoreDispatcherPriority::Normal, [=]()
+                {
+                    _this->m_visibilityChanged(*_this, wParam != FALSE);
+                });
+            }
+            else if (msg == WM_SETFOCUS)
+            {
+                SetFocus(_this->m_coreWindowHwnd);
+            }
+            else if (msg == WM_THEMECHANGED)
+            {
+                SendMessageW(_this->m_coreWindowHwnd, msg, wParam, lParam);
+            }
+            else if (msg == WM_DWMNCRENDERINGCHANGED)
+            {
+                SetWindowLongW(hwnd, GWL_EXSTYLE, (BOOL)wParam ?
+                    _this->ExtendedStyles() :
+                    _this->ExtendedStyles() |~ (WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME));
+            }
+        }
+
+        return DefWindowProcW(hwnd, msg, wParam, lParam);
     }
 }

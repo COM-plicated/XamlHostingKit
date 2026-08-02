@@ -3,6 +3,8 @@
 #include "WindowCreationOptions.g.h"
 #include "Helpers.h"
 
+#include "XamlConfig.h"
+
 namespace winrt::XamlHostingKit::implementation
 {
     struct WindowCreationOptions : WindowCreationOptionsT<WindowCreationOptions>
@@ -14,7 +16,15 @@ namespace winrt::XamlHostingKit::implementation
         std::int32_t  m_width          { CW_USEDEFAULT };
         std::int32_t  m_height         { CW_USEDEFAULT };
         std::uint32_t m_styles         { WS_OVERLAPPEDWINDOW };
-        std::uint32_t m_extendedStyles { WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME };
+        std::uint32_t m_extendedStyles
+        { 
+            static_cast<uint32_t>
+            (
+                XamlConfig::s_disableRedirectionLayer ?
+                WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME :
+                WS_EX_DLGMODALFRAME
+            )
+        };
 
     public:
         WindowCreationOptions() = default;
