@@ -232,21 +232,27 @@ namespace winrt::XamlHostingKit::implementation
     void XamlWindow::Move(float left, float top)
     {
         uint32_t dpi = Helpers::GetDpiForWindow(m_hwnd);
+
         if (!IsZoomed(m_hwnd) && !IsIconic(m_hwnd))
         {
-            SetWindowPos(m_hwnd, NULL, left * dpi, top * dpi, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+            SetWindowPos(m_hwnd, NULL,
+                         static_cast<int>(left * dpi),
+                         static_cast<int>(top * dpi),
+                         0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
         }
         else
         {
             WINDOWPLACEMENT wp;
             wp.length = sizeof(WINDOWPLACEMENT);
             GetWindowPlacement(m_hwnd, &wp);
+
             LONG width = wp.rcNormalPosition.right - wp.rcNormalPosition.left;
             LONG height = wp.rcNormalPosition.bottom - wp.rcNormalPosition.top;
-            wp.rcNormalPosition.left = left * dpi;
-            wp.rcNormalPosition.top = top * dpi;
-            wp.rcNormalPosition.right = left * dpi + width;
-            wp.rcNormalPosition.bottom = top * dpi + height;
+
+            wp.rcNormalPosition.left = static_cast<int>(left * dpi);
+            wp.rcNormalPosition.top = static_cast<int>(top * dpi);
+            wp.rcNormalPosition.right = static_cast<int>(left * dpi + width);
+            wp.rcNormalPosition.bottom = static_cast<int>(top * dpi + height);
             SetWindowPlacement(m_hwnd, &wp);
         }
     }
@@ -259,17 +265,22 @@ namespace winrt::XamlHostingKit::implementation
     void XamlWindow::Resize(float width, float height)
     {
         uint32_t dpi = Helpers::GetDpiForWindow(m_hwnd);
+
         if (!IsZoomed(m_hwnd) && !IsIconic(m_hwnd))
         {
-            SetWindowPos(m_hwnd, NULL, 0, 0, width * dpi, height * dpi, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+            SetWindowPos(m_hwnd, NULL, 0, 0,
+                         static_cast<int>(width * dpi),
+                         static_cast<int>(height * dpi),
+                         SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
         }
         else
         {
             WINDOWPLACEMENT wp;
             wp.length = sizeof(WINDOWPLACEMENT);
             GetWindowPlacement(m_hwnd, &wp);
-            wp.rcNormalPosition.right = wp.rcNormalPosition.left + width * dpi;
-            wp.rcNormalPosition.bottom = wp.rcNormalPosition.top + height * dpi;
+
+            wp.rcNormalPosition.right = static_cast<int>(wp.rcNormalPosition.left + width * dpi);
+            wp.rcNormalPosition.bottom = static_cast<int>(wp.rcNormalPosition.top + height * dpi);
             SetWindowPlacement(m_hwnd, &wp);
         }
     }

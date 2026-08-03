@@ -1,8 +1,12 @@
 #pragma once
 
 #include <winrt/Windows.UI.Core.h>
-#include <winrt/Windows.ApplicationModel.Core.h>
 #include <winrt/Windows.ApplicationModel.Activation.h>
+
+#pragma push_macro("WINRT_LEAN_AND_MEAN")
+#undef WINRT_LEAN_AND_MEAN
+#include <winrt/Windows.ApplicationModel.Core.h>
+#pragma pop_macro("WINRT_LEAN_AND_MEAN")
 
 namespace winrt::XamlHostingKit::implementation
 {

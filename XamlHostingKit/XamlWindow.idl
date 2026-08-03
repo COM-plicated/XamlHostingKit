@@ -42,14 +42,12 @@ namespace XamlHostingKit
             void Close();
 
             [default_overload]
-            void Move(Windows.Foundation.Point topleft);
-            [method_name("MoveInlined")]
-            void Move(float left, float top);
+            void Move(Windows.Foundation.Point position);
+            void Move(Single x, Single y);
 
             [default_overload]
             void Resize(Windows.Foundation.Size size);
-            [method_name("ResizeInlined")]
-            void Resize(float width, float height);
+            void Resize(Single width, Single height);
 
             event Windows.Foundation.TypedEventHandler<XamlWindow, Boolean> VisibilityChanged;
         }
