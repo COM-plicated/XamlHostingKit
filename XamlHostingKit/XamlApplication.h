@@ -22,6 +22,8 @@ namespace winrt::XamlHostingKit::implementation
         static winrt::XamlHostingKit::XamlWindow CreateWindow(winrt::XamlHostingKit::WindowCreationOptions const& options, winrt::Windows::UI::Xaml::ApplicationInitializationCallback const& windowCallback);
         
         static void Close();
+
+        static void RemoveWindow(winrt::XamlHostingKit::XamlWindow const& window);
     };
 }
 

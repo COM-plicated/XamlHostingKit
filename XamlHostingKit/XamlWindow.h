@@ -19,6 +19,7 @@ namespace winrt::XamlHostingKit::implementation
         static thread_local XamlWindow* s_currentWindow;
         static const constexpr auto XHK_WINDOW_OBJECT_PROP = L"COMplicated.XamlHostingKit.WindowObject";
 
+        bool m_isMain { false };
         HWND m_hwnd { nullptr };
         HWND m_coreWindowHwnd { nullptr };
         hstring m_title;
@@ -29,6 +30,7 @@ namespace winrt::XamlHostingKit::implementation
         CoreDispatcher m_dispatcher { nullptr };
         DispatcherQueue m_dispatcherQueue { nullptr };
         CoreWindow m_coreWindow { nullptr };
+        FrameworkView m_frameworkView { nullptr };
         winrt::event<winrt::Windows::Foundation::TypedEventHandler<winrt::XamlHostingKit::XamlWindow, bool>> m_visibilityChanged;
 
         static LPCWSTR const RegisterWindowClass(WNDPROC wndProc);
@@ -38,6 +40,7 @@ namespace winrt::XamlHostingKit::implementation
 
 
         XamlWindow() = default;
+        XamlWindow(winrt::XamlHostingKit::WindowCreationOptions const& options, bool isMain = false);
 
         static winrt::XamlHostingKit::XamlWindow Current();
 
@@ -75,6 +78,8 @@ namespace winrt::XamlHostingKit::implementation
         void VisibilityChanged(winrt::event_token const& token) noexcept;
 
         HRESULT STDMETHODCALLTYPE get_WindowHandle(HWND* hwnd);
+
+        void RunMessageLoop();
     };
 }
 

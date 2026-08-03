@@ -2,13 +2,89 @@
 #include "XamlWindow.h"
 #include "XamlWindow.g.cpp"
 
+#include <dwmapi.h>
 #include "XamlConfig.h"
 #include "Helpers.h"
+#include "LegacyNonImmersiveView.h"
+#include <CoreWindow.h>
+#include "Features.h"
+#include "XamlApplication.h"
 
 namespace winrt::XamlHostingKit::implementation
 {
     const LPCWSTR XamlWindow::s_windowClassName = RegisterWindowClass(WndProc);
     thread_local XamlWindow* XamlWindow::s_currentWindow = nullptr;
+
+    XamlWindow::XamlWindow(winrt::XamlHostingKit::WindowCreationOptions const& options, bool isMain)
+        : m_isMain(isMain)
+    {
+        m_title = options.Title();
+        m_styles = options.Styles();
+        m_extendedStyles = options.ExtendedStyles();
+
+        BOOL dwmFrameEnabled = TRUE;
+        if (FAILED(DwmIsCompositionEnabled(&dwmFrameEnabled)))
+        {
+            dwmFrameEnabled = TRUE;
+        }
+
+        winrt::check_pointer(m_hwnd = CreateWindowExW(
+            dwmFrameEnabled ?
+                m_extendedStyles :
+                (m_extendedStyles |~ (WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME)),
+            s_windowClassName,
+            m_title.c_str(),
+            m_styles |~ WS_VISIBLE,
+            options.Left(),
+            options.Top(),
+            options.Width(),
+            options.Height(),
+            NULL,
+            NULL,
+            GetModuleHandleW(nullptr),
+            nullptr));
+
+        winrt::check_hresult(PrivateCreateCoreWindow(
+            IMMERSIVE_HOSTED,
+            L"",
+            0, 0, 0, 0,
+            0,
+            m_hwnd,
+            winrt::guid_of<ICoreWindow>(),
+            winrt::put_abi(m_coreWindow)));
+
+        m_dispatcher = m_coreWindow.Dispatcher();
+
+        if (Features::IsDispatcherQueueSupported)
+            m_dispatcherQueue = m_coreWindow.DispatcherQueue();
+
+        winrt::com_ptr<ICoreWindowInterop> interop = m_coreWindow.as<ICoreWindowInterop>();
+        winrt::check_hresult(interop->get_WindowHandle(&m_coreWindowHwnd));
+
+        SetPropW(m_hwnd, XHK_WINDOW_OBJECT_PROP, this);
+
+        ::IUnknown* pView = nullptr;
+        if (auto cap2 = winrt::try_get_activation_factory<CoreApplication, ICoreApplicationPrivate2>())
+        {
+            LOG_IF_FAILED(cap2->CreateNonImmersiveView((void**)&pView));
+        }
+
+        m_view = winrt::make<LegacyNonImmersiveView>(m_coreWindow, isMain, pView)
+            .as<winrt::Windows::ApplicationModel::Core::CoreApplicationView>();
+
+        m_frameworkView = { };
+        m_frameworkView.Initialize(m_view);
+        m_frameworkView.SetWindow(m_coreWindow);
+
+        RECT clientRect { };
+        GetClientRect(m_hwnd, &clientRect);
+
+        SetParent(m_coreWindowHwnd, m_hwnd);
+        SetWindowLongW(m_coreWindowHwnd, GWL_STYLE, WS_CHILD | WS_VISIBLE);
+        SetWindowPos(m_coreWindowHwnd, NULL, 0, 0, clientRect.right - clientRect.left, clientRect.bottom - clientRect.top, SWP_NOZORDER | SWP_SHOWWINDOW | SWP_NOACTIVATE);
+
+        s_currentWindow = this;
+    }
 
     winrt::XamlHostingKit::XamlWindow XamlWindow::Current()
     {
@@ -142,15 +218,6 @@ namespace winrt::XamlHostingKit::implementation
     void XamlWindow::Close()
     {
         CloseWindow(m_hwnd);
-
-        try
-        {
-            m_dispatcher.StopProcessEvents();
-        }
-        catch (...)
-        {
-            // nothing to do here, WM_DESTROY -> PostQuitMessage will take care of the message loop
-        }
     }
 
     winrt::event_token XamlWindow::VisibilityChanged(winrt::Windows::Foundation::TypedEventHandler<winrt::XamlHostingKit::XamlWindow, bool> const& handler)
@@ -163,10 +230,16 @@ namespace winrt::XamlHostingKit::implementation
         m_visibilityChanged.remove(token);
     }
 
+    void XamlWindow::RunMessageLoop()
+    {
+        m_frameworkView.Run();
+    }
+
     HRESULT XamlWindow::get_WindowHandle(HWND* hwnd)
     {
         if (hwnd == nullptr)
             return E_POINTER;
+
         *hwnd = m_hwnd;
         return S_OK;
     }
@@ -201,7 +274,7 @@ namespace winrt::XamlHostingKit::implementation
         }
         else if (msg == WM_SETTINGCHANGE)
         {
-            if ((BOOL)lParam && std::wstring_view((wchar_t*)lParam) == L"ImmersiveColorSet")
+            if ((BOOL)lParam && wcscmp((wchar_t*)lParam, L"ImmersiveColorSet") == 0)
                 Helpers::EnsureTitleBarTheme(hwnd);
 
             if (_this)
@@ -211,6 +284,27 @@ namespace winrt::XamlHostingKit::implementation
         }
         else if (msg == WM_DESTROY)
         {
+            RemovePropW(hwnd, XHK_WINDOW_OBJECT_PROP);
+
+            s_currentWindow = nullptr;
+
+            if (_this)
+            {
+                try
+                {
+                    _this->m_frameworkView.Uninitialize();
+                }
+                catch (...) { }
+
+                try
+                {
+                    _this->m_dispatcher.StopProcessEvents();
+                }
+                catch (...) { }
+
+                XamlApplication::RemoveWindow(*_this);
+            }
+
             PostQuitMessage(0);
         }
         else if (_this)
