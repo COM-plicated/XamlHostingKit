@@ -48,7 +48,6 @@ namespace winrt::XamlHostingKit::implementation
         void Title(hstring const& value);
 
         winrt::Windows::Foundation::Rect Bounds();
-        void Bounds(winrt::Windows::Foundation::Rect const& value);
 
         std::uint32_t Styles();
         void Styles(std::uint32_t value);
@@ -73,6 +72,9 @@ namespace winrt::XamlHostingKit::implementation
         void Show();
         void Hide();
         void Close();
+
+        void Move(winrt::Windows::Foundation::Point topleft);
+        void Resize(winrt::Windows::Foundation::Size size);
 
         winrt::event_token VisibilityChanged(winrt::Windows::Foundation::TypedEventHandler<winrt::XamlHostingKit::XamlWindow, bool> const& handler);
         void VisibilityChanged(winrt::event_token const& token) noexcept;

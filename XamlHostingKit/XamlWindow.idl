@@ -21,12 +21,12 @@ namespace XamlHostingKit
         [interface_name("IXamlWindow", 55B829F3-C545-CAFE-B440-410527C2C569)]
         {
             String                  Title          { get; set; };
-            Windows.Foundation.Rect Bounds         { get; set; };
             UInt32                  Styles         { get; set; };
             UInt32                  ExtendedStyles { get; set; };
 
             Boolean                                           IsVisible           { get; };
             Windows.UI.WindowId                               WindowHandle        { get; };
+            Windows.Foundation.Rect                           Bounds              { get; };
             Windows.UI.Xaml.Window                            SystemWindow        { get; };
             Windows.ApplicationModel.Core.CoreApplicationView CoreApplicationView { get; };
 
@@ -40,6 +40,9 @@ namespace XamlHostingKit
             void Show();
             void Hide();
             void Close();
+
+            void Move(Windows.Foundation.Point topleft);
+            void Resize(Windows.Foundation.Size size);
 
             event Windows.Foundation.TypedEventHandler<XamlWindow, Boolean> VisibilityChanged;
         }

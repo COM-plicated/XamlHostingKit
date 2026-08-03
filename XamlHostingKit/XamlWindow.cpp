@@ -110,7 +110,17 @@ namespace winrt::XamlHostingKit::implementation
     winrt::Windows::Foundation::Rect XamlWindow::Bounds()
     {
         RECT rect { };
-        GetWindowRect(m_hwnd, &rect);
+        if (!IsIconic(m_hwnd))
+        {
+            GetWindowRect(m_hwnd, &rect);
+        }
+        else
+        {
+            WINDOWPLACEMENT placement;
+            placement.length = sizeof(WINDOWPLACEMENT);
+            GetWindowPlacement(m_hwnd, &placement);
+            rect = placement.rcNormalPosition;
+        }
         uint32_t dpi = Helpers::GetDpiForWindow(m_hwnd);
 
         return
@@ -120,12 +130,6 @@ namespace winrt::XamlHostingKit::implementation
             static_cast<float>(rect.right - rect.left) / dpi,
             static_cast<float>(rect.bottom - rect.top) / dpi
         };
-    }
-
-    void XamlWindow::Bounds(winrt::Windows::Foundation::Rect const& value)
-    {
-        uint32_t dpi = Helpers::GetDpiForWindow(m_hwnd);
-        SetWindowPos(m_hwnd, NULL, value.X * dpi, value.Y * dpi, value.Width * dpi, value.Height * dpi, SWP_NOZORDER | SWP_NOACTIVATE);
     }
 
     std::uint32_t XamlWindow::Styles()
@@ -218,6 +222,46 @@ namespace winrt::XamlHostingKit::implementation
     void XamlWindow::Close()
     {
         CloseWindow(m_hwnd);
+    }
+
+    void XamlWindow::Move(winrt::Windows::Foundation::Point topleft)
+    {
+        uint32_t dpi = Helpers::GetDpiForWindow(m_hwnd);
+        if (!IsZoomed(m_hwnd) && !IsIconic(m_hwnd))
+        {
+            SetWindowPos(m_hwnd, NULL, topleft.X * dpi, topleft.Y * dpi, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+        }
+        else
+        {
+            WINDOWPLACEMENT wp;
+            wp.length = sizeof(WINDOWPLACEMENT);
+            GetWindowPlacement(m_hwnd, &wp);
+            LONG width = wp.rcNormalPosition.right - wp.rcNormalPosition.left;
+            LONG height = wp.rcNormalPosition.bottom - wp.rcNormalPosition.top;
+            wp.rcNormalPosition.left = topleft.X * dpi;
+            wp.rcNormalPosition.top = topleft.Y * dpi;
+            wp.rcNormalPosition.right = topleft.X * dpi + width;
+            wp.rcNormalPosition.bottom = topleft.Y * dpi + height;
+            SetWindowPlacement(m_hwnd, &wp);
+        }
+    }
+
+    void XamlWindow::Resize(winrt::Windows::Foundation::Size size)
+    {
+        uint32_t dpi = Helpers::GetDpiForWindow(m_hwnd);
+        if (!IsZoomed(m_hwnd) && !IsIconic(m_hwnd))
+        {
+            SetWindowPos(m_hwnd, NULL, 0, 0, size.Width * dpi, size.Height * dpi, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+        }
+        else
+        {
+            WINDOWPLACEMENT wp;
+            wp.length = sizeof(WINDOWPLACEMENT);
+            GetWindowPlacement(m_hwnd, &wp);
+            wp.rcNormalPosition.right = wp.rcNormalPosition.left + size.Width * dpi;
+            wp.rcNormalPosition.bottom = wp.rcNormalPosition.top + size.Height * dpi;
+            SetWindowPlacement(m_hwnd, &wp);
+        }
     }
 
     winrt::event_token XamlWindow::VisibilityChanged(winrt::Windows::Foundation::TypedEventHandler<winrt::XamlHostingKit::XamlWindow, bool> const& handler)
