@@ -226,10 +226,15 @@ namespace winrt::XamlHostingKit::implementation
 
     void XamlWindow::Move(winrt::Windows::Foundation::Point topleft)
     {
+        Move(topleft.X, topleft.Y);
+    }
+
+    void XamlWindow::Move(float left, float top)
+    {
         uint32_t dpi = Helpers::GetDpiForWindow(m_hwnd);
         if (!IsZoomed(m_hwnd) && !IsIconic(m_hwnd))
         {
-            SetWindowPos(m_hwnd, NULL, topleft.X * dpi, topleft.Y * dpi, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+            SetWindowPos(m_hwnd, NULL, left * dpi, top * dpi, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
         }
         else
         {
@@ -238,28 +243,33 @@ namespace winrt::XamlHostingKit::implementation
             GetWindowPlacement(m_hwnd, &wp);
             LONG width = wp.rcNormalPosition.right - wp.rcNormalPosition.left;
             LONG height = wp.rcNormalPosition.bottom - wp.rcNormalPosition.top;
-            wp.rcNormalPosition.left = topleft.X * dpi;
-            wp.rcNormalPosition.top = topleft.Y * dpi;
-            wp.rcNormalPosition.right = topleft.X * dpi + width;
-            wp.rcNormalPosition.bottom = topleft.Y * dpi + height;
+            wp.rcNormalPosition.left = left * dpi;
+            wp.rcNormalPosition.top = top * dpi;
+            wp.rcNormalPosition.right = left * dpi + width;
+            wp.rcNormalPosition.bottom = top * dpi + height;
             SetWindowPlacement(m_hwnd, &wp);
         }
     }
 
     void XamlWindow::Resize(winrt::Windows::Foundation::Size size)
     {
+        Resize(size.Width, size.Height);
+    }
+
+    void XamlWindow::Resize(float width, float height)
+    {
         uint32_t dpi = Helpers::GetDpiForWindow(m_hwnd);
         if (!IsZoomed(m_hwnd) && !IsIconic(m_hwnd))
         {
-            SetWindowPos(m_hwnd, NULL, 0, 0, size.Width * dpi, size.Height * dpi, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+            SetWindowPos(m_hwnd, NULL, 0, 0, width * dpi, height * dpi, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
         }
         else
         {
             WINDOWPLACEMENT wp;
             wp.length = sizeof(WINDOWPLACEMENT);
             GetWindowPlacement(m_hwnd, &wp);
-            wp.rcNormalPosition.right = wp.rcNormalPosition.left + size.Width * dpi;
-            wp.rcNormalPosition.bottom = wp.rcNormalPosition.top + size.Height * dpi;
+            wp.rcNormalPosition.right = wp.rcNormalPosition.left + width * dpi;
+            wp.rcNormalPosition.bottom = wp.rcNormalPosition.top + height * dpi;
             SetWindowPlacement(m_hwnd, &wp);
         }
     }

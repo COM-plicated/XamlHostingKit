@@ -74,7 +74,9 @@ namespace winrt::XamlHostingKit::implementation
         void Close();
 
         void Move(winrt::Windows::Foundation::Point topleft);
+        void Move(float left, float top);
         void Resize(winrt::Windows::Foundation::Size size);
+        void Resize(float width, float height);
 
         winrt::event_token VisibilityChanged(winrt::Windows::Foundation::TypedEventHandler<winrt::XamlHostingKit::XamlWindow, bool> const& handler);
         void VisibilityChanged(winrt::event_token const& token) noexcept;

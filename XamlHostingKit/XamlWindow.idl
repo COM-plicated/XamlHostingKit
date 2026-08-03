@@ -41,8 +41,15 @@ namespace XamlHostingKit
             void Hide();
             void Close();
 
+            [default_overload]
             void Move(Windows.Foundation.Point topleft);
+            [method_name("MoveInlined")]
+            void Move(float left, float top);
+
+            [default_overload]
             void Resize(Windows.Foundation.Size size);
+            [method_name("ResizeInlined")]
+            void Resize(float width, float height);
 
             event Windows.Foundation.TypedEventHandler<XamlWindow, Boolean> VisibilityChanged;
         }
