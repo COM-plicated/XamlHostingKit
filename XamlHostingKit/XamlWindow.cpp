@@ -35,19 +35,21 @@ namespace winrt::XamlHostingKit::implementation
     {
         RECT rect { };
         GetWindowRect(m_hwnd, &rect);
+        uint32_t dpi = Helpers::GetDpiForWindow(m_hwnd);
 
         return
         {
-            static_cast<float>(rect.left),
-            static_cast<float>(rect.top),
-            static_cast<float>(rect.right - rect.left),
-            static_cast<float>(rect.bottom - rect.top)
+            static_cast<float>(rect.left) / dpi,
+            static_cast<float>(rect.top) / dpi,
+            static_cast<float>(rect.right - rect.left) / dpi,
+            static_cast<float>(rect.bottom - rect.top) / dpi
         };
     }
 
     void XamlWindow::Bounds(winrt::Windows::Foundation::Rect const& value)
     {
-        SetWindowPos(m_hwnd, NULL, value.X, value.Y, value.Width, value.Height, SWP_NOZORDER | SWP_NOACTIVATE);
+        uint32_t dpi = Helpers::GetDpiForWindow(m_hwnd);
+        SetWindowPos(m_hwnd, NULL, value.X * dpi, value.Y * dpi, value.Width * dpi, value.Height * dpi, SWP_NOZORDER | SWP_NOACTIVATE);
     }
 
     std::uint32_t XamlWindow::Styles()

@@ -3,6 +3,7 @@
 #include <filesystem>
 #include "Privates.h"
 #include <wil/registry.h>
+#include <ShellScalingApi.h>
 
 namespace winrt::XamlHostingKit
 {
@@ -20,6 +21,7 @@ namespace winrt::XamlHostingKit
     static const auto IEConfiguration_SetBrowserAppProfile = reinterpret_cast<HRESULT(WINAPI*)(const wchar_t*, uint32_t, uint32_t)>(GetProcAddress(IERTUtilModule, MAKEINTRESOURCEA(797)));
     static const auto PrivateCreateCoreWindow = reinterpret_cast<HRESULT(WINAPI*)(CoreWindowType, const wchar_t*, int, int, int, int, uint32_t, HWND, REFGUID, void**)>(GetProcAddress(WinUIModule, MAKEINTRESOURCEA(1500)));
     static const auto CoSetASTATestMode = reinterpret_cast<void(WINAPI*)(ASTA_TEST_MODE_FLAGS)>(GetProcAddress(COMBaseModule, MAKEINTRESOURCEA(100)));
+    static const auto GetDpiForWindowMethod = reinterpret_cast<UINT(WINAPI*)(HWND)>(GetProcAddress(User32Module, "GetDpiForWindow"));
 
     static const auto PersonalizeKey = wil::reg::open_unique_key(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize");
 
@@ -68,6 +70,18 @@ namespace winrt::XamlHostingKit
             SetPreferredAppMode(PreferredAppMode::AllowDark);
             RefreshImmersiveColorPolicyState();
             AllowDarkModeForWindow(hwnd, true);
+        }
+
+        inline static uint32_t GetDpiForWindow(HWND hwnd)
+        {
+            if (GetDpiForWindowMethod)
+                return GetDpiForWindowMethod(hwnd);
+
+            HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+            uint32_t dpi;
+            GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi, &dpi);
+
+            return dpi;
         }
     };
 }
