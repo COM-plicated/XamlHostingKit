@@ -29,7 +29,7 @@ namespace winrt::XamlHostingKit
     {
     private:
 
-        inline static winrt::hstring const& __GetExecutableName()
+        inline static winrt::hstring __GetExecutableName()
         {
             wchar_t path[MAX_PATH];
             GetModuleFileNameW(GetModuleHandleW(nullptr), path, MAX_PATH);
@@ -47,7 +47,7 @@ namespace winrt::XamlHostingKit
 
         inline static winrt::hstring const& GetExecutableName()
         {
-            static winrt::hstring const& exeName = __GetExecutableName();
+            static winrt::hstring exeName = __GetExecutableName();
             return exeName;
         }
 
@@ -81,16 +81,16 @@ namespace winrt::XamlHostingKit
             }
         }
 
-        inline static uint32_t GetDpiForWindow(HWND hwnd)
+        inline static float GetDpiScaleForWindow(HWND hwnd)
         {
             if (GetDpiForWindowMethod)
-                return GetDpiForWindowMethod(hwnd);
+                return GetDpiForWindowMethod(hwnd) / 96.0f;
 
+            uint32_t dpi = 96;
             HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
-            uint32_t dpi;
             GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi, &dpi);
 
-            return dpi;
+            return dpi / 96.0f;
         }
     };
 }

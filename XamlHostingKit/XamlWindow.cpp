@@ -121,7 +121,8 @@ namespace winrt::XamlHostingKit::implementation
             GetWindowPlacement(m_hwnd, &placement);
             rect = placement.rcNormalPosition;
         }
-        uint32_t dpi = Helpers::GetDpiForWindow(m_hwnd);
+
+        auto dpi = Helpers::GetDpiScaleForWindow(m_hwnd);
 
         return
         {
@@ -231,7 +232,7 @@ namespace winrt::XamlHostingKit::implementation
 
     void XamlWindow::Move(float left, float top)
     {
-        uint32_t dpi = Helpers::GetDpiForWindow(m_hwnd);
+        auto dpi = Helpers::GetDpiScaleForWindow(m_hwnd);
 
         if (!IsZoomed(m_hwnd) && !IsIconic(m_hwnd))
         {
@@ -264,7 +265,7 @@ namespace winrt::XamlHostingKit::implementation
 
     void XamlWindow::Resize(float width, float height)
     {
-        uint32_t dpi = Helpers::GetDpiForWindow(m_hwnd);
+        auto dpi = Helpers::GetDpiScaleForWindow(m_hwnd);
 
         if (!IsZoomed(m_hwnd) && !IsIconic(m_hwnd))
         {
