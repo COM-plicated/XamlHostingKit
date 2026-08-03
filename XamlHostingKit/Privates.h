@@ -167,7 +167,7 @@ inline static const constexpr uintptr_t OffsetOfAppCompatShimData()
 
 inline static const constexpr auto OFFSET_OF_SHIM_DATA = OffsetOfAppCompatShimData();
 
-inline static const constexpr GUID Windows10_PlatformID = { 0x8e0f7a12, 0xbfb3, 0x4fe8, 0xb9a5, 0x48, 0xfd, 0x50, 0xa1, 0x5a, 0x9a };
+inline static const constexpr GUID Windows10_PlatformID = { 0x8e0f7a12, 0xbfb3, 0x4fe8, { 0xb9, 0xa5, 0x48, 0xfd, 0x50, 0xa1, 0x5a, 0x9a } };
 
 MIDL_INTERFACE("6090202d-2843-4ba5-9b0d-fc88eecd9ce5")
 ICoreApplicationPrivate2 : public ::IInspectable
