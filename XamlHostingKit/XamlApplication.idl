@@ -8,6 +8,7 @@ namespace XamlHostingKit
         {
             static Boolean EnableWebView { get; set; };
             static Boolean DisableRedirectionLayer { get; set; };
+            static Boolean EnableTouchpadAwareness { get; set; };
         }
     }
 

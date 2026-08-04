@@ -39,4 +39,20 @@ namespace winrt::XamlHostingKit::implementation
 
         s_disableRedirectionLayer = value;
     }
+
+    bool XamlConfig::EnableTouchpadAwareness()
+    {
+        return s_enableTouchpadAwareness;
+    }
+
+    void XamlConfig::EnableTouchpadAwareness(bool value)
+    {
+        if (s_isInitialized)
+        {
+            throw hresult_illegal_method_call
+            (L"Changing EnableTouchpadAwareness after calling XamlApplication.Start() is not supported.");
+        }
+
+        s_enableTouchpadAwareness = value;
+    }
 }

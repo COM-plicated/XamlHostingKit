@@ -7,21 +7,25 @@
 
 namespace winrt::XamlHostingKit
 {
-    static const auto UXThemeModule = LoadLibraryW(L"uxtheme.dll");
-    static const auto User32Module = LoadLibraryW(L"user32.dll");
-    static const auto IERTUtilModule = LoadLibraryW(L"iertutil.dll");
-    static const auto WinUIModule = LoadLibraryW(L"Windows.UI.dll");
+    static const auto UXThemeModule = wil::unique_hmodule(LoadLibraryW(L"uxtheme.dll"));
+    static const auto User32Module = wil::unique_hmodule(LoadLibraryW(L"user32.dll"));
+    static const auto IERTUtilModule = wil::unique_hmodule(LoadLibraryW(L"iertutil.dll"));
+    static const auto WinUIModule = wil::unique_hmodule(LoadLibraryW(L"Windows.UI.dll"));
     static const auto COMBaseModule = GetModuleHandleW(L"combase.dll");
+    static const auto Win32UModule = GetModuleHandleW(L"win32u.dll");
 
-    static const auto IsDarkModeAllowedForWindow = reinterpret_cast<BOOL(WINAPI*)(HWND)>(GetProcAddress(UXThemeModule, MAKEINTRESOURCEA(137)));
-    static const auto SetWindowCompositionAttribute = reinterpret_cast<BOOL(WINAPI*)(HWND, WINDOWCOMPOSITIONATTRIBDATA*)>(GetProcAddress(User32Module, "SetWindowCompositionAttribute"));
-    static const auto SetPreferredAppMode = reinterpret_cast<void(WINAPI*)(PreferredAppMode)>(GetProcAddress(UXThemeModule, MAKEINTRESOURCEA(135)));
-    static const auto RefreshImmersiveColorPolicyState = reinterpret_cast<void(WINAPI*)()>(GetProcAddress(UXThemeModule, MAKEINTRESOURCEA(104)));
-    static const auto AllowDarkModeForWindow = reinterpret_cast<void(WINAPI*)(HWND, BOOL)>(GetProcAddress(UXThemeModule, MAKEINTRESOURCEA(133)));
-    static const auto IEConfiguration_SetBrowserAppProfile = reinterpret_cast<HRESULT(WINAPI*)(const wchar_t*, uint32_t, uint32_t)>(GetProcAddress(IERTUtilModule, MAKEINTRESOURCEA(797)));
-    static const auto PrivateCreateCoreWindow = reinterpret_cast<HRESULT(WINAPI*)(CoreWindowType, const wchar_t*, int, int, int, int, uint32_t, HWND, REFGUID, void**)>(GetProcAddress(WinUIModule, MAKEINTRESOURCEA(1500)));
+    static const auto IsDarkModeAllowedForWindow = reinterpret_cast<BOOL(WINAPI*)(HWND)>(GetProcAddress(UXThemeModule.get(), MAKEINTRESOURCEA(137)));
+    static const auto SetWindowCompositionAttribute = reinterpret_cast<BOOL(WINAPI*)(HWND, WINDOWCOMPOSITIONATTRIBDATA*)>(GetProcAddress(User32Module.get(), "SetWindowCompositionAttribute"));
+    static const auto SetPreferredAppMode = reinterpret_cast<void(WINAPI*)(PreferredAppMode)>(GetProcAddress(UXThemeModule.get(), MAKEINTRESOURCEA(135)));
+    static const auto RefreshImmersiveColorPolicyState = reinterpret_cast<void(WINAPI*)()>(GetProcAddress(UXThemeModule.get(), MAKEINTRESOURCEA(104)));
+    static const auto AllowDarkModeForWindow = reinterpret_cast<void(WINAPI*)(HWND, BOOL)>(GetProcAddress(UXThemeModule.get(), MAKEINTRESOURCEA(133)));
+    static const auto IEConfiguration_SetBrowserAppProfile = reinterpret_cast<HRESULT(WINAPI*)(const wchar_t*, uint32_t, uint32_t)>(GetProcAddress(IERTUtilModule.get(), MAKEINTRESOURCEA(797)));
+    static const auto PrivateCreateCoreWindow = reinterpret_cast<HRESULT(WINAPI*)(CoreWindowType, const wchar_t*, int, int, int, int, uint32_t, HWND, REFGUID, void**)>(GetProcAddress(WinUIModule.get(), MAKEINTRESOURCEA(1500)));
     static const auto CoSetASTATestMode = reinterpret_cast<void(WINAPI*)(ASTA_TEST_MODE_FLAGS)>(GetProcAddress(COMBaseModule, MAKEINTRESOURCEA(100)));
-    static const auto GetDpiForWindowMethod = reinterpret_cast<decltype(&GetDpiForWindow)>(GetProcAddress(User32Module, "GetDpiForWindow"));
+    static const auto GetDpiForWindowMethod = reinterpret_cast<decltype(&GetDpiForWindow)>(GetProcAddress(User32Module.get(), "GetDpiForWindow"));
+    static const auto NtUserRegisterTouchPadCapable = reinterpret_cast<BOOL(WINAPI*)(BOOL)>(GetProcAddress(Win32UModule, "NtUserRegisterTouchPadCapable"));
+    static const auto RegisterTouchpadCapableWindowMethod = reinterpret_cast<BOOL(WINAPI*)(HWND, BOOL)>(GetProcAddress(User32Module.get(), MAKEINTRESOURCEA(2689)));
+    static const auto RegisterTouchpadCapableThreadMethod = reinterpret_cast<BOOL(WINAPI*)(BOOL)>(GetProcAddress(User32Module.get(), MAKEINTRESOURCEA(2688)));
 
     static const auto PersonalizeKey = wil::reg::open_unique_key(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize");
 
@@ -127,10 +131,12 @@ namespace winrt::XamlHostingKit
                 {
                     _switchContextOffset = (intptr_t)((byte*)&((APPCOMPAT_EXE_DATA_TH1*)pShim)->SwitchContext - (byte*)pShim);
                 }
-                /*else if (Windows10_PlatformID == ((APPCOMPAT_EXE_DATA_EIGHT*)pShim)->SwitchContext.Data.Platform)
+                else if (Windows10_PlatformID == ((APPCOMPAT_EXE_DATA_EIGHT*)pShim)->SwitchContext.Data.Platform ||
+                         WindowsBlue_PlatformID == ((APPCOMPAT_EXE_DATA_EIGHT*)pShim)->SwitchContext.Data.Platform ||
+                         Windows8_PlatformID == ((APPCOMPAT_EXE_DATA_EIGHT*)pShim)->SwitchContext.Data.Platform)
                 {
                     _switchContextOffset = (intptr_t)((byte*)&((APPCOMPAT_EXE_DATA_EIGHT*)pShim)->SwitchContext - (byte*)pShim);
-                }*/
+                }
                 else
                 {
                     auto current = (byte*)pShim;
@@ -139,7 +145,9 @@ namespace winrt::XamlHostingKit
 
                     while (current <= end)
                     {
-                        if (Windows10_PlatformID == *(GUID*)current)
+                        if (Windows10_PlatformID == *(GUID*)current /*||
+                            WindowsBlue_PlatformID == *(GUID*)current ||
+                            Windows8_PlatformID == *(GUID*)current*/)
                         {
                             _switchContextOffset = (intptr_t)(current - (byte*)pShim) - offset;
                             break;

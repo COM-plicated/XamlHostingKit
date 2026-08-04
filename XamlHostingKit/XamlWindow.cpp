@@ -12,12 +12,13 @@
 
 namespace winrt::XamlHostingKit::implementation
 {
-    const LPCWSTR XamlWindow::s_windowClassName = RegisterWindowClass(WndProc);
     thread_local XamlWindow* XamlWindow::s_currentWindow = nullptr;
 
     XamlWindow::XamlWindow(winrt::XamlHostingKit::WindowCreationOptions const& options, bool isMain)
         : m_isMain(isMain)
     {
+        static const auto className = RegisterWindowClass(WndProc);
+
         m_title = options.Title();
         m_styles = options.Styles();
         m_extendedStyles = options.ExtendedStyles();
@@ -28,11 +29,27 @@ namespace winrt::XamlHostingKit::implementation
             dwmFrameEnabled = TRUE;
         }
 
+        if (XamlConfig::s_enableTouchpadAwareness)
+        {
+            if (RegisterTouchpadCapableThreadMethod)
+            {
+                LOG_LAST_ERROR_IF(!RegisterTouchpadCapableThreadMethod(TRUE));
+            }
+            else if (NtUserRegisterTouchPadCapable)
+            {
+                LOG_LAST_ERROR_IF(!NtUserRegisterTouchPadCapable(TRUE));
+            }
+            else
+            {
+                LOG_HR_MSG(E_FAIL, "Touchpad awareness cannot be enabled due to neither RegisterTouchpadCapableThread function nor NtUserRegisterTouchPadCapable function being found on the current OS environment.");
+            }
+        }
+
         winrt::check_pointer(m_hwnd = CreateWindowExW(
             dwmFrameEnabled ?
                 m_extendedStyles :
                 (m_extendedStyles |~ (WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME)),
-            s_windowClassName,
+            className,
             m_title.c_str(),
             m_styles |~ WS_VISIBLE,
             options.Left(),
@@ -62,6 +79,12 @@ namespace winrt::XamlHostingKit::implementation
             m_dispatcherQueue = m_coreWindow.DispatcherQueue();
 
         SetPropW(m_hwnd, XHK_WINDOW_OBJECT_PROP, this);
+
+        if (XamlConfig::s_enableTouchpadAwareness && RegisterTouchpadCapableWindowMethod)
+        {
+            RegisterTouchpadCapableWindowMethod(m_hwnd, TRUE);
+            RegisterTouchpadCapableWindowMethod(m_coreWindowHwnd, TRUE);
+        }
 
         if (SetWindowCompositionAttribute)
         {

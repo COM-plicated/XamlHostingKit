@@ -144,6 +144,17 @@ struct SDBQUERYRESULT
     GUID DB[16];
 };
 
+struct APPCOMPAT_EXE_DATA_EIGHT
+{
+    uint16_t ShimEngine[MAX_PATH];
+    uint32_t Size;
+    uint32_t Magic;
+    uint16_t ExeType;
+    SDBQUERYRESULT SdbQueryResult;
+    char DbgLogChannels[1024];
+    SWITCH_CONTEXT SwitchContext; // uint64_t[128]
+};
+
 struct APPCOMPAT_EXE_DATA_TH1
 {
     uint16_t ShimEngine[MAX_PATH];
@@ -187,6 +198,8 @@ inline static const constexpr uintptr_t OffsetOfAppCompatShimData()
 
 inline static const constexpr auto OFFSET_OF_SHIM_DATA = OffsetOfAppCompatShimData();
 
+inline static const constexpr GUID Windows8_PlatformID = { 0x4a2f28e3, 0x53b9, 0x4441, { 0xba, 0x9c, 0xd6, 0x9d, 0x4a, 0x4a, 0x6e, 0x38 } };
+inline static const constexpr GUID WindowsBlue_PlatformID = { 0x1f676c76, 0x80e1, 0x4239, { 0x95, 0xbb, 0x83, 0xd0, 0xf6, 0xd0, 0xda, 0x78 } };
 inline static const constexpr GUID Windows10_PlatformID = { 0x8e0f7a12, 0xbfb3, 0x4fe8, { 0xb9, 0xa5, 0x48, 0xfd, 0x50, 0xa1, 0x5a, 0x9a } };
 
 MIDL_INTERFACE("6090202d-2843-4ba5-9b0d-fc88eecd9ce5")

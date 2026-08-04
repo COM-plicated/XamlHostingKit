@@ -15,7 +15,6 @@ namespace winrt::XamlHostingKit::implementation
     struct XamlWindow : XamlWindowT<XamlWindow, IWindowNative>
     {
     private:
-        static const LPCWSTR s_windowClassName;
         static thread_local XamlWindow* s_currentWindow;
         static const constexpr auto XHK_WINDOW_OBJECT_PROP = L"COMplicated.XamlHostingKit.WindowObject";
 
