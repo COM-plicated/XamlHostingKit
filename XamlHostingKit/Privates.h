@@ -47,6 +47,24 @@ struct WINDOWCOMPOSITIONATTRIBDATA
     unsigned int cbData;
 };
 
+enum ACCENT_STATE
+{
+    ACCENT_DISABLED,
+    ACCENT_ENABLE_GRADIENT = 1,
+    ACCENT_ENABLE_TRANSPARENTGRADIENT = 2,
+    ACCENT_ENABLE_BLURBEHIND = 3,
+    ACCENT_ENABLE_ACRYLICBLURBEHIND = 4,
+    ACCENT_ENABLE_HOSTBACKDROP = 5,
+};
+
+struct ACCENT_POLICY
+{
+    ACCENT_STATE AccentState;
+    ULONG AccentFlags;
+    ULONG GradientColor;
+    ULONG AnimationId;
+};
+
 enum class PreferredAppMode
 {
     Default,
@@ -74,6 +92,8 @@ enum ASTA_TEST_MODE_FLAGS : unsigned int
     GIT_LIFETIME_EXTENSION_ENABLED = 0x2,
     ROINITIALIZEASTA_ALLOWED = 0x4,
 };
+
+DEFINE_ENUM_FLAG_OPERATORS(ASTA_TEST_MODE_FLAGS);
 
 struct WindowCreationParameters
 {

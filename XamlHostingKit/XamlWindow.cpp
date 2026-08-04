@@ -53,15 +53,32 @@ namespace winrt::XamlHostingKit::implementation
             winrt::guid_of<ICoreWindow>(),
             winrt::put_abi(m_coreWindow)));
 
+        winrt::com_ptr<ICoreWindowInterop> interop = m_coreWindow.as<ICoreWindowInterop>();
+        winrt::check_hresult(interop->get_WindowHandle(&m_coreWindowHwnd));
+
         m_dispatcher = m_coreWindow.Dispatcher();
 
         if (Features::IsDispatcherQueueSupported)
             m_dispatcherQueue = m_coreWindow.DispatcherQueue();
 
-        winrt::com_ptr<ICoreWindowInterop> interop = m_coreWindow.as<ICoreWindowInterop>();
-        winrt::check_hresult(interop->get_WindowHandle(&m_coreWindowHwnd));
-
         SetPropW(m_hwnd, XHK_WINDOW_OBJECT_PROP, this);
+
+        if (SetWindowCompositionAttribute)
+        {
+            ACCENT_POLICY policy { ACCENT_ENABLE_HOSTBACKDROP };
+
+            WINDOWCOMPOSITIONATTRIBDATA data = { };
+            data.Attrib = WINDOWCOMPOSITIONATTRIB::WCA_ACCENT_POLICY;
+            data.pvData = &policy;
+            data.cbData = sizeof(policy);
+
+            LOG_LAST_ERROR_IF(!SetWindowCompositionAttribute(m_hwnd, &data));
+            SetWindowCompositionAttribute(m_coreWindowHwnd, &data);
+        }
+        else
+        {
+            LOG_HR_MSG(E_FAIL, "Host Backrop cannot be enabled due to SetWindowCompositionAttribute function not being found on the current OS environment.");
+        }
 
         ::IUnknown* pView = nullptr;
         if (auto cap2 = winrt::try_get_activation_factory<CoreApplication, ICoreApplicationPrivate2>())
