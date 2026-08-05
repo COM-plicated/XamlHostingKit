@@ -127,6 +127,12 @@ namespace winrt::XamlHostingKit::implementation
                     Helpers::EnableResizeSynchronization(m_coreWindowHwnd, true);
                     m_windowPrivate.attach(wPriv.detach());
                     m_isSyncObjEnabled = true;
+
+                    if (HANDLE syncHandle = Helpers::GetResizeSynchronizationObject(m_hwnd)) [[likely]]
+                    {
+                        LOG_IF_FAILED(m_windowPrivate->SetSynchronizationInfo((uint64_t)syncHandle, (uint64_t)m_hwnd));
+                        CloseHandle(syncHandle);
+                    }
                 }
             }
         }
@@ -431,6 +437,15 @@ namespace winrt::XamlHostingKit::implementation
         {
             if (msg == WM_SIZE)
             {
+                // TODO: Should this be after SetSynchronizationInfo instead?
+                // this is currently here before it because XAML sets the CoreWindow synchronization object
+                // on every WM_SIZE message as explained by the comment below, so it seems like we should send that message
+                // before we set the synchronization object so that XAML doesn't override it (with CoreWindow's one),
+                // but also the code around (NtUser)LayoutCompleted in WUX.dll seems to suggest that we are supposed to resize
+                // after setting the synchronization object, this is so confusing...
+                SetWindowPos(_this->m_coreWindowHwnd, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam), SWP_NOZORDER | SWP_SHOWWINDOW | SWP_NOACTIVATE);
+                SendMessageW(_this->m_coreWindowHwnd, msg, wParam, lParam);
+
                 if (_this->m_isSyncObjEnabled) [[likely]]
                 {
                     if (HANDLE syncHandle = Helpers::GetResizeSynchronizationObject(hwnd)) [[likely]]
@@ -439,9 +454,6 @@ namespace winrt::XamlHostingKit::implementation
                         CloseHandle(syncHandle);
                     }
                 }
-
-                SetWindowPos(_this->m_coreWindowHwnd, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam), SWP_NOZORDER | SWP_SHOWWINDOW | SWP_NOACTIVATE);
-                SendMessageW(_this->m_coreWindowHwnd, msg, wParam, lParam);
             }
             else if (msg == WM_SHOWWINDOW && _this->m_visibilityChanged)
             {
