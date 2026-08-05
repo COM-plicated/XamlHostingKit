@@ -34,7 +34,7 @@ namespace winrt::XamlHostingKit::implementation
             throw hresult_invalid_argument(L"initCallback cannot be null.");
         }
 
-        std::call_once(s_webViewInitFlag, []
+        std::call_once(s_appInitFlag, []
         {
             LOG_IF_FAILED(InitializeCoreApplicationHooks());
 

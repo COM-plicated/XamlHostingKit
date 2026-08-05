@@ -29,7 +29,7 @@ namespace winrt::XamlHostingKit::implementation
         inline static IVector<winrt::XamlHostingKit::XamlWindow> s_windows { winrt::multi_threaded_vector<winrt::XamlHostingKit::XamlWindow>() };
         inline static HRESULT(WINAPI* s_originalInitializeForCurrentApplication)(mrm::IMrtResourceManager* _this) { nullptr };
         inline static HRESULT(WINAPI* s_originalTryInitializeForCurrentApplication)(mrm::IMrtResourceManager2* _this) { nullptr };
-        inline static std::once_flag s_webViewInitFlag { };
+        inline static std::once_flag s_appInitFlag { };
         inline static std::once_flag s_mrmHookFlag { };
 
         static HRESULT InitializeWebView();
