@@ -4,14 +4,26 @@
 #include "Privates.h"
 #include <wil/registry.h>
 #include <ShellScalingApi.h>
+#include <Shlobj.h>
+#include <winrt/Windows.Storage.Streams.h>
+
+#pragma warning(push, 0)
+#include <simdutf/simdutf.h>
+#pragma warning(pop)
 
 namespace winrt::XamlHostingKit
 {
     static const auto UXThemeModule = wil::unique_hmodule(LoadLibraryW(L"uxtheme.dll"));
     static const auto User32Module = wil::unique_hmodule(LoadLibraryW(L"user32.dll"));
     static const auto IERTUtilModule = wil::unique_hmodule(LoadLibraryW(L"iertutil.dll"));
+    static const auto AppCoreModule = wil::unique_hmodule(LoadLibraryW(L"kernel.appcore.dll"));
     static const auto WinUIModule = wil::unique_hmodule(LoadLibraryW(L"Windows.UI.dll"));
+    static const auto XAMLModule = wil::unique_hmodule(LoadLibraryW(L"Windows.UI.Xaml.dll"));
+    static const auto MrmModule = wil::unique_hmodule(LoadLibraryW(L"MrmCoreR.dll"));
+    static const auto TWinAPICoreModule = wil::unique_hmodule(LoadLibraryW(L"twinapi.appcore.dll"));
+    static const auto ThreadPoolModule = wil::unique_hmodule(LoadLibraryW(L"threadpoolwinrt.dll"));
     static const auto COMBaseModule = GetModuleHandleW(L"combase.dll");
+    static const auto KernelBaseModule = GetModuleHandleW(L"kernelbase.dll");
     static const auto Win32UModule = GetModuleHandleW(L"win32u.dll");
 
     static const auto IsDarkModeAllowedForWindow = reinterpret_cast<BOOL(WINAPI*)(HWND)>(GetProcAddress(UXThemeModule.get(), MAKEINTRESOURCEA(137)));
@@ -31,24 +43,49 @@ namespace winrt::XamlHostingKit
 
     #define NtCurrentPeb() (NtCurrentTeb()->ProcessEnvironmentBlock)
 
+    namespace wss = winrt::Windows::Storage::Streams;
+
     class Helpers
     {
     private:
-
         inline static intptr_t _switchContextOffset = 0;
 
-        inline static winrt::hstring __GetExecutableName()
+        inline static std::filesystem::path __GetExecutablePath()
         {
             wchar_t path[MAX_PATH];
             GetModuleFileNameW(GetModuleHandleW(nullptr), path, MAX_PATH);
+            return std::filesystem::path(path);
+        }
 
-            std::filesystem::path exePath(path);
-            return winrt::hstring { exePath.stem().wstring() };
+        inline static std::filesystem::path _executablePath = __GetExecutablePath();
+
+        inline static winrt::hstring __GetExecutableName()
+        {
+            return winrt::hstring { _executablePath.stem().wstring() };
         }
 
         inline static bool ShouldAppsUseDarkMode()
         {
             return !wil::reg::try_get_value_dword(PersonalizeKey.get(), L"AppsUseLightTheme").value_or(true);
+        }
+
+        inline static std::wstring ToBase64(std::wstring const& input)
+        {
+            auto inputSizeInBytes = input.length() * sizeof(wchar_t);
+            auto size = simdutf::base64_length_from_binary(inputSizeInBytes, simdutf::base64_url);
+
+            char* output = new char[size];
+            simdutf::binary_to_base64((const char*)input.c_str(), inputSizeInBytes, output, simdutf::base64_url);
+
+            char16_t* wideOutput = new char16_t[size];
+            simdutf::convert_utf8_to_utf16(output, size, wideOutput);
+
+            auto str = std::wstring((wchar_t*)wideOutput, size);
+
+            delete[] output;
+            delete[] wideOutput;
+
+            return str;
         }
 
     public:
@@ -59,10 +96,15 @@ namespace winrt::XamlHostingKit
             return exeName;
         }
 
+        inline static std::filesystem::path GetExecutableFolderPath()
+        {
+            return _executablePath.parent_path();
+        }
+
         inline static void EnsureTitleBarTheme(HWND hwnd)
         {
             if (IsDarkModeAllowedForWindow &&
-                SetWindowCompositionAttribute)
+                SetWindowCompositionAttribute) [[likely]]
             {
                 bool isDarkMode = IsDarkModeAllowedForWindow(hwnd) && ShouldAppsUseDarkMode();
 
@@ -88,7 +130,7 @@ namespace winrt::XamlHostingKit
         {
             if (SetPreferredAppMode &&
                 RefreshImmersiveColorPolicyState &&
-                AllowDarkModeForWindow)
+                AllowDarkModeForWindow) [[likely]]
             {
                 SetPreferredAppMode(PreferredAppMode::AllowDark);
                 RefreshImmersiveColorPolicyState();
@@ -105,7 +147,7 @@ namespace winrt::XamlHostingKit
 
         inline static const float GetDpiScaleForWindow(HWND hwnd)
         {
-            if (GetDpiForWindowMethod)
+            if (GetDpiForWindowMethod) [[likely]]
                 return GetDpiForWindowMethod(hwnd) / 96.0f;
 
             uint32_t dpi = 96;
@@ -119,7 +161,7 @@ namespace winrt::XamlHostingKit
         {
             if (_switchContextOffset == 0)
             {
-                if (Windows10_PlatformID == pShim->SwitchContext.Data.Platform)
+                if (Windows10_PlatformID == pShim->SwitchContext.Data.Platform) [[likely]]
                 {
                     _switchContextOffset = (intptr_t)((byte*)&pShim->SwitchContext - (byte*)pShim);
                 }
@@ -167,7 +209,10 @@ namespace winrt::XamlHostingKit
         inline static SWITCH_CONTEXT_DATA* GetSwitchContextData()
         {
             auto appCompat = *(APPCOMPAT_EXE_DATA**)((intptr_t)NtCurrentPeb() + OFFSET_OF_SHIM_DATA);
-            if (!appCompat) return nullptr;
+            if (!appCompat) [[unlikely]]
+            {
+                return nullptr;
+            }
 
             auto switchContext = GetSwitchContext(appCompat);
             return switchContext ? &switchContext->Data : nullptr;
@@ -175,7 +220,7 @@ namespace winrt::XamlHostingKit
 
         inline static void* GetModuleEntryPoint(HMODULE Module)
         {
-            if (!Module)
+            if (!Module) [[unlikely]]
                 return nullptr;
 
             auto dosHeader = (IMAGE_DOS_HEADER*)Module;
@@ -219,20 +264,20 @@ namespace winrt::XamlHostingKit
                                              const char* Import,
                                              IMAGE_THUNK_DATA** pThunk)
         {
-            if (ImportModule == nullptr)
+            if (ImportModule == nullptr) [[unlikely]]
                 RETURN_HR(E_INVALIDARG);
 
-            if (pThunk == nullptr)
+            if (pThunk == nullptr) [[unlikely]]
                 RETURN_HR(E_POINTER);
 
-            if (Module == nullptr)
+            if (Module == nullptr) [[unlikely]]
                 Module = GetModuleHandleW(nullptr);
 
             auto dosHeader = (IMAGE_DOS_HEADER*)Module;
             auto ntHeaders = (IMAGE_NT_HEADERS*)((byte*)Module + dosHeader->e_lfanew);
             auto directory = &ntHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
 
-            if (directory->VirtualAddress <= 0 || directory->Size <= 0)
+            if (directory->VirtualAddress <= 0 || directory->Size <= 0) [[unlikely]]
                 RETURN_HR(E_FAIL);
 
             auto peImports = (IMAGE_IMPORT_DESCRIPTOR*)((byte*)Module + directory->VirtualAddress);
@@ -250,7 +295,7 @@ namespace winrt::XamlHostingKit
             }
 
             auto delayDir = &ntHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT];
-            if (delayDir->VirtualAddress > 0 && directory->Size > 0)
+            if (delayDir->VirtualAddress > 0 && directory->Size > 0) [[likely]]
             {
                 auto delayImports = (IMAGE_DELAYLOAD_DESCRIPTOR*)((byte*)Module + delayDir->VirtualAddress);
 
@@ -284,6 +329,36 @@ namespace winrt::XamlHostingKit
             pThunk->u1.Function = (ULONG_PTR)Function;
             RETURN_LAST_ERROR_IF(!VirtualProtect(&pThunk->u1.Function, sizeof(ULONG_PTR), protect, &protect));
             return S_OK;
+        }
+
+        inline static HANDLE CreateTempFileFromBuffer(wss::IBuffer const& buffer)
+        {
+            wil::unique_cotaskmem_string path { nullptr };
+            if FAILED_LOG(SHGetKnownFolderPath(FOLDERID_LocalAppData,
+                KF_FLAG_CREATE | KF_FLAG_FORCE_APPCONTAINER_REDIRECTION | KF_FLAG_FORCE_PACKAGE_REDIRECTION,
+                nullptr,
+                path.put()))
+            {
+                winrt::check_hresult(SHGetKnownFolderPath(FOLDERID_LocalAppData,
+                    KF_FLAG_CREATE | KF_FLAG_FORCE_APPCONTAINER_REDIRECTION,
+                    nullptr,
+                    path.put()));
+            }
+
+            HANDLE handle;
+            auto filePath = std::filesystem::path(path.get()) / ToBase64(GetExecutableFolderPath());
+            winrt::check_pointer(handle = CreateFileW(filePath.c_str(),
+                GENERIC_READ | GENERIC_WRITE,
+                0,
+                nullptr,
+                CREATE_ALWAYS,
+                FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE,
+                nullptr));
+
+            DWORD bytesWritten;
+            winrt::check_bool(WriteFile(handle, buffer.data(), static_cast<DWORD>(buffer.Length()), &bytesWritten, nullptr));
+
+            return handle;
         }
     };
 }

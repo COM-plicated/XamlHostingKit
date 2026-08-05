@@ -235,3 +235,10 @@ ISystemResourceManagerExtensions2 : public ::IInspectable
 {
     STDMETHOD(LoadPriFileForSystemUse)(PCWSTR path) PURE;
 };
+
+MIDL_INTERFACE("06636c29-5a17-458d-8ea2-2422d997a922")
+IWindowPrivate : public ::IInspectable
+{
+    STDMETHOD(get_TransparentBackground)(BOOL* pValue) PURE;
+    STDMETHOD(put_TransparentBackground)(BOOL value) PURE;
+};

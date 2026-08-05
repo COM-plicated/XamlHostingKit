@@ -7,6 +7,7 @@ namespace winrt::XamlHostingKit::implementation
     bool XamlConfig::s_isInitialized = false;
     bool XamlConfig::s_enableWebView = true;
     bool XamlConfig::s_disableRedirectionLayer = true;
+    bool XamlConfig::s_enableTouchpadAwareness = true;
 
     bool XamlConfig::EnableWebView()
     {

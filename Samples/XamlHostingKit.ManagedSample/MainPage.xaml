@@ -1,0 +1,16 @@
+﻿<Page
+    x:Class="XamlHostingKit.ManagedSample.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:XamlHostingKit.ManagedSample"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+    Loaded="Page_Loaded">
+
+    <StackPanel x:Name="panel" Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center">
+        <TextBlock Text="Hello from XamlHostingKit!" FontSize="36" VerticalAlignment="Center" HorizontalAlignment="Center" />
+        <!--<WebView Source="https://dn720307.ca.archive.org/0/items/kikTXNL6MvX6ZpRXM/kikTXNL6MvX6ZpRXM.mp4" Width="400" Height="400" Margin="0,20,0,0" />-->
+    </StackPanel>
+</Page>

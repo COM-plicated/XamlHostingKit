@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <WindowsSdkPackageVersion>10.0.26100.73-preview</WindowsSdkPackageVersion>
+    <TargetPlatformVersion>10.0.26100.0</TargetPlatformVersion>
+    <TargetPlatformMinVersion>10.0.15063.0</TargetPlatformMinVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PublishAot>true</PublishAot>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
+    <UseUwp>true</UseUwp>
+    <UseUwpTools>true</UseUwpTools>
+    <DefineConstants>DISABLE_XAML_GENERATED_MAIN;$(DefineConstants)</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Platforms>x64;arm64;x86</Platforms>
+    <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+    <PublishProfile>win-$(Platform).pubxml</PublishProfile>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <DisableEmbeddedXbf>false</DisableEmbeddedXbf>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <ProjectPriFileName>resources.pri</ProjectPriFileName>
+    <_SupportEmbedFileResources>true</_SupportEmbedFileResources>
+    <CsWinRTAotWarningLevel>3</CsWinRTAotWarningLevel>
+    <LangVersion>preview</LangVersion>
+    <CsWinRTIIDOptimizerOptOut>true</CsWinRTIIDOptimizerOptOut>
+    <SkipXamlDesignerSdkCheck>true</SkipXamlDesignerSdkCheck>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AppxTargetDeviceFamilyItem Include="Windows.Desktop" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.3.0-prerelease.251115.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\XamlHostingKit.Projection\XamlHostingKit.Projection.csproj" />
+  </ItemGroup>
+
+</Project>

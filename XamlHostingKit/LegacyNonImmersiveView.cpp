@@ -25,6 +25,11 @@ namespace winrt::XamlHostingKit::implementation
         return m_coreWindow;
     }
 
+    CoreDispatcher LegacyNonImmersiveView::Dispatcher() const
+    {
+        return m_coreWindow.Dispatcher();
+    }
+
     winrt::event_token LegacyNonImmersiveView::Activated(TypedEventHandler<CoreApplicationView, IActivatedEventArgs> const& handler)
     {
         return m_activatedEvent.add(handler);
@@ -37,7 +42,8 @@ namespace winrt::XamlHostingKit::implementation
 
     int32_t LegacyNonImmersiveView::query_interface_tearoff(winrt::guid const& id, void** object)
     {
-        if (m_realView && id != winrt::guid_of<ICoreApplicationView>())
+        if (m_realView &&
+           (id != winrt::guid_of<ICoreApplicationView>() && id != winrt::guid_of<ICoreApplicationView2>()))
         {
             return m_realView.as(id, object);
         }

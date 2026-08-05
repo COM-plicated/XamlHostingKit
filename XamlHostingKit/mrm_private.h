@@ -1,9 +1,11 @@
 // Sources:
 // - https://github.com/GPUOpen-Tools/common_src_amdtoswrappers/blob/master/src/win32/osApplication.cpp
+// - https://github.com/diversenok/NtUtilsLibrary/blob/master/Headers/Ntapi.appmodel.mrm.pas
 
 #pragma once
 
 #include <Windows.h>
+#include <Unknwn.h>
 
 namespace ABI::Windows::ApplicationModel::Resources::Core
 {
@@ -13,32 +15,23 @@ namespace ABI::Windows::ApplicationModel::Resources::Core
     IMrtResourceManager : public ::IUnknown
     {
     public:
-        virtual HRESULT STDMETHODCALLTYPE Initialize() = 0;
-        virtual HRESULT STDMETHODCALLTYPE InitializeForCurrentApplication() = 0;
-        virtual HRESULT STDMETHODCALLTYPE InitializeForPackage(LPCWSTR) = 0;
-        virtual HRESULT STDMETHODCALLTYPE InitializeForFile(LPCWSTR) = 0;
-        virtual HRESULT STDMETHODCALLTYPE GetMainResourceMap(const GUID&, void**) = 0;
-        virtual HRESULT STDMETHODCALLTYPE GetResourceMap(LPCWSTR, const GUID&, void**) = 0;
-        virtual HRESULT STDMETHODCALLTYPE GetDefaultContext(const GUID&, void**) = 0;
-        virtual HRESULT STDMETHODCALLTYPE GetReference(const GUID&, void**) = 0;
-        virtual HRESULT STDMETHODCALLTYPE IsResourceReference(LPCWSTR, BOOL*) = 0;
+        virtual HRESULT STDMETHODCALLTYPE Initialize() PURE;
+        virtual HRESULT STDMETHODCALLTYPE InitializeForCurrentApplication() PURE;
+        virtual HRESULT STDMETHODCALLTYPE InitializeForPackage(LPCWSTR) PURE;
+        virtual HRESULT STDMETHODCALLTYPE InitializeForFile(LPCWSTR filePath) PURE;
+        virtual HRESULT STDMETHODCALLTYPE GetMainResourceMap(const GUID&, void**) PURE;
+        virtual HRESULT STDMETHODCALLTYPE GetResourceMap(LPCWSTR, const GUID&, void**) PURE;
+        virtual HRESULT STDMETHODCALLTYPE GetDefaultContext(const GUID&, void**) PURE;
+        virtual HRESULT STDMETHODCALLTYPE GetReference(const GUID&, void**) PURE;
+        virtual HRESULT STDMETHODCALLTYPE IsResourceReference(LPCWSTR, BOOL*) PURE;
     };
 
-    MIDL_INTERFACE("6E21E72B-B9B0-42AE-A686-983CF784EDCD")
-    IMrtResourceMap : public ::IUnknown
+    MIDL_INTERFACE("439DD7C9-0EEB-4715-BAA7-F0877694E616")
+    IMrtResourceManager2 : public ::IUnknown
     {
     public:
-        virtual HRESULT STDMETHODCALLTYPE GetUri(LPWSTR*) = 0;
-        virtual HRESULT STDMETHODCALLTYPE GetSubtree(LPCWSTR, IMrtResourceMap**) = 0;
-        virtual HRESULT STDMETHODCALLTYPE GetString(LPCWSTR, LPWSTR*) = 0;
-        virtual HRESULT STDMETHODCALLTYPE GetStringForContext(struct IMrtResourceContext*, LPCWSTR, LPWSTR*) = 0;
-        virtual HRESULT STDMETHODCALLTYPE GetFilePath(LPCWSTR, LPWSTR*) = 0;
-        virtual HRESULT STDMETHODCALLTYPE GetFilePathForContext(struct IMrtResourceContext*, LPCWSTR, LPWSTR*) = 0;
-        virtual HRESULT STDMETHODCALLTYPE GetNamedResourceCount(unsigned int*) = 0;
-        virtual HRESULT STDMETHODCALLTYPE GetNamedResourceUri(unsigned int, LPWSTR*) = 0;
-        virtual HRESULT STDMETHODCALLTYPE GetNamedResource(LPCWSTR, const GUID&, void**) = 0;
-        virtual HRESULT STDMETHODCALLTYPE GetFullyQualifiedReference(LPCWSTR, LPCWSTR, LPWSTR*) = 0;
-        virtual HRESULT STDMETHODCALLTYPE GetFilePathByUri(IUri*, LPWSTR*) = 0;
-        virtual HRESULT STDMETHODCALLTYPE GetFilePathForContextByUri(struct IMrtResourceContext*, IUri*, LPWSTR*) = 0;
+        virtual HRESULT STDMETHODCALLTYPE InitializeForPackageFile(LPCWSTR, LPCWSTR) PURE;
+        virtual HRESULT STDMETHODCALLTYPE TryInitializeForCurrentApplication() PURE;
+        virtual HRESULT STDMETHODCALLTYPE InitializeForInboxApplication(LPCWSTR, LPCWSTR) PURE;
     };
 }

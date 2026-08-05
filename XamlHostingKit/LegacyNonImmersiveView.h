@@ -15,7 +15,7 @@ namespace winrt::XamlHostingKit::implementation
     using namespace winrt::Windows::ApplicationModel::Core;
     using namespace winrt::Windows::ApplicationModel::Activation;
 
-    struct LegacyNonImmersiveView : winrt::implements<LegacyNonImmersiveView, ICoreApplicationView>
+    struct LegacyNonImmersiveView : winrt::implements<LegacyNonImmersiveView, ICoreApplicationView, ICoreApplicationView2>
     {
     private:
         bool m_isMain { false };
@@ -30,6 +30,7 @@ namespace winrt::XamlHostingKit::implementation
         CoreWindow CoreWindow() const;
         bool IsMain() const;
         bool IsHosted() const;
+        CoreDispatcher Dispatcher() const;
 
         winrt::event_token Activated(TypedEventHandler<CoreApplicationView, IActivatedEventArgs> const& handler);
         void Activated(winrt::event_token const& token) noexcept;

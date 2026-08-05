@@ -37,6 +37,7 @@ namespace XamlHostingKit
         [interface_name("IXamlApplication", D0389C8D-A104-BEEF-91A4-46FF1BFB5C1C)]
         {
             Boolean IsWebViewAvailable { get; };
+            Windows.ApplicationModel.Resources.Core.ResourceManager ResourceManager { get; };
         }
     }
 }

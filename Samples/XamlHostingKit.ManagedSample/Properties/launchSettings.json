@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "XamlHostingKit.ManagedSample": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    },
+    "XamlHostingKit.ManagedSample (Packaged)": {
+      "commandName": "MsixPackage",
+      "nativeDebugging": true
+    }
+  }
+}

@@ -24,22 +24,22 @@ namespace winrt::XamlHostingKit::implementation
         m_extendedStyles = options.ExtendedStyles();
 
         BOOL dwmFrameEnabled = TRUE;
-        if (FAILED(DwmIsCompositionEnabled(&dwmFrameEnabled)))
+        if (FAILED(DwmIsCompositionEnabled(&dwmFrameEnabled))) [[unlikely]]
         {
             dwmFrameEnabled = TRUE;
         }
 
-        if (XamlConfig::s_enableTouchpadAwareness)
+        if (XamlConfig::s_enableTouchpadAwareness) [[likely]]
         {
-            if (RegisterTouchpadCapableThreadMethod)
+            if (RegisterTouchpadCapableThreadMethod) [[unlikely]]
             {
                 LOG_LAST_ERROR_IF(!RegisterTouchpadCapableThreadMethod(TRUE));
             }
-            else if (NtUserRegisterTouchPadCapable)
+            else if (NtUserRegisterTouchPadCapable) [[likely]]
             {
                 LOG_LAST_ERROR_IF(!NtUserRegisterTouchPadCapable(TRUE));
             }
-            else
+            else [[unlikely]]
             {
                 LOG_HR_MSG(E_FAIL, "Touchpad awareness cannot be enabled due to neither RegisterTouchpadCapableThread function nor NtUserRegisterTouchPadCapable function being found on the current OS environment.");
             }
@@ -48,10 +48,10 @@ namespace winrt::XamlHostingKit::implementation
         winrt::check_pointer(m_hwnd = CreateWindowExW(
             dwmFrameEnabled ?
                 m_extendedStyles :
-                (m_extendedStyles |~ (WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME)),
+                (m_extendedStyles &~ (WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME)),
             className,
             m_title.c_str(),
-            m_styles |~ WS_VISIBLE,
+            m_styles &~ WS_VISIBLE,
             options.Left(),
             options.Top(),
             options.Width(),
@@ -80,13 +80,13 @@ namespace winrt::XamlHostingKit::implementation
 
         SetPropW(m_hwnd, XHK_WINDOW_OBJECT_PROP, this);
 
-        if (XamlConfig::s_enableTouchpadAwareness && RegisterTouchpadCapableWindowMethod)
+        if (XamlConfig::s_enableTouchpadAwareness && RegisterTouchpadCapableWindowMethod) [[unlikely]]
         {
             RegisterTouchpadCapableWindowMethod(m_hwnd, TRUE);
             RegisterTouchpadCapableWindowMethod(m_coreWindowHwnd, TRUE);
         }
 
-        if (SetWindowCompositionAttribute)
+        if (SetWindowCompositionAttribute) [[likely]]
         {
             ACCENT_POLICY policy { ACCENT_ENABLE_HOSTBACKDROP };
 
@@ -104,7 +104,7 @@ namespace winrt::XamlHostingKit::implementation
         }
 
         ::IUnknown* pView = nullptr;
-        if (auto cap2 = winrt::try_get_activation_factory<CoreApplication, ICoreApplicationPrivate2>())
+        if (auto cap2 = winrt::try_get_activation_factory<CoreApplication, ICoreApplicationPrivate2>()) [[likely]]
         {
             LOG_IF_FAILED(cap2->CreateNonImmersiveView((void**)&pView));
         }
@@ -115,6 +115,13 @@ namespace winrt::XamlHostingKit::implementation
         m_frameworkView = { };
         m_frameworkView.Initialize(m_view);
         m_frameworkView.SetWindow(m_coreWindow);
+        m_systemWindow = Window::Current();
+
+        if (auto wPriv = m_systemWindow.try_as<IWindowPrivate>())
+        {
+            LOG_IF_FAILED(wPriv->put_TransparentBackground(TRUE));
+            // TODO: set synchronization object via IWindowPrivate::SetSynchronizationInfo
+        }
 
         RECT clientRect { };
         GetClientRect(m_hwnd, &clientRect);
@@ -128,7 +135,7 @@ namespace winrt::XamlHostingKit::implementation
 
     winrt::XamlHostingKit::XamlWindow XamlWindow::Current()
     {
-        if (auto window = s_currentWindow)
+        if (auto window = s_currentWindow) [[likely]]
         {
             return *window;
         }
@@ -150,7 +157,7 @@ namespace winrt::XamlHostingKit::implementation
     winrt::Windows::Foundation::Rect XamlWindow::Bounds()
     {
         RECT rect { };
-        if (!IsIconic(m_hwnd))
+        if (!IsIconic(m_hwnd)) [[likely]]
         {
             GetWindowRect(m_hwnd, &rect);
         }
@@ -274,7 +281,7 @@ namespace winrt::XamlHostingKit::implementation
     {
         auto dpi = Helpers::GetDpiScaleForWindow(m_hwnd);
 
-        if (!IsZoomed(m_hwnd) && !IsIconic(m_hwnd))
+        if (!IsZoomed(m_hwnd) && !IsIconic(m_hwnd)) [[likely]]
         {
             SetWindowPos(m_hwnd, NULL,
                          static_cast<int>(left * dpi),
@@ -307,7 +314,7 @@ namespace winrt::XamlHostingKit::implementation
     {
         auto dpi = Helpers::GetDpiScaleForWindow(m_hwnd);
 
-        if (!IsZoomed(m_hwnd) && !IsIconic(m_hwnd))
+        if (!IsZoomed(m_hwnd) && !IsIconic(m_hwnd)) [[likely]]
         {
             SetWindowPos(m_hwnd, NULL, 0, 0,
                          static_cast<int>(width * dpi),
@@ -361,7 +368,7 @@ namespace winrt::XamlHostingKit::implementation
         wcex.hInstance = GetModuleHandleW(nullptr);
         wcex.lpszClassName = className;
 
-        if (!RegisterClassExW(&wcex))
+        if (!RegisterClassExW(&wcex)) [[unlikely]]
         {
             throw winrt::hresult_error(HRESULT_FROM_WIN32(GetLastError()), L"Failed to register window class");
         }
@@ -383,7 +390,7 @@ namespace winrt::XamlHostingKit::implementation
             if ((BOOL)lParam && wcscmp((wchar_t*)lParam, L"ImmersiveColorSet") == 0)
                 Helpers::EnsureTitleBarTheme(hwnd);
 
-            if (_this)
+            if (_this) [[likely]]
             {
                 SendMessageW(_this->m_coreWindowHwnd, msg, wParam, lParam);
             }
@@ -394,9 +401,9 @@ namespace winrt::XamlHostingKit::implementation
 
             s_currentWindow = nullptr;
 
-            if (_this)
+            if (_this) [[likely]]
             {
-                try
+                /*try
                 {
                     _this->m_frameworkView.Uninitialize();
                 }
@@ -406,12 +413,11 @@ namespace winrt::XamlHostingKit::implementation
                 {
                     _this->m_dispatcher.StopProcessEvents();
                 }
-                catch (...) { }
+                catch (...) { }*/
 
+                PostQuitMessage(0);
                 XamlApplication::RemoveWindow(*_this);
             }
-
-            PostQuitMessage(0);
         }
         else if (_this)
         {
@@ -439,7 +445,7 @@ namespace winrt::XamlHostingKit::implementation
             {
                 SetWindowLongW(hwnd, GWL_EXSTYLE, (BOOL)wParam ?
                     _this->ExtendedStyles() :
-                    _this->ExtendedStyles() |~ (WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME));
+                    _this->ExtendedStyles() &~ (WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME));
             }
         }
 

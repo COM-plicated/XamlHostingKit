@@ -8,6 +8,9 @@
     <Filter Include="Generated Files">
       <UniqueIdentifier>{926ab91d-31b4-48c3-b9a4-e681349f27f0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="simdutf">
+      <UniqueIdentifier>{139e42b2-6a09-4dc3-9909-5730a7e2190f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -16,6 +19,9 @@
     <ClCompile Include="XamlWindow.cpp" />
     <ClCompile Include="WindowCreationOptions.cpp" />
     <ClCompile Include="LegacyNonImmersiveView.cpp" />
+    <ClCompile Include="simdutf\simdutf.cpp">
+      <Filter>simdutf</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -28,6 +34,9 @@
     <ClInclude Include="Features.h" />
     <ClInclude Include="LegacyNonImmersiveView.h" />
     <ClInclude Include="mrm_private.h" />
+    <ClInclude Include="simdutf\simdutf.h">
+      <Filter>simdutf</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="XamlApplication.idl" />

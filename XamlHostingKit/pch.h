@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#define NOMINMAX
+
 #include <Windows.h>
 #include <Unknwn.h>
 #include <inspectable.h>
