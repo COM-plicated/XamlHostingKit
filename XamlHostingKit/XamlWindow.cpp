@@ -4,7 +4,6 @@
 
 #include <dwmapi.h>
 #include "XamlConfig.h"
-#include "Helpers.h"
 #include "LegacyNonImmersiveView.h"
 #include <CoreWindow.h>
 #include "Features.h"
@@ -75,7 +74,7 @@ namespace winrt::XamlHostingKit::implementation
 
         m_dispatcher = m_coreWindow.Dispatcher();
 
-        if (Features::IsDispatcherQueueSupported)
+        if (Features::IsDispatcherQueueAvailable)
             m_dispatcherQueue = m_coreWindow.DispatcherQueue();
 
         SetPropW(m_hwnd, XHK_WINDOW_OBJECT_PROP, this);
@@ -117,10 +116,19 @@ namespace winrt::XamlHostingKit::implementation
         m_frameworkView.SetWindow(m_coreWindow);
         m_systemWindow = Window::Current();
 
-        if (auto wPriv = m_systemWindow.try_as<IWindowPrivate>())
+        if (auto wPriv = m_systemWindow.try_as<IWindowPrivate>()) [[likely]]
         {
             LOG_IF_FAILED(wPriv->put_TransparentBackground(TRUE));
-            Helpers::EnableResizeSynchronization(m_hwnd, true);
+
+            if (Features::IsSetSynchronizationInfoAvailable) [[likely]]
+            {
+                if (!LOG_LAST_ERROR_IF(!Helpers::EnableResizeSynchronization(m_hwnd, true))) [[likely]]
+                {
+                    Helpers::EnableResizeSynchronization(m_coreWindowHwnd, true);
+                    m_windowPrivate.attach(wPriv.detach());
+                    m_isSyncObjEnabled = true;
+                }
+            }
         }
 
         RECT clientRect { };
@@ -423,17 +431,17 @@ namespace winrt::XamlHostingKit::implementation
         {
             if (msg == WM_SIZE)
             {
-                if (auto wPriv = _this->m_systemWindow.try_as<IWindowPrivate>())
+                if (_this->m_isSyncObjEnabled) [[likely]]
                 {
-                    if (HANDLE syncHandle = Helpers::GetResizeSynchronizationObject(hwnd))
+                    if (HANDLE syncHandle = Helpers::GetResizeSynchronizationObject(hwnd)) [[likely]]
                     {
-                        wPriv->SetSynchronizationInfo((uint64_t)syncHandle, (uint64_t)hwnd);
+                        _this->m_windowPrivate->SetSynchronizationInfo((uint64_t)syncHandle, (uint64_t)hwnd);
                         CloseHandle(syncHandle);
                     }
                 }
+
                 SetWindowPos(_this->m_coreWindowHwnd, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam), SWP_NOZORDER | SWP_SHOWWINDOW | SWP_NOACTIVATE);
                 SendMessageW(_this->m_coreWindowHwnd, msg, wParam, lParam);
-                Helpers::LayoutCompleted(hwnd);
             }
             else if (msg == WM_SHOWWINDOW && _this->m_visibilityChanged)
             {

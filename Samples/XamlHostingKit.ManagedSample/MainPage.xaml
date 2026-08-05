@@ -11,6 +11,5 @@
 
     <StackPanel x:Name="panel" Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center">
         <TextBlock Text="Hello from XamlHostingKit!" FontSize="36" VerticalAlignment="Center" HorizontalAlignment="Center" />
-        <!--<WebView Source="https://dn720307.ca.archive.org/0/items/kikTXNL6MvX6ZpRXM/kikTXNL6MvX6ZpRXM.mp4" Width="400" Height="400" Margin="0,20,0,0" />-->
     </StackPanel>
 </Page>

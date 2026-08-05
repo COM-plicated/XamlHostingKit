@@ -3,6 +3,7 @@
 #include <winrt/Windows.UI.Core.h>
 #include <winrt/Windows.UI.Xaml.h>
 #include "IWindowNative.h"
+#include "Helpers.h"
 
 namespace winrt::XamlHostingKit::implementation
 {
@@ -19,6 +20,7 @@ namespace winrt::XamlHostingKit::implementation
         static const constexpr auto XHK_WINDOW_OBJECT_PROP = L"COMplicated.XamlHostingKit.WindowObject";
 
         bool m_isMain { false };
+        bool m_isSyncObjEnabled { false };
         HWND m_hwnd { nullptr };
         HWND m_coreWindowHwnd { nullptr };
         hstring m_title;
@@ -30,6 +32,7 @@ namespace winrt::XamlHostingKit::implementation
         DispatcherQueue m_dispatcherQueue { nullptr };
         CoreWindow m_coreWindow { nullptr };
         FrameworkView m_frameworkView { nullptr };
+        winrt::com_ptr<IWindowPrivate> m_windowPrivate { nullptr };
         winrt::event<winrt::Windows::Foundation::TypedEventHandler<winrt::XamlHostingKit::XamlWindow, bool>> m_visibilityChanged;
 
         static LPCWSTR const RegisterWindowClass(WNDPROC wndProc);
