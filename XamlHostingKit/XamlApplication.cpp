@@ -93,6 +93,15 @@ namespace winrt::XamlHostingKit::implementation
 
             WaitForSingleObject(hThread.get(), INFINITE);
         }
+
+        HMODULE edgeModule;
+        HMODULE threadpoolModule;
+        if (XamlConfig::s_enableWebView &&
+           (edgeModule = GetModuleHandleW(L"edgehtml.dll")) &&
+           (threadpoolModule = GetModuleHandleW(L"api-ms-win-core-threadpool-l1-2-0.dll"))) [[likely]]
+        {
+            LOG_IF_FAILED(Helpers::XWinePatchImport(edgeModule, threadpoolModule, "SubmitThreadpoolWork", &SubmitThreadpoolWorkHook));
+        }
     }
 
     void XamlApplication::Start(winrt::Windows::UI::Xaml::ApplicationInitializationCallback const& initCallback, hstring const& priPath)

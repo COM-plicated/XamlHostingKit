@@ -360,6 +360,7 @@ namespace winrt::XamlHostingKit::implementation
     void XamlWindow::RunMessageLoop()
     {
         m_frameworkView.Run();
+        //m_frameworkView.Uninitialize();
     }
 
     HRESULT XamlWindow::get_WindowHandle(HWND* hwnd)
@@ -414,22 +415,16 @@ namespace winrt::XamlHostingKit::implementation
             RemovePropW(hwnd, XHK_WINDOW_OBJECT_PROP);
 
             s_currentWindow = nullptr;
+            PostQuitMessage(0);
 
             if (_this) [[likely]]
             {
                 /*try
                 {
-                    _this->m_frameworkView.Uninitialize();
-                }
-                catch (...) { }
-
-                try
-                {
                     _this->m_dispatcher.StopProcessEvents();
                 }
                 catch (...) { }*/
 
-                PostQuitMessage(0);
                 XamlApplication::RemoveWindow(*_this);
             }
         }
@@ -439,8 +434,8 @@ namespace winrt::XamlHostingKit::implementation
             {
                 // TODO: Should this be after SetSynchronizationInfo instead?
                 // this is currently here before it because XAML sets the CoreWindow synchronization object
-                // on every WM_SIZE message as explained by the comment below, so it seems like we should send that message
-                // before we set the synchronization object so that XAML doesn't override it (with CoreWindow's one),
+                // on every WM_SIZE message, so it seems like we should send that message before we set
+                // the synchronization object so that XAML doesn't override it (with CoreWindow's one),
                 // but also the code around (NtUser)LayoutCompleted in WUX.dll seems to suggest that we are supposed to resize
                 // after setting the synchronization object, this is so confusing...
                 SetWindowPos(_this->m_coreWindowHwnd, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam), SWP_NOZORDER | SWP_SHOWWINDOW | SWP_NOACTIVATE);

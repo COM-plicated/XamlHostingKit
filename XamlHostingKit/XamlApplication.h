@@ -6,6 +6,7 @@
 #include "Helpers.h"
 #include "mrm_private.h"
 #include <winrt/Windows.ApplicationModel.Resources.Core.h>
+#include <threadpoolapiset.h>
 
 namespace winrt::XamlHostingKit::implementation
 {
@@ -48,6 +49,7 @@ namespace winrt::XamlHostingKit::implementation
         static HRESULT WINAPI get_ViewsHook(void* _this, void** pViews);
         static HRESULT WINAPI get_MainViewHook(void* _this, void** pView);
         static HRESULT InitializeCoreApplicationHooks();
+        inline static void WINAPI SubmitThreadpoolWorkHook([[maybe_unused]] PTP_WORK work) { };
 
     public:
         XamlApplication() = default;
