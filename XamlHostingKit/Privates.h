@@ -241,4 +241,11 @@ IWindowPrivate : public ::IInspectable
 {
     STDMETHOD(get_TransparentBackground)(BOOL* pValue) PURE;
     STDMETHOD(put_TransparentBackground)(BOOL value) PURE;
+    STDMETHOD(_stub8)() PURE;
+    STDMETHOD(_stub9)() PURE;
+    STDMETHOD(_stub10)() PURE;
+    STDMETHOD(_stub11)() PURE;
+    STDMETHOD(_stub12)() PURE;
+    STDMETHOD(_stub13)() PURE;
+    STDMETHOD(SetSynchronizationInfo)(UINT64 syncObj, UINT64 hwnd) PURE;
 };

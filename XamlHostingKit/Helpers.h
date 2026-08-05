@@ -39,6 +39,11 @@ namespace winrt::XamlHostingKit
     static const auto RegisterTouchpadCapableWindowMethod = reinterpret_cast<BOOL(WINAPI*)(HWND, BOOL)>(GetProcAddress(User32Module.get(), MAKEINTRESOURCEA(2689)));
     static const auto RegisterTouchpadCapableThreadMethod = reinterpret_cast<BOOL(WINAPI*)(BOOL)>(GetProcAddress(User32Module.get(), MAKEINTRESOURCEA(2688)));
 
+    // not sure about the return type.
+    static const auto NtUserGetResizeDCompositionSynchronizationObject = reinterpret_cast<ULONG(WINAPI*)(HWND, HANDLE*)>(GetProcAddress(Win32UModule, "NtUserGetResizeDCompositionSynchronizationObject"));
+    static const auto NtUserEnableResizeLayoutSynchronization = reinterpret_cast<void(WINAPI*)(HWND, BOOL)>(GetProcAddress(Win32UModule, "NtUserEnableResizeLayoutSynchronization"));
+    static const auto NtUserLayoutCompleted = reinterpret_cast<ULONG(WINAPI*)(HWND)>(GetProcAddress(Win32UModule, "NtUserLayoutCompleted"));
+
     static const auto PersonalizeKey = wil::reg::open_unique_key(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize");
 
     #define NtCurrentPeb() (NtCurrentTeb()->ProcessEnvironmentBlock)
@@ -359,6 +364,31 @@ namespace winrt::XamlHostingKit
             winrt::check_bool(WriteFile(handle, buffer.data(), static_cast<DWORD>(buffer.Length()), &bytesWritten, nullptr));
 
             return handle;
+        }
+
+        inline static void EnableResizeSynchronization(HWND hwnd, bool enabled)
+        {
+            if (NtUserEnableResizeLayoutSynchronization)
+                NtUserEnableResizeLayoutSynchronization(hwnd, enabled);
+        }
+
+        inline static HANDLE GetResizeSynchronizationObject(HWND hwnd)
+        {
+            if (!NtUserGetResizeDCompositionSynchronizationObject)
+                return nullptr;
+
+            HANDLE handle;
+
+            if (!NtUserGetResizeDCompositionSynchronizationObject(hwnd, &handle))
+                return nullptr;
+
+            return handle;
+        }
+
+        inline static void LayoutCompleted(HWND hwnd)
+        {
+            if (NtUserLayoutCompleted)
+                NtUserLayoutCompleted(hwnd);
         }
     };
 }

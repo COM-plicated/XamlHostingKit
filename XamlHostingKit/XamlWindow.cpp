@@ -120,7 +120,7 @@ namespace winrt::XamlHostingKit::implementation
         if (auto wPriv = m_systemWindow.try_as<IWindowPrivate>())
         {
             LOG_IF_FAILED(wPriv->put_TransparentBackground(TRUE));
-            // TODO: set synchronization object via IWindowPrivate::SetSynchronizationInfo
+            Helpers::EnableResizeSynchronization(m_hwnd, true);
         }
 
         RECT clientRect { };
@@ -423,8 +423,17 @@ namespace winrt::XamlHostingKit::implementation
         {
             if (msg == WM_SIZE)
             {
+                if (auto wPriv = _this->m_systemWindow.try_as<IWindowPrivate>())
+                {
+                    if (HANDLE syncHandle = Helpers::GetResizeSynchronizationObject(hwnd))
+                    {
+                        wPriv->SetSynchronizationInfo((uint64_t)syncHandle, (uint64_t)hwnd);
+                        CloseHandle(syncHandle);
+                    }
+                }
                 SetWindowPos(_this->m_coreWindowHwnd, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam), SWP_NOZORDER | SWP_SHOWWINDOW | SWP_NOACTIVATE);
                 SendMessageW(_this->m_coreWindowHwnd, msg, wParam, lParam);
+                Helpers::LayoutCompleted(hwnd);
             }
             else if (msg == WM_SHOWWINDOW && _this->m_visibilityChanged)
             {
