@@ -12,18 +12,22 @@ namespace XamlHostingKit
         }
     }
 
-    unsealed runtimeclass XamlApplication : Windows.UI.Xaml.Application
+    static runtimeclass XamlApplication
     {
-        XamlApplication();
-
         [static_name("IXamlApplicationStatics", 5533DD55-4D93-DEAD-8F32-D3185E0C6241)]
         {
             static XamlWindow MainWindow { get; };
             static IVectorView<XamlWindow> Windows { get; };
 
+            static Boolean IsWebViewAvailable { get; };
+            static Windows.ApplicationModel.Resources.Core.ResourceManager ResourceManager { get; };
+
             static void Start(Windows.UI.Xaml.ApplicationInitializationCallback initCallback);
-            [method_name("StartWithPriPath"), default_overload]
-            static void Start(Windows.UI.Xaml.ApplicationInitializationCallback initCallback, String priPath);
+
+            // TODO: disabled for now until we implement proper support for custom PRI paths
+            //[method_name("StartWithPriPath"), default_overload]
+            //static void Start(Windows.UI.Xaml.ApplicationInitializationCallback initCallback, String priPath);
+
             [method_name("StartWithPriBuffer")]
             static void Start(Windows.UI.Xaml.ApplicationInitializationCallback initCallback, Windows.Storage.Streams.IBuffer priBuffer);
 
@@ -32,12 +36,6 @@ namespace XamlHostingKit
             static XamlWindow CreateWindow(WindowCreationOptions options, Windows.UI.Xaml.ApplicationInitializationCallback windowCallback);
 
             static void Close();
-        }
-
-        [interface_name("IXamlApplication", D0389C8D-A104-BEEF-91A4-46FF1BFB5C1C)]
-        {
-            Boolean IsWebViewAvailable { get; };
-            Windows.ApplicationModel.Resources.Core.ResourceManager ResourceManager { get; };
         }
     }
 }

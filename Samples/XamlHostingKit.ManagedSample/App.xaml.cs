@@ -1,9 +1,10 @@
-﻿using Windows.UI.Xaml.Controls;
+﻿using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
 using Windows.ApplicationModel.Activation;
 
 namespace XamlHostingKit.ManagedSample
 {
-    public sealed partial class App : XamlApplication
+    public sealed partial class App : Application
     {
         public App()
         {

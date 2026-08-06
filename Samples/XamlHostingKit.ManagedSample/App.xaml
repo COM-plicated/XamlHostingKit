@@ -1,8 +1,8 @@
-﻿<xhk:XamlApplication
+﻿<Application
     x:Class="XamlHostingKit.ManagedSample.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:XamlHostingKit.ManagedSample"
     xmlns:xhk="using:XamlHostingKit">
 
-</xhk:XamlApplication>
+</Application>

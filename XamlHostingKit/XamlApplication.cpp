@@ -27,6 +27,26 @@ namespace winrt::XamlHostingKit::implementation
         return s_windows.GetView();
     }
 
+    bool XamlApplication::IsWebViewAvailable()
+    {
+        if (!s_propsFilled) [[unlikely]]
+        {
+            throw hresult_illegal_method_call(L"IsWebViewAvailable can only be called after XamlApplication.Start().");
+        }
+
+        return s_isWebViewAvailable;
+    }
+
+    ResourceManager XamlApplication::ResourceManager()
+    {
+        if (!s_propsFilled) [[unlikely]]
+        {
+            throw hresult_illegal_method_call(L"ResourceManager can only be called after XamlApplication.Start().");
+        }
+
+        return s_resourceManager;
+    }
+
     void XamlApplication::StartCommon(winrt::Windows::UI::Xaml::ApplicationInitializationCallback const& initCallback)
     {
         if (!initCallback) [[unlikely]]
@@ -48,6 +68,8 @@ namespace winrt::XamlHostingKit::implementation
                 LOG_HR_MSG(S_FALSE, "Failed to load twinapi.appcore.dll and/or threadpoolwinrt.dll, some features might not be available.");
             }
         });
+
+        s_propsFilled = true;
 
         if (Features::IsXamlRootAvailable) [[likely]]
         {
@@ -111,6 +133,8 @@ namespace winrt::XamlHostingKit::implementation
             throw hresult_illegal_method_call(L"XamlApplication.Start() can only be called once.");
         }
 
+        s_propsFilled = false;
+
         if (priPath.empty()) [[unlikely]]
         {
             throw hresult_invalid_argument(L"priPath cannot be empty.");
@@ -126,6 +150,8 @@ namespace winrt::XamlHostingKit::implementation
         {
             throw hresult_illegal_method_call(L"XamlApplication.Start() can only be called once.");
         }
+
+        s_propsFilled = false;
 
         if (!priBuffer) [[unlikely]]
         {
@@ -150,7 +176,7 @@ namespace winrt::XamlHostingKit::implementation
 
     void XamlApplication::Start(winrt::Windows::UI::Xaml::ApplicationInitializationCallback const& initCallback)
     {
-        Start(initCallback, winrt::hstring{ (Helpers::GetExecutableFolderPath() / L"resources.pri").wstring() });
+        Start(initCallback, winrt::hstring { (Helpers::GetExecutableFolderPath() / L"resources.pri").wstring() });
     }
 
     winrt::XamlHostingKit::XamlWindow XamlApplication::CreateWindow()
@@ -202,7 +228,7 @@ namespace winrt::XamlHostingKit::implementation
         }
     }
 
-    BOOL WINAPI XamlApplication::IsImmersiveProcessHook(void* unk)
+    BOOL WINAPI XamlApplication::IsImmersiveProcessHook([[maybe_unused]] void* unk)
     {
         return TRUE;
     }
@@ -221,7 +247,7 @@ namespace winrt::XamlHostingKit::implementation
         return GetProcAddress(hModule, lpProcName);
     }
 
-    LONG WINAPI XamlApplication::AppPolicyGetWindowingModelHook(HANDLE processToken, AppPolicyWindowingModel* policy)
+    LONG WINAPI XamlApplication::AppPolicyGetWindowingModelHook([[maybe_unused]] HANDLE processToken, AppPolicyWindowingModel* policy)
     {
         if (!policy) [[unlikely]]
         {
@@ -401,7 +427,7 @@ namespace winrt::XamlHostingKit::implementation
         }
     }
 
-    HRESULT WINAPI XamlApplication::get_ViewsHook(void* _this, void** pViews)
+    HRESULT WINAPI XamlApplication::get_ViewsHook([[maybe_unused]] void* _this, void** pViews)
     {
         if (!pViews) [[unlikely]]
         {
@@ -429,7 +455,7 @@ namespace winrt::XamlHostingKit::implementation
         return S_OK;
     }
 
-    HRESULT WINAPI XamlApplication::get_MainViewHook(void* _this, void** pView)
+    HRESULT WINAPI XamlApplication::get_MainViewHook([[maybe_unused]] void* _this, void** pView)
     {
         if (!pView) [[unlikely]]
         {

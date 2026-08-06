@@ -15,12 +15,13 @@ namespace winrt::XamlHostingKit::implementation
     namespace mrm = ABI::Windows::ApplicationModel::Resources::Core;
     namespace warc = winrt::Windows::ApplicationModel::Resources::Core;
 
-    struct XamlApplication : XamlApplicationT<XamlApplication>
+    struct XamlApplication
     {
     private:
         static const constexpr PCWSTR KNOWN_FILE_NAME = L"__XHK_EMBEDDED_RESOURCES__.pri";
 
         inline static bool s_hasStarted { false };
+        inline static bool s_propsFilled { false };
         inline static bool s_isWebViewAvailable { false };
         inline static bool s_mrmHookedSuccessfully { false };
         inline static wil::unique_handle s_priTempFile { nullptr };
@@ -55,8 +56,8 @@ namespace winrt::XamlHostingKit::implementation
     public:
         XamlApplication() = default;
 
-        inline bool IsWebViewAvailable() { return s_isWebViewAvailable; }
-        inline ResourceManager ResourceManager() { return s_resourceManager; }
+        static bool IsWebViewAvailable();
+        static ResourceManager ResourceManager();
 
         static winrt::XamlHostingKit::XamlWindow MainWindow();
         static winrt::Windows::Foundation::Collections::IVectorView<winrt::XamlHostingKit::XamlWindow> Windows();
