@@ -401,15 +401,15 @@ namespace winrt::XamlHostingKit
             auto const& folderPath = GetExecutableFolderPath().wstring();
             PriTempFilePath = L"\\\\?\\" + (std::filesystem::path(path.get()) /
                 ToBase64(Sha256({ (std::byte*)folderPath.data(), folderPath.length() * sizeof(wchar_t) })))
-                .wstring();
+                .wstring() + std::to_wstring((uint32_t)GetCurrentProcessId());
 
-            winrt::check_pointer(handle = CreateFileW(PriTempFilePath.c_str(),
+            winrt::check_bool((handle = CreateFileW(PriTempFilePath.c_str(),
                 GENERIC_READ | GENERIC_WRITE,
                 0,
                 nullptr,
                 CREATE_ALWAYS,
                 FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE,
-                nullptr));
+                nullptr)) != INVALID_HANDLE_VALUE);
 
             DWORD bytesWritten;
             winrt::check_bool(WriteFile(handle, buffer.data(), static_cast<DWORD>(buffer.Length()), &bytesWritten, nullptr));
