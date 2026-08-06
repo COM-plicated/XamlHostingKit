@@ -6,9 +6,10 @@ namespace XamlHostingKit
     {
         [static_name("IXamlConfigStatics", 4E5F4743-0130-F00D-AA27-15B544BF3005)]
         {
-            static Boolean EnableWebView { get; set; };
-            static Boolean DisableRedirectionLayer { get; set; };
-            static Boolean EnableTouchpadAwareness { get; set; };
+            static Boolean EnableWebView            { get; set; };
+            static Boolean DisableRedirectionLayer  { get; set; };
+            static Boolean EnableTouchpadAwareness  { get; set; };
+            static Boolean DisableEarlyXamlShutdown { get; set; };
         }
     }
 

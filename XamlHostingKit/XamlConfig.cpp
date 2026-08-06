@@ -8,6 +8,7 @@ namespace winrt::XamlHostingKit::implementation
     bool XamlConfig::s_enableWebView = true;
     bool XamlConfig::s_disableRedirectionLayer = true;
     bool XamlConfig::s_enableTouchpadAwareness = true;
+    bool XamlConfig::s_disableEarlyXamlShutdown = false;
 
     bool XamlConfig::EnableWebView()
     {
@@ -55,5 +56,15 @@ namespace winrt::XamlHostingKit::implementation
         }
 
         s_enableTouchpadAwareness = value;
+    }
+
+    bool XamlConfig::DisableEarlyXamlShutdown()
+    {
+        return s_disableEarlyXamlShutdown;
+    }
+
+    void XamlConfig::DisableEarlyXamlShutdown(bool value)
+    {
+        s_disableEarlyXamlShutdown = value;
     }
 }

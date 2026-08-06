@@ -363,13 +363,19 @@ namespace winrt::XamlHostingKit::implementation
     void XamlWindow::RunMessageLoop()
     {
         m_frameworkView.Run();
-        //m_frameworkView.Uninitialize();
+        
+        if (!XamlConfig::s_disableEarlyXamlShutdown) [[likely]]
+        {
+            m_frameworkView.Uninitialize();
+        }
     }
 
     HRESULT XamlWindow::get_WindowHandle(HWND* hwnd)
     {
-        if (hwnd == nullptr)
+        if (hwnd == nullptr) [[unlikely]]
+        {
             return E_POINTER;
+        }
 
         *hwnd = m_hwnd;
         return S_OK;
