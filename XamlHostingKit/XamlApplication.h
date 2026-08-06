@@ -42,6 +42,7 @@ namespace winrt::XamlHostingKit::implementation
         static LONG WINAPI GetCurrentPackageInfoHook(_In_ const UINT32 flags, _Inout_ UINT32* bufferLength, _Out_opt_ BYTE* buffer, _Out_opt_ UINT32* count);
         static LONG WINAPI AppPolicyGetWindowingModelHook(HANDLE processToken, AppPolicyWindowingModel* policy);
         static HANDLE WINAPI CreateFileWHook(_In_ LPCWSTR lpFileName, _In_ DWORD dwDesiredAccess, _In_ DWORD dwShareMode, _In_opt_ LPSECURITY_ATTRIBUTES lpSecurityAttributes, _In_ DWORD dwCreationDisposition, _In_ DWORD dwFlagsAndAttributes, _In_opt_ HANDLE hTemplateFile);
+        static BOOL WINAPI GetFileAttributesExWHook(_In_ LPCWSTR lpFileName, _In_ GET_FILEEX_INFO_LEVELS fInfoLevelId, _Out_writes_bytes_(sizeof(WIN32_FILE_ATTRIBUTE_DATA)) LPVOID lpFileInformation);
         static HRESULT WINAPI InitializeForCurrentApplicationHook(mrm::IMrtResourceManager* _this);
         static HRESULT WINAPI TryInitializeForCurrentApplicationHook(mrm::IMrtResourceManager2* _this);
         static HRESULT InitializeMrmHooks();

@@ -37,6 +37,19 @@
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.3.1" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <PrepareResourcesDependsOn>
+      $(PrepareResourcesDependsOn);
+      GenerateProjectPriFile
+    </PrepareResourcesDependsOn>
+  </PropertyGroup>
+
+  <Target Name="EmbedPriFileIntoDll" BeforeTargets="BeforeResGen">
+    <ItemGroup>  
+      <EmbeddedResource Include="$(ProjectPriFullPath)" Type="Non-Resx" WithCulture="false" />
+    </ItemGroup>
+  </Target>
+
   <ItemGroup>
     <ProjectReference Include="..\..\XamlHostingKit.Projection\XamlHostingKit.Projection.csproj" />
   </ItemGroup>

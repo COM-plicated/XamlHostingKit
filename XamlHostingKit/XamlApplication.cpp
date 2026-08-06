@@ -286,12 +286,33 @@ namespace winrt::XamlHostingKit::implementation
 
     HANDLE WINAPI XamlApplication::CreateFileWHook(_In_ LPCWSTR lpFileName, _In_ DWORD dwDesiredAccess, _In_ DWORD dwShareMode, _In_opt_ LPSECURITY_ATTRIBUTES lpSecurityAttributes, _In_ DWORD dwCreationDisposition, _In_ DWORD dwFlagsAndAttributes, _In_opt_ HANDLE hTemplateFile)
     {
-        if (lpFileName && _wcsicmp(lpFileName, s_priFileName.c_str()) == 0) [[likely]]
+        HANDLE handle;
+        if (lpFileName &&
+            s_priTempFile &&
+            _wcsicmp(lpFileName, s_priFileName.c_str()) == 0 &&
+            DuplicateHandle(GetCurrentProcess(),
+                s_priTempFile.get(),
+                GetCurrentProcess(),
+                &handle,
+                0, FALSE,
+                DUPLICATE_SAME_ACCESS)) [[likely]]
         {
-            return s_priTempFile.get();
+            return handle;
         }
 
         return CreateFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+    }
+
+    BOOL WINAPI XamlApplication::GetFileAttributesExWHook(_In_ LPCWSTR lpFileName, _In_ GET_FILEEX_INFO_LEVELS fInfoLevelId, _Out_writes_bytes_(sizeof(WIN32_FILE_ATTRIBUTE_DATA)) LPVOID lpFileInformation)
+    {
+        if (lpFileName &&
+            !Helpers::PriTempFilePath.empty() &&
+            _wcsicmp(lpFileName, s_priFileName.c_str()) == 0) [[likely]]
+        {
+            lpFileName = Helpers::PriTempFilePath.c_str();
+        }
+
+        return GetFileAttributesExW(lpFileName, fInfoLevelId, lpFileInformation);
     }
 
     HRESULT WINAPI XamlApplication::InitializeForCurrentApplicationHook(mrm::IMrtResourceManager* _this)
@@ -347,6 +368,7 @@ namespace winrt::XamlHostingKit::implementation
             DetourAttach(&(PVOID&)s_originalTryInitializeForCurrentApplication, TryInitializeForCurrentApplicationHook);
             RETURN_LAST_ERROR_IF(DetourTransactionCommit() != NO_ERROR);
             RETURN_IF_FAILED(Helpers::XWinePatchImport(MrmModule.get(), KernelBaseModule, "CreateFileW", &CreateFileWHook));
+            RETURN_IF_FAILED(Helpers::XWinePatchImport(MrmModule.get(), KernelBaseModule, "GetFileAttributesExW", &GetFileAttributesExWHook));
 
             return S_OK;
         }

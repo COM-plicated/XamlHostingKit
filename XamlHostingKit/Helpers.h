@@ -1,8 +1,10 @@
 #pragma once
 
+#include <bcrypt.h>
 #include <filesystem>
 #include "Privates.h"
 #include <wil/registry.h>
+#include <wil/resource.h>
 #include <ShellScalingApi.h>
 #include <Shlobj.h>
 #include <winrt/Windows.Storage.Streams.h>
@@ -90,7 +92,55 @@ namespace winrt::XamlHostingKit
             return str;
         }
 
+        inline static std::wstring ToBase64(std::span<const std::byte> input)
+        {
+            auto inputSizeInBytes = input.size();
+            auto size = simdutf::base64_length_from_binary(inputSizeInBytes, simdutf::base64_url);
+
+            char* output = new char[size];
+            simdutf::binary_to_base64((const char*)input.data(), inputSizeInBytes, output, simdutf::base64_url);
+
+            char16_t* wideOutput = new char16_t[size];
+            simdutf::convert_utf8_to_utf16(output, size, wideOutput);
+
+            auto str = std::wstring((wchar_t*)wideOutput, size);
+
+            delete[] output;
+            delete[] wideOutput;
+
+            return str;
+        }
+
+        inline static std::array<std::byte, 32> Sha256(std::span<const std::byte> data)
+        {
+            std::array<std::byte, 32> digest { };
+
+            wil::unique_bcrypt_algorithm alg;
+            THROW_IF_NTSTATUS_FAILED(::BCryptOpenAlgorithmProvider(
+                alg.put(), BCRYPT_SHA256_ALGORITHM, nullptr, 0));
+
+            DWORD hashLength = 0;
+            ULONG written = 0;
+            THROW_IF_NTSTATUS_FAILED(::BCryptGetProperty(
+                alg.get(), BCRYPT_HASH_LENGTH,
+                reinterpret_cast<PUCHAR>(&hashLength), sizeof(hashLength), &written, 0));
+
+            THROW_HR_IF(E_UNEXPECTED, hashLength != digest.size());
+
+            THROW_IF_NTSTATUS_FAILED(::BCryptHash(
+                alg.get(),
+                nullptr, 0,
+                reinterpret_cast<PUCHAR>(const_cast<std::byte*>(data.data())),
+                static_cast<ULONG>(data.size()),
+                reinterpret_cast<PUCHAR>(digest.data()),
+                static_cast<ULONG>(digest.size())));
+
+            return digest;
+        }
+
     public:
+
+        inline static std::wstring PriTempFilePath { };
 
         inline static winrt::hstring const& GetExecutableName()
         {
@@ -348,8 +398,12 @@ namespace winrt::XamlHostingKit
             }
 
             HANDLE handle;
-            auto filePath = std::filesystem::path(path.get()) / ToBase64(GetExecutableFolderPath());
-            winrt::check_pointer(handle = CreateFileW(filePath.c_str(),
+            auto const& folderPath = GetExecutableFolderPath().wstring();
+            PriTempFilePath = L"\\\\?\\" + (std::filesystem::path(path.get()) /
+                ToBase64(Sha256({ (std::byte*)folderPath.data(), folderPath.length() * sizeof(wchar_t) })))
+                .wstring();
+
+            winrt::check_pointer(handle = CreateFileW(PriTempFilePath.c_str(),
                 GENERIC_READ | GENERIC_WRITE,
                 0,
                 nullptr,
