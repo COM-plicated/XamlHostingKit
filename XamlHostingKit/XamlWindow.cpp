@@ -274,6 +274,9 @@ namespace winrt::XamlHostingKit::implementation
     void XamlWindow::Show()
     {
         ShowWindow(m_hwnd, SW_SHOW);
+        SetForegroundWindow(m_hwnd);
+        SetActiveWindow(m_coreWindowHwnd);
+        SetActiveWindow(m_hwnd);
     }
 
     void XamlWindow::Hide()
@@ -461,7 +464,7 @@ namespace winrt::XamlHostingKit::implementation
             {
                 SetFocus(_this->m_coreWindowHwnd);
             }
-            else if (msg == WM_THEMECHANGED)
+            else if (msg == WM_THEMECHANGED || msg == WM_ACTIVATE)
             {
                 SendMessageW(_this->m_coreWindowHwnd, msg, wParam, lParam);
             }
