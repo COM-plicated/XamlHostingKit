@@ -54,6 +54,7 @@ namespace winrt::XamlHostingKit::implementation
         static HRESULT WINAPI get_MainViewHook(void* _this, void** pView);
         static HRESULT InitializeCoreApplicationHooks();
         inline static void WINAPI SubmitThreadpoolWorkHook([[maybe_unused]] PTP_WORK work) { };
+        inline static HRESULT WINAPI CreateAppxSecurityManagerHook(void* unk, IWebPlatformSecurityManager** ppManager);
 
     public:
         XamlApplication() = default;

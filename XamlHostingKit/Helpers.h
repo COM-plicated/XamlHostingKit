@@ -22,6 +22,7 @@ namespace winrt::XamlHostingKit
     static const auto WinUIModule = wil::unique_hmodule(LoadLibraryW(L"Windows.UI.dll"));
     static const auto XAMLModule = wil::unique_hmodule(LoadLibraryW(L"Windows.UI.Xaml.dll"));
     static const auto MrmModule = wil::unique_hmodule(LoadLibraryW(L"MrmCoreR.dll"));
+    static const auto UrlMonModule = wil::unique_hmodule(LoadLibraryW(L"UrlMon.dll"));
     static const auto TWinAPICoreModule = wil::unique_hmodule(LoadLibraryW(L"twinapi.appcore.dll"));
     static const auto ThreadPoolModule = wil::unique_hmodule(LoadLibraryW(L"threadpoolwinrt.dll"));
     static const auto COMBaseModule = GetModuleHandleW(L"combase.dll");
@@ -300,7 +301,22 @@ namespace winrt::XamlHostingKit
         {
             for (size_t j = 0; pImportNameTable[j].u1.AddressOfData > 0; j++)
             {
+                auto isIntResource = IS_INTRESOURCE(Import);
                 if ((pImportNameTable[j].u1.AddressOfData & IMAGE_ORDINAL_FLAG) != 0)
+                {
+                    if (!isIntResource)
+                        continue;
+
+                    if (((pImportNameTable[j].u1.Ordinal & ~IMAGE_ORDINAL_FLAG) == (uintptr_t)Import))
+                    {
+                        *pThunk = &pImportAddressTable[j];
+                        return S_OK;
+                    }
+
+                    continue;
+                }
+
+                if (isIntResource)
                     continue;
 
                 auto name = ((IMAGE_IMPORT_BY_NAME*)((byte*)Module + pImportNameTable[j].u1.AddressOfData))->Name;

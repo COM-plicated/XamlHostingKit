@@ -357,6 +357,15 @@ namespace winrt::XamlHostingKit::implementation
         return GetCurrentPackageInfo(flags, bufferLength, buffer, count);
     }
 
+    inline HRESULT WINAPI XamlApplication::CreateAppxSecurityManagerHook([[maybe_unused]] void* unk, IWebPlatformSecurityManager** ppManager)
+    {
+        if (!ppManager) [[unlikely]]
+            return E_POINTER;
+
+        *ppManager = winrt::make<DefaultWebPlatformSecurityManager>().detach();
+        return S_OK;
+    }
+
     HRESULT XamlApplication::InitializeWebView()
     {
         if (AppCoreModule &&
@@ -366,6 +375,7 @@ namespace winrt::XamlHostingKit::implementation
         {
             RETURN_IF_FAILED(Helpers::XWinePatchImport(XAMLModule.get(), AppCoreModule.get(), "AppPolicyGetWindowingModel", &AppPolicyGetWindowingModelHook));
             RETURN_IF_FAILED(Helpers::XWinePatchImport(XAMLModule.get(), AppCoreModule.get(), "GetCurrentPackageInfo", &GetCurrentPackageInfoHook));
+            RETURN_IF_FAILED(Helpers::XWinePatchImport(XAMLModule.get(), UrlMonModule.get(), MAKEINTRESOURCEA(517), &CreateAppxSecurityManagerHook));
             RETURN_IF_FAILED(Helpers::XWinePatchImport(IERTUtilModule.get(), KernelBaseModule, "GetProcAddress", &GetProcAddressHook));
             RETURN_IF_FAILED(IEConfiguration_SetBrowserAppProfile(L"MicrosoftEdge", 2, 0));
             return S_OK;

@@ -249,3 +249,28 @@ IWindowPrivate : public ::IInspectable
     STDMETHOD(_stub13)() PURE;
     STDMETHOD(SetSynchronizationInfo)(UINT64 syncObj, UINT64 hwnd) PURE;
 };
+
+MIDL_INTERFACE("49d33aad-f985-4b70-97a0-28eceb6523bf")
+IWebPlatformSecurityManager : public ::IUnknown
+{
+    STDMETHOD(MapUrlToZone)(::IUri*, unsigned int*, unsigned int, wchar_t**, unsigned int*) PURE;
+    STDMETHOD(ProcessUrlAction)(::IUri*, unsigned int, unsigned __int8*, unsigned int, unsigned __int8*, unsigned int, unsigned int, unsigned int*) PURE;
+    STDMETHOD(GetSecurityId)(::IUri*, unsigned __int8*, unsigned int*) PURE;
+    STDMETHOD(QueryCustomPolicy)(::IUri*, const GUID*, unsigned __int8**, unsigned int*, unsigned __int8*, unsigned int) PURE;
+};
+
+MIDL_INTERFACE("e4dfc97c-9bef-4803-8ce1-0f980df7c847")
+IWebPlatformPermanentSecurityManager : public IWebPlatformSecurityManager
+{
+    STDMETHOD(GetZoneActionPolicyEx)(::IUri*, unsigned int, unsigned int, unsigned __int8*, unsigned int, URLZONEREG, unsigned int) PURE;
+};
+
+struct DefaultWebPlatformSecurityManager : winrt::implements<DefaultWebPlatformSecurityManager, IWebPlatformSecurityManager, IWebPlatformPermanentSecurityManager>
+{
+    DefaultWebPlatformSecurityManager() = default;
+    inline STDMETHODIMP MapUrlToZone(::IUri*, unsigned int*, unsigned int, wchar_t**, unsigned int*) override { return INET_E_DEFAULT_ACTION; }
+    inline STDMETHODIMP ProcessUrlAction(::IUri*, unsigned int, unsigned __int8*, unsigned int, unsigned __int8*, unsigned int, unsigned int, unsigned int*) override { return E_FAIL; }
+    inline STDMETHODIMP GetSecurityId(::IUri*, unsigned __int8*, unsigned int*) override { return INET_E_DEFAULT_ACTION; }
+    inline STDMETHODIMP QueryCustomPolicy(::IUri*, const GUID*, unsigned __int8**, unsigned int*, unsigned __int8*, unsigned int) override { return INET_E_DEFAULT_ACTION; }
+    inline STDMETHODIMP GetZoneActionPolicyEx(::IUri*, unsigned int, unsigned int, unsigned __int8*, unsigned int, URLZONEREG, unsigned int) override { return INET_E_DEFAULT_ACTION; }
+};
