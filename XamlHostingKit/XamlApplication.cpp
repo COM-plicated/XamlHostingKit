@@ -19,6 +19,7 @@ namespace winrt::XamlHostingKit::implementation
 
     winrt::XamlHostingKit::XamlWindow XamlApplication::MainWindow()
     {
+        std::lock_guard lock(s_mainWindowMutex);
         return s_mainWindow;
     }
 
@@ -100,8 +101,12 @@ namespace winrt::XamlHostingKit::implementation
         auto window = winrt::make_self<XamlWindow>(WindowCreationOptions { }, true);
 
         s_hasStarted = true;
-        s_mainWindow = *window.get();
-        s_windows.Append(s_mainWindow);
+
+        {
+            std::lock_guard lock(s_mainWindowMutex);
+            s_mainWindow = *window.get();
+            s_windows.Append(s_mainWindow);
+        }
 
         Application::Current().as<IApplicationOverrides>().OnLaunched(nullptr);
 
@@ -204,9 +209,12 @@ namespace winrt::XamlHostingKit::implementation
                 window = winrt::make_self<XamlWindow>(options, false);
                 s_windows.Append(*window.get());
 
-                if (s_mainWindow == nullptr) [[unlikely]]
                 {
-                    s_mainWindow = *window.get();
+                    std::lock_guard lock(s_mainWindowMutex);
+                    if (s_mainWindow == nullptr) [[unlikely]]
+                    {
+                        s_mainWindow = *window.get();
+                    }
                 }
             }
             catch (...)
@@ -214,11 +222,12 @@ namespace winrt::XamlHostingKit::implementation
                 exception = std::current_exception();
             }
 
+            auto localWindow = window;
             windowCreated.SetEvent();
 
-            if (window) [[likely]]
+            if (localWindow) [[likely]]
             {
-                window->RunMessageLoop();
+                localWindow->RunMessageLoop();
             }
         }).detach();
 
@@ -257,6 +266,7 @@ namespace winrt::XamlHostingKit::implementation
             }
         }
 
+        std::lock_guard lock(s_mainWindowMutex);
         s_mainWindow = nullptr;
     }
 
@@ -267,6 +277,7 @@ namespace winrt::XamlHostingKit::implementation
         {
             s_windows.RemoveAt(idx);
 
+            std::lock_guard lock(s_mainWindowMutex);
             if (s_mainWindow == window)
             {
                 if (s_windows.Size() > 0)
@@ -515,6 +526,7 @@ namespace winrt::XamlHostingKit::implementation
             return E_POINTER;
         }
 
+        std::lock_guard lock(s_mainWindowMutex);
         if (s_mainWindow) [[likely]]
         {
             winrt::copy_to_abi(s_mainWindow.CoreApplicationView(), *pView);

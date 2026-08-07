@@ -7,6 +7,7 @@
 #include "mrm_private.h"
 #include <winrt/Windows.ApplicationModel.Resources.Core.h>
 #include <threadpoolapiset.h>
+#include <mutex>
 
 namespace winrt::XamlHostingKit::implementation
 {
@@ -33,6 +34,7 @@ namespace winrt::XamlHostingKit::implementation
         inline static HRESULT(WINAPI* s_originalTryInitializeForCurrentApplication)(mrm::IMrtResourceManager2* _this) { nullptr };
         inline static std::once_flag s_appInitFlag { };
         inline static std::once_flag s_mrmHookFlag { };
+        inline static std::mutex s_mainWindowMutex { };
 
         static HRESULT InitializeWebView();
         static void StartCommon(winrt::Windows::UI::Xaml::ApplicationInitializationCallback const& initCallback);
