@@ -11,5 +11,6 @@
 
     <StackPanel x:Name="panel" Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center">
         <TextBlock Text="Hello from XamlHostingKit!" FontSize="36" VerticalAlignment="Center" HorizontalAlignment="Center" />
+        <Button Content="Create secondary view" HorizontalAlignment="Stretch" Margin="0,20,0,0" Click="Button_Click" />
     </StackPanel>
 </Page>

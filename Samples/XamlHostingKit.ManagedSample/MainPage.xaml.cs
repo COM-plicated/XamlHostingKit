@@ -29,5 +29,19 @@ namespace XamlHostingKit.ManagedSample
 
             panel.Children.Add(wv);
         }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            XamlApplication.CreateWindow(new() { Title = "XamlHostingKit Secondary Window" }, (p) =>
+            {
+                var window = XamlWindow.Current;
+
+                Frame frame = new();
+                frame.Navigate(typeof(SecondaryPage));
+                window.Content = frame;
+
+                window.Show();
+            });
+        }
     }
 }

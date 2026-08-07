@@ -30,7 +30,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Images\COMplicated.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <AppxTargetDeviceFamilyItem Include="Windows.Desktop" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Images\COMplicated.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

@@ -179,19 +179,72 @@ namespace winrt::XamlHostingKit::implementation
         Start(initCallback, winrt::hstring { (Helpers::GetExecutableFolderPath() / L"resources.pri").wstring() });
     }
 
-    winrt::XamlHostingKit::XamlWindow XamlApplication::CreateWindow()
-    {
-        throw hresult_not_implemented();
-    }
-
     winrt::XamlHostingKit::XamlWindow XamlApplication::CreateWindow(winrt::XamlHostingKit::WindowCreationOptions const& options)
     {
-        throw hresult_not_implemented();
+        if (!s_hasStarted) [[unlikely]]
+        {
+            throw hresult_illegal_method_call(L"XamlApplication.CreateWindow() can only be called after XamlApplication.Start().");
+        }
+
+        com_ptr<XamlWindow> window = nullptr;
+        std::exception_ptr exception = nullptr;
+        wil::unique_event windowCreated { wil::EventOptions::ManualReset };
+
+        std::thread([&]()
+        {
+            try
+            {
+                winrt::init_apartment(winrt::apartment_type::single_threaded);
+
+                if (CoSetASTATestMode) [[likely]]
+                {
+                    CoSetASTATestMode(ROINITIALIZEASTA_ALLOWED);
+                }
+
+                window = winrt::make_self<XamlWindow>(options, false);
+                s_windows.Append(*window.get());
+
+                if (s_mainWindow == nullptr) [[unlikely]]
+                {
+                    s_mainWindow = *window.get();
+                }
+            }
+            catch (...)
+            {
+                exception = std::current_exception();
+            }
+
+            windowCreated.SetEvent();
+
+            if (window) [[likely]]
+            {
+                window->RunMessageLoop();
+            }
+        }).detach();
+
+        windowCreated.wait();
+        if (exception) [[unlikely]]
+        {
+            std::rethrow_exception(exception);
+        }
+
+        return *window.get();
+    }
+
+    winrt::XamlHostingKit::XamlWindow XamlApplication::CreateWindow()
+    {
+        return CreateWindow({ });
     }
 
     winrt::XamlHostingKit::XamlWindow XamlApplication::CreateWindow(winrt::XamlHostingKit::WindowCreationOptions const& options, winrt::Windows::UI::Xaml::ApplicationInitializationCallback const& windowCallback)
     {
-        throw hresult_not_implemented();
+        auto window = CreateWindow(options);
+        window.Dispatcher().RunAsync(CoreDispatcherPriority::Normal, [windowCallback]()
+        {
+            windowCallback(nullptr);
+        });
+
+        return window;
     }
 
     void XamlApplication::Close()
