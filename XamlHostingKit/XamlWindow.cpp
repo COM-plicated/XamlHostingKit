@@ -3,6 +3,7 @@
 #include "XamlWindow.g.cpp"
 
 #include <dwmapi.h>
+#include <shellapi.h>
 #include "XamlConfig.h"
 #include "LegacyNonImmersiveView.h"
 #include <CoreWindow.h>
@@ -391,6 +392,10 @@ namespace winrt::XamlHostingKit::implementation
         wcex.lpfnWndProc = wndProc;
         wcex.hInstance = GetModuleHandleW(nullptr);
         wcex.lpszClassName = className;
+
+        ExtractIconExW(Helpers::GetExecutablePath(), 0, s_iconLarge.put(), s_iconSmall.put(), 1);
+        wcex.hIcon = s_iconLarge.get();
+        wcex.hIconSm = s_iconSmall.get();
 
         if (!RegisterClassExW(&wcex)) [[unlikely]]
         {

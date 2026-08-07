@@ -153,6 +153,11 @@ namespace winrt::XamlHostingKit
             return _executablePath.parent_path();
         }
 
+        inline static const wchar_t* GetExecutablePath()
+        {
+            return _executablePath.c_str();
+        }
+
         inline static void EnsureTitleBarTheme(HWND hwnd)
         {
             if (IsDarkModeAllowedForWindow &&

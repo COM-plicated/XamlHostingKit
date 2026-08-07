@@ -19,6 +19,9 @@ namespace winrt::XamlHostingKit::implementation
         static thread_local XamlWindow* s_currentWindow;
         static const constexpr auto XHK_WINDOW_OBJECT_PROP = L"COMplicated.XamlHostingKit.WindowObject";
 
+        inline static wil::unique_hicon s_iconSmall { nullptr };
+        inline static wil::unique_hicon s_iconLarge { nullptr };
+
         bool m_isMain { false };
         bool m_isSyncObjEnabled { false };
         HWND m_hwnd { nullptr };
