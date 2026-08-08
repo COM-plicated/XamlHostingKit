@@ -6,10 +6,12 @@ namespace XamlHostingKit
     {
         [static_name("IXamlConfigStatics", 4E5F4743-0130-F00D-AA27-15B544BF3005)]
         {
-            static Boolean EnableWebView            { get; set; };
-            static Boolean DisableRedirectionLayer  { get; set; };
-            static Boolean EnableTouchpadAwareness  { get; set; };
-            static Boolean DisableEarlyXamlShutdown { get; set; };
+            static Boolean EnableWebView                   { get; set; };
+            static Boolean DisableRedirectionLayer         { get; set; };
+            static Boolean EnableTouchpadAwareness         { get; set; };
+            static Boolean DisableEarlyXamlShutdown        { get; set; };
+            static Boolean EnableMsAppxWebProtocolSupport  { get; set; };
+            static Boolean EnableArbitraryPathsInMsAppxWeb { get; set; };
         }
     }
 
@@ -24,11 +26,8 @@ namespace XamlHostingKit
             static Windows.ApplicationModel.Resources.Core.ResourceManager ResourceManager { get; };
 
             static void Start(Windows.UI.Xaml.ApplicationInitializationCallback initCallback);
-
-            // TODO: disabled for now until we implement proper support for custom PRI paths
-            //[method_name("StartWithPriPath"), default_overload]
-            //static void Start(Windows.UI.Xaml.ApplicationInitializationCallback initCallback, String priPath);
-
+            [method_name("StartWithPriPath"), default_overload]
+            static void Start(Windows.UI.Xaml.ApplicationInitializationCallback initCallback, String priPath);
             [method_name("StartWithPriBuffer")]
             static void Start(Windows.UI.Xaml.ApplicationInitializationCallback initCallback, Windows.Storage.Streams.IBuffer priBuffer);
 

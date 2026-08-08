@@ -9,6 +9,7 @@
 #include "XamlConfig.h"
 #include "XamlWindow.h"
 #include <detours/detours.h>
+#include <FileProtocolHandler.h>
 
 namespace winrt::XamlHostingKit::implementation
 {
@@ -101,6 +102,7 @@ namespace winrt::XamlHostingKit::implementation
         auto window = winrt::make_self<XamlWindow>(WindowCreationOptions { }, true);
 
         s_hasStarted = true;
+        XamlConfig::s_isInitialized = true;
 
         {
             std::lock_guard lock(s_mainWindowMutex);
@@ -131,7 +133,7 @@ namespace winrt::XamlHostingKit::implementation
         }
     }
 
-    void XamlApplication::Start(winrt::Windows::UI::Xaml::ApplicationInitializationCallback const& initCallback, hstring const& priPath)
+    void XamlApplication::Start(winrt::Windows::UI::Xaml::ApplicationInitializationCallback const& initCallback, hstring const& priPath, bool shouldThrowOnHookFailure)
     {
         if (s_hasStarted) [[unlikely]]
         {
@@ -143,6 +145,23 @@ namespace winrt::XamlHostingKit::implementation
         if (priPath.empty()) [[unlikely]]
         {
             throw hresult_invalid_argument(L"priPath cannot be empty.");
+        }
+
+        s_priFileName = priPath;
+
+        std::call_once(s_mrmHookFlag, []
+        {
+            s_mrmHookedSuccessfully = SUCCEEDED_LOG(InitializeMrmHooks());
+        });
+
+        if (!s_mrmHookedSuccessfully) [[unlikely]]
+        {
+            s_priFileName = { };
+
+            if (shouldThrowOnHookFailure) [[unlikely]]
+            {
+                throw hresult_error(E_FAIL, L"Failed to hook Modern Resource Manager (MRM) functions.");
+            }
         }
 
         CreateResourceManager(priPath.c_str());
@@ -163,25 +182,13 @@ namespace winrt::XamlHostingKit::implementation
             throw hresult_invalid_argument(L"priBuffer cannot be null.");
         }
 
-        std::call_once(s_mrmHookFlag, []
-        {
-            s_mrmHookedSuccessfully = SUCCEEDED_LOG(InitializeMrmHooks());
-        });
-
-        if (!s_mrmHookedSuccessfully) [[unlikely]]
-        {
-            throw hresult_error(E_FAIL, L"Failed to hook Modern Resource Manager (MRM) functions.");
-        }
-
         s_priTempFile.reset(Helpers::CreateTempFileFromBuffer(priBuffer));
-
-        CreateResourceManager(s_priFileName.c_str());
-        StartCommon(initCallback);
+        Start(initCallback, winrt::hstring { (Helpers::GetExecutableFolderPath() / KNOWN_FILE_NAME).wstring() }, true);
     }
 
     void XamlApplication::Start(winrt::Windows::UI::Xaml::ApplicationInitializationCallback const& initCallback)
     {
-        Start(initCallback, winrt::hstring { (Helpers::GetExecutableFolderPath() / L"resources.pri").wstring() });
+        Start(initCallback, winrt::hstring { (Helpers::GetExecutableFolderPath() / L"resources.pri").wstring() }, false);
     }
 
     winrt::XamlHostingKit::XamlWindow XamlApplication::CreateWindow(winrt::XamlHostingKit::WindowCreationOptions const& options)
@@ -366,6 +373,22 @@ namespace winrt::XamlHostingKit::implementation
         return S_OK;
     }
 
+    HRESULT WINAPI XamlApplication::CreateAppxProtocolClassFactoryHook(
+        [[maybe_unused]] void* unk1,
+        [[maybe_unused]] void* unk2,
+        [[maybe_unused]] void* unk3,
+        [[maybe_unused]] void* unk4,
+        IClassFactory** ppFactory)
+    {
+        if (!ppFactory) [[unlikely]]
+        {
+            return E_POINTER;
+        }
+
+        *ppFactory = winrt::make<ClassFactory<FileProtocolHandler>>().detach();
+        return S_OK;
+    }
+
     HRESULT XamlApplication::InitializeWebView()
     {
         if (AppCoreModule &&
@@ -378,6 +401,12 @@ namespace winrt::XamlHostingKit::implementation
             RETURN_IF_FAILED(Helpers::XWinePatchImport(XAMLModule.get(), UrlMonModule.get(), MAKEINTRESOURCEA(517), &CreateAppxSecurityManagerHook));
             RETURN_IF_FAILED(Helpers::XWinePatchImport(IERTUtilModule.get(), KernelBaseModule, "GetProcAddress", &GetProcAddressHook));
             RETURN_IF_FAILED(IEConfiguration_SetBrowserAppProfile(L"MicrosoftEdge", 2, 0));
+
+            if (XamlConfig::s_enableMsAppxWebProtocolSupport) [[unlikely]]
+            {
+                RETURN_IF_FAILED(Helpers::XWinePatchImport(XAMLModule.get(), UrlMonModule.get(), MAKEINTRESOURCEA(505), &CreateAppxProtocolClassFactoryHook));
+            }
+
             return S_OK;
         }
 
@@ -421,7 +450,7 @@ namespace winrt::XamlHostingKit::implementation
         GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCWSTR)_ReturnAddress(), &mod);
 
         HRESULT hr;
-        if (mod != XAMLModule.get() || !s_priTempFile ||
+        if (mod != XAMLModule.get() || s_priFileName.empty() ||
             FAILED_LOG(hr = _this->InitializeForFile(s_priFileName.c_str()))) [[unlikely]]
         {
             return s_originalInitializeForCurrentApplication(_this);
@@ -438,7 +467,7 @@ namespace winrt::XamlHostingKit::implementation
         HRESULT hr;
         winrt::com_ptr<mrm::IMrtResourceManager> manager;
 
-        if (mod != XAMLModule.get() || !s_priTempFile ||
+        if (mod != XAMLModule.get() || s_priFileName.empty() ||
             FAILED_LOG(_this->QueryInterface(manager.put())) ||
             FAILED_LOG(hr = manager->InitializeForFile(s_priFileName.c_str()))) [[unlikely]]
         {

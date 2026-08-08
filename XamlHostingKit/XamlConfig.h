@@ -10,6 +10,8 @@ namespace winrt::XamlHostingKit::implementation
         static bool s_disableRedirectionLayer;
         static bool s_enableTouchpadAwareness;
         static bool s_disableEarlyXamlShutdown;
+        static bool s_enableMsAppxWebProtocolSupport;
+        static bool s_enableArbitraryPathsInMsAppxWeb;
 
         XamlConfig() = default;
 
@@ -24,6 +26,12 @@ namespace winrt::XamlHostingKit::implementation
 
         static bool DisableEarlyXamlShutdown();
         static void DisableEarlyXamlShutdown(bool value);
+
+        static bool EnableMsAppxWebProtocolSupport();
+        static void EnableMsAppxWebProtocolSupport(bool value);
+
+        static bool EnableArbitraryPathsInMsAppxWeb();
+        static void EnableArbitraryPathsInMsAppxWeb(bool value);
     };
 }
 

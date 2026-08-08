@@ -26,7 +26,7 @@ namespace winrt::XamlHostingKit::implementation
         inline static bool s_isWebViewAvailable { false };
         inline static bool s_mrmHookedSuccessfully { false };
         inline static wil::unique_handle s_priTempFile { nullptr };
-        inline static const std::wstring s_priFileName { (Helpers::GetExecutableFolderPath() / KNOWN_FILE_NAME).wstring() };
+        inline static std::wstring s_priFileName { };
         inline static winrt::XamlHostingKit::XamlWindow s_mainWindow { nullptr };
         inline static ResourceManager s_resourceManager { nullptr };
         inline static IVector<winrt::XamlHostingKit::XamlWindow> s_windows { winrt::multi_threaded_vector<winrt::XamlHostingKit::XamlWindow>() };
@@ -44,6 +44,8 @@ namespace winrt::XamlHostingKit::implementation
         static BOOL WINAPI IsImmersiveProcessHook(void* unk);
         static LONG WINAPI GetCurrentPackageInfoHook(_In_ const UINT32 flags, _Inout_ UINT32* bufferLength, _Out_opt_ BYTE* buffer, _Out_opt_ UINT32* count);
         static LONG WINAPI AppPolicyGetWindowingModelHook(HANDLE processToken, AppPolicyWindowingModel* policy);
+        static HRESULT WINAPI CreateAppxSecurityManagerHook(void* unk, IWebPlatformSecurityManager** ppManager);
+        static HRESULT WINAPI CreateAppxProtocolClassFactoryHook(void* unk1, void* unk2, void* unk3, void* unk4, IClassFactory** ppFactory);
         static HANDLE WINAPI CreateFileWHook(_In_ LPCWSTR lpFileName, _In_ DWORD dwDesiredAccess, _In_ DWORD dwShareMode, _In_opt_ LPSECURITY_ATTRIBUTES lpSecurityAttributes, _In_ DWORD dwCreationDisposition, _In_ DWORD dwFlagsAndAttributes, _In_opt_ HANDLE hTemplateFile);
         static BOOL WINAPI GetFileAttributesExWHook(_In_ LPCWSTR lpFileName, _In_ GET_FILEEX_INFO_LEVELS fInfoLevelId, _Out_writes_bytes_(sizeof(WIN32_FILE_ATTRIBUTE_DATA)) LPVOID lpFileInformation);
         static HRESULT WINAPI InitializeForCurrentApplicationHook(mrm::IMrtResourceManager* _this);
@@ -54,7 +56,6 @@ namespace winrt::XamlHostingKit::implementation
         static HRESULT WINAPI get_MainViewHook(void* _this, void** pView);
         static HRESULT InitializeCoreApplicationHooks();
         inline static void WINAPI SubmitThreadpoolWorkHook([[maybe_unused]] PTP_WORK work) { };
-        inline static HRESULT WINAPI CreateAppxSecurityManagerHook(void* unk, IWebPlatformSecurityManager** ppManager);
 
     public:
         XamlApplication() = default;
@@ -66,7 +67,7 @@ namespace winrt::XamlHostingKit::implementation
         static winrt::Windows::Foundation::Collections::IVectorView<winrt::XamlHostingKit::XamlWindow> Windows();
         
         static void Start(winrt::Windows::UI::Xaml::ApplicationInitializationCallback const& initCallback);
-        static void Start(winrt::Windows::UI::Xaml::ApplicationInitializationCallback const& initCallback, hstring const& priPath);
+        static void Start(winrt::Windows::UI::Xaml::ApplicationInitializationCallback const& initCallback, hstring const& priPath, bool shouldThrowOnHookFailure = true);
         static void Start(winrt::Windows::UI::Xaml::ApplicationInitializationCallback const& initCallback, winrt::Windows::Storage::Streams::IBuffer const& priBuffer);
         
         static winrt::XamlHostingKit::XamlWindow CreateWindow();

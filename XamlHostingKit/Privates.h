@@ -262,7 +262,7 @@ IWebPlatformSecurityManager : public ::IUnknown
 MIDL_INTERFACE("e4dfc97c-9bef-4803-8ce1-0f980df7c847")
 IWebPlatformPermanentSecurityManager : public IWebPlatformSecurityManager
 {
-    STDMETHOD(GetZoneActionPolicyEx)(::IUri*, unsigned int, unsigned int, unsigned __int8*, unsigned int, URLZONEREG, unsigned int) PURE;
+    STDMETHOD(GetZoneActionPolicyEx)(unsigned int, unsigned int, unsigned __int8*, unsigned int, URLZONEREG, unsigned int) PURE;
 };
 
 struct DefaultWebPlatformSecurityManager : winrt::implements<DefaultWebPlatformSecurityManager, IWebPlatformSecurityManager, IWebPlatformPermanentSecurityManager>
@@ -272,5 +272,5 @@ struct DefaultWebPlatformSecurityManager : winrt::implements<DefaultWebPlatformS
     inline STDMETHODIMP ProcessUrlAction(::IUri*, unsigned int, unsigned __int8*, unsigned int, unsigned __int8*, unsigned int, unsigned int, unsigned int*) override { return E_FAIL; }
     inline STDMETHODIMP GetSecurityId(::IUri*, unsigned __int8*, unsigned int*) override { return INET_E_DEFAULT_ACTION; }
     inline STDMETHODIMP QueryCustomPolicy(::IUri*, const GUID*, unsigned __int8**, unsigned int*, unsigned __int8*, unsigned int) override { return INET_E_DEFAULT_ACTION; }
-    inline STDMETHODIMP GetZoneActionPolicyEx(::IUri*, unsigned int, unsigned int, unsigned __int8*, unsigned int, URLZONEREG, unsigned int) override { return INET_E_DEFAULT_ACTION; }
+    inline STDMETHODIMP GetZoneActionPolicyEx(unsigned int, unsigned int, unsigned __int8*, unsigned int, URLZONEREG, unsigned int) override { return INET_E_DEFAULT_ACTION; }
 };

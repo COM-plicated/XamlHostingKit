@@ -43,6 +43,7 @@ namespace winrt::XamlHostingKit
     static const auto RegisterTouchpadCapableThreadMethod = reinterpret_cast<BOOL(WINAPI*)(BOOL)>(GetProcAddress(User32Module.get(), MAKEINTRESOURCEA(2688)));
     static const auto NtUserGetResizeDCompositionSynchronizationObject = reinterpret_cast<BOOL(WINAPI*)(HWND, HANDLE*)>(GetProcAddress(Win32UModule, "NtUserGetResizeDCompositionSynchronizationObject"));
     static const auto NtUserEnableResizeLayoutSynchronization = reinterpret_cast<BOOL(WINAPI*)(HWND, BOOL)>(GetProcAddress(Win32UModule, "NtUserEnableResizeLayoutSynchronization"));
+    static const auto UrlmonCreateInstance = reinterpret_cast<HRESULT(WINAPI*)(REFCLSID, IUnknown*, REFIID, void**)>(GetProcAddress(UrlMonModule.get(), MAKEINTRESOURCEA(441)));
 
     static const auto PersonalizeKey = wil::reg::open_unique_key(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize");
 
@@ -456,6 +457,72 @@ namespace winrt::XamlHostingKit
                 return nullptr;
 
             return handle;
+        }
+    };
+
+    namespace detail
+    {
+        template <typename D, typename... Interfaces>
+        constexpr std::array<GUID, sizeof...(Interfaces) + 1>
+        iid_array_impl(winrt::implements<D, Interfaces...>*)
+        {
+            // TODO: support marker types and/or the rest of implicit
+            // interfaces (e.g. IInspectable, IAgileObject, IWeakReferenceSource, ...)?
+            // we don't use any with ClassFactory currently, so this is fine for now.
+
+#ifdef __INTELLISENSE__
+            return { __uuidof(::IUnknown), __uuidof(Interfaces)... };
+#else
+            return { __uuidof(::IUnknown), std::bit_cast<GUID>(winrt::guid_of<Interfaces>())...};
+#endif
+        }
+    }
+
+    template <typename T>
+    struct iid_array
+    {
+        static constexpr auto value = detail::iid_array_impl(static_cast<T*>(nullptr));
+    };
+
+    template <typename T>
+    inline constexpr auto iid_array_v = iid_array<T>::value;
+
+    template <typename T>
+    struct ClassFactory : winrt::implements<ClassFactory<T>, IClassFactory>
+    {
+    public:
+        inline ClassFactory() = default;
+
+        inline HRESULT WINAPI CreateInstance(IUnknown* pUnkOuter, REFIID riid, void** ppvObject) noexcept override
+        {
+            RETURN_HR_IF(CLASS_E_NOAGGREGATION, pUnkOuter != nullptr);
+            RETURN_HR_IF_NULL(E_POINTER, ppvObject);
+
+            constexpr auto iids = iid_array_v<T>;
+            bool const hasIID = std::any_of(iids.begin(), iids.end(), [&](auto const& iid) { return riid == iid; });
+
+            if (!hasIID)
+            {
+                *ppvObject = nullptr;
+                return E_NOINTERFACE;
+            }
+
+            auto object = winrt::make<T>();
+            RETURN_HR(object->QueryInterface(riid, ppvObject));
+        }
+
+        inline HRESULT WINAPI LockServer(BOOL fLock) noexcept override
+        {
+            if (fLock)
+            {
+                ++winrt::get_module_lock();
+            }
+            else
+            {
+                --winrt::get_module_lock();
+            }
+
+            return S_OK;
         }
     };
 }
