@@ -12,6 +12,7 @@ namespace winrt::XamlHostingKit::implementation
     bool XamlConfig::s_disableEarlyXamlShutdown = false;
     bool XamlConfig::s_enableMsAppxWebProtocolSupport = false;
     bool XamlConfig::s_enableArbitraryPathsInMsAppxWeb = false;
+    bool XamlConfig::s_enableSmoothResize = true;
 
     bool XamlConfig::EnableWebView()
     {
@@ -101,5 +102,21 @@ namespace winrt::XamlHostingKit::implementation
         }
 
         s_enableArbitraryPathsInMsAppxWeb = value && s_enableMsAppxWebProtocolSupport;
+    }
+
+    bool XamlConfig::EnableSmoothResize()
+    {
+        return s_enableSmoothResize;
+    }
+
+    void XamlConfig::EnableSmoothResize(bool value)
+    {
+        if (s_isInitialized) [[unlikely]]
+        {
+            throw hresult_illegal_method_call
+            (L"Changing EnableSmoothResize after calling XamlApplication.Start() is not supported.");
+        }
+
+        s_enableSmoothResize = value;
     }
 }

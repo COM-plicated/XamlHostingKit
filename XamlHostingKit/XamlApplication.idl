@@ -12,6 +12,7 @@ namespace XamlHostingKit
             static Boolean DisableEarlyXamlShutdown        { get; set; };
             static Boolean EnableMsAppxWebProtocolSupport  { get; set; };
             static Boolean EnableArbitraryPathsInMsAppxWeb { get; set; };
+            static Boolean EnableSmoothResize              { get; set; };
         }
     }
 

@@ -121,7 +121,7 @@ namespace winrt::XamlHostingKit::implementation
         {
             LOG_IF_FAILED(wPriv->put_TransparentBackground(TRUE));
 
-            if (Features::IsSetSynchronizationInfoAvailable) [[likely]]
+            if (XamlConfig::s_enableSmoothResize && Features::IsSetSynchronizationInfoAvailable) [[likely]]
             {
                 if (!LOG_LAST_ERROR_IF(!Helpers::EnableResizeSynchronization(m_hwnd, true))) [[likely]]
                 {
