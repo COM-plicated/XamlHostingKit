@@ -130,7 +130,7 @@
       <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
       <WarningLevel>Level4</WarningLevel>
       <AdditionalOptions>%(AdditionalOptions) /bigobj</AdditionalOptions>
-      <PreprocessorDefinitions>_WINRT_DLL;WIN32_LEAN_AND_MEAN;WINRT_LEAN_AND_MEAN;WINRT_NO_MODULE_LOCK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINRT_DLL;WIN32_LEAN_AND_MEAN;WINRT_LEAN_AND_MEAN;WINRT_NO_MODULE_LOCK;USE_PATH_HASH_FOR_TEMP_PRI=false;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalUsingDirectories>$(WindowsSDK_WindowsMetadata);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
     </ClCompile>
     <Link>
@@ -187,6 +187,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="Privates.h" />
     <ClInclude Include="simdutf\simdutf.h" />
+    <ClInclude Include="version.h" />
     <ClInclude Include="WindowCreationOptions.h" />
     <ClInclude Include="XamlApplication.h">
       <DependentUpon>XamlApplication.idl</DependentUpon>
@@ -210,6 +211,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="version.cpp" />
     <ClCompile Include="WindowCreationOptions.cpp" />
     <ClCompile Include="XamlApplication.cpp">
       <DependentUpon>XamlApplication.idl</DependentUpon>

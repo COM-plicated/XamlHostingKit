@@ -1,17 +1,24 @@
 #pragma once
 
-#include <bcrypt.h>
+#include <Shlobj.h>
 #include <filesystem>
 #include "Privates.h"
 #include <wil/registry.h>
 #include <wil/resource.h>
 #include <ShellScalingApi.h>
-#include <Shlobj.h>
 #include <winrt/Windows.Storage.Streams.h>
 
+#if USE_PATH_HASH_FOR_TEMP_PRI // defined in the vcxproj file
+#include <bcrypt.h>
 #pragma warning(push, 0)
 #include <simdutf/simdutf.h>
 #pragma warning(pop)
+#endif
+
+#define USE_FULL_CLASS_FACTORY false
+#if USE_FULL_CLASS_FACTORY
+#include <weakreference.h>
+#endif
 
 namespace winrt::XamlHostingKit
 {
@@ -75,6 +82,7 @@ namespace winrt::XamlHostingKit
             return !wil::reg::try_get_value_dword(PersonalizeKey.get(), L"AppsUseLightTheme").value_or(true);
         }
 
+#if USE_PATH_HASH_FOR_TEMP_PRI
         inline static std::wstring ToBase64(std::wstring const& input)
         {
             auto inputSizeInBytes = input.length() * sizeof(wchar_t);
@@ -139,6 +147,7 @@ namespace winrt::XamlHostingKit
 
             return digest;
         }
+#endif
 
     public:
 
@@ -419,12 +428,17 @@ namespace winrt::XamlHostingKit
                     path.put()));
             }
 
-            HANDLE handle;
+#if USE_PATH_HASH_FOR_TEMP_PRI
             auto const& folderPath = GetExecutableFolderPath().wstring();
             PriTempFilePath = L"\\\\?\\" + (std::filesystem::path(path.get()) /
                 ToBase64(Sha256({ (std::byte*)folderPath.data(), folderPath.length() * sizeof(wchar_t) })))
                 .wstring() + std::to_wstring((uint32_t)GetCurrentProcessId());
+#else
+            PriTempFilePath = L"\\\\?\\" + (std::filesystem::path(path.get()) /
+                std::format(L"{}.{}.xhk.pri", GetExecutableName(), (uint32_t)GetCurrentProcessId())).native();
+#endif
 
+            HANDLE handle;
             winrt::check_bool((handle = CreateFileW(PriTempFilePath.c_str(),
                 GENERIC_READ | GENERIC_WRITE,
                 0,
@@ -462,30 +476,70 @@ namespace winrt::XamlHostingKit
 
     namespace detail
     {
+#if !USE_FULL_CLASS_FACTORY
         template <typename D, typename... Interfaces>
-        constexpr std::array<GUID, sizeof...(Interfaces) + 1>
-        iid_array_impl(winrt::implements<D, Interfaces...>*)
+        inline constexpr bool has_iid(winrt::implements<D, Interfaces...>*, const GUID& iid)
         {
-            // TODO: support marker types and/or the rest of implicit
-            // interfaces (e.g. IInspectable, IAgileObject, IWeakReferenceSource, ...)?
-            // we don't use any with ClassFactory currently, so this is fine for now.
-
 #ifdef __INTELLISENSE__
-            return { __uuidof(::IUnknown), __uuidof(Interfaces)... };
+            return (iid == __uuidof(::IUnknown)) || ((iid == __uuidof(Interfaces)) || ...);
 #else
-            return { __uuidof(::IUnknown), std::bit_cast<GUID>(winrt::guid_of<Interfaces>())...};
+            return (iid == __uuidof(::IUnknown)) || ((iid == std::bit_cast<GUID>(winrt::guid_of<Interfaces>())) || ...);
 #endif
         }
+#else
+        template <typename T>
+        struct is_real_interface : std::true_type { };
+
+        template <typename T>
+        struct is_real_interface<winrt::cloaked<T>> : std::false_type { };
+
+        template <>
+        struct is_real_interface<winrt::composable> : std::false_type { };
+
+        template <>
+        struct is_real_interface<winrt::composing> : std::false_type { };
+
+        template <>
+        struct is_real_interface<winrt::static_lifetime> : std::false_type { };
+
+        template <>
+        struct is_real_interface<winrt::non_agile> : std::false_type { };
+
+        template <>
+        struct is_real_interface<winrt::no_weak_ref> : std::false_type { };
+
+        template <>
+        struct is_real_interface<winrt::no_module_lock> : std::false_type { };
+
+        template <typename T>
+        inline constexpr bool is_real_interface_v = is_real_interface<T>::value;
+
+        template <typename... Interfaces>
+        inline constexpr bool has_non_agile_v = (std::is_same_v<Interfaces, winrt::non_agile> || ...);
+
+        template <typename... Interfaces>
+        inline constexpr bool has_no_weak_ref_v = (std::is_same_v<Interfaces, winrt::no_weak_ref> || ...);
+
+        template <typename D, typename... Interfaces>
+        inline constexpr bool has_iid(winrt::implements<D, Interfaces...>*, const GUID& iid)
+        {
+            return (iid == __uuidof(::IUnknown) || iid == __uuidof(::IInspectable))
+                || (!has_no_weak_ref_v<Interfaces...> && iid == __uuidof(::IWeakReferenceSource))
+                || (!has_non_agile_v<Interfaces...> && (iid == __uuidof(::IAgileObject) || iid == __uuidof(::IMarshal)))
+#ifdef __INTELLISENSE__
+                || ((is_real_interface_v<Interfaces> && iid == __uuidof(Interfaces)) || ...);
+#else
+                || ((is_real_interface_v<Interfaces> && iid == std::bit_cast<GUID>(winrt::guid_of<Interfaces>())) || ...);
+#endif
+        }
+#endif
     }
 
     template <typename T>
-    struct iid_array
+    inline constexpr bool has_iid(const GUID& iid)
     {
-        static constexpr auto value = detail::iid_array_impl(static_cast<T*>(nullptr));
-    };
-
-    template <typename T>
-    inline constexpr auto iid_array_v = iid_array<T>::value;
+        return detail::has_iid(static_cast<T*>(nullptr), iid);
+    }
 
     template <typename T>
     struct ClassFactory : winrt::implements<ClassFactory<T>, IClassFactory>
@@ -498,10 +552,7 @@ namespace winrt::XamlHostingKit
             RETURN_HR_IF(CLASS_E_NOAGGREGATION, pUnkOuter != nullptr);
             RETURN_HR_IF_NULL(E_POINTER, ppvObject);
 
-            constexpr auto iids = iid_array_v<T>;
-            bool const hasIID = std::any_of(iids.begin(), iids.end(), [&](auto const& iid) { return riid == iid; });
-
-            if (!hasIID)
+            if (!has_iid<T>(riid))
             {
                 *ppvObject = nullptr;
                 return E_NOINTERFACE;

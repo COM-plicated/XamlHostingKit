@@ -1,3 +1,5 @@
+#if USE_PATH_HASH_FOR_TEMP_PRI // defined in the vcxproj file
+
 /* auto-generated on 2026-04-21 16:52:25 -0400. Do not edit! */
 /* begin file src/simdutf.cpp */
 #include "simdutf.h"
@@ -68065,3 +68067,5 @@ bool simdutf_base64_valid_utf16(char16_t input,
 /* end file src/simdutf_c.cpp */
 SIMDUTF_POP_DISABLE_WARNINGS
 /* end file src/simdutf.cpp */
+
+#endif

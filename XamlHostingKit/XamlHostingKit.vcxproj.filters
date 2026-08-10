@@ -23,6 +23,7 @@
       <Filter>simdutf</Filter>
     </ClCompile>
     <ClCompile Include="FileProtocolHandler.cpp" />
+    <ClCompile Include="version.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -39,6 +40,7 @@
       <Filter>simdutf</Filter>
     </ClInclude>
     <ClInclude Include="FileProtocolHandler.h" />
+    <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="XamlApplication.idl" />

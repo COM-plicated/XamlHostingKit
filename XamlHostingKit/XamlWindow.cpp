@@ -129,7 +129,7 @@ namespace winrt::XamlHostingKit::implementation
                     m_windowPrivate.attach(wPriv.detach());
                     m_isSyncObjEnabled = true;
 
-                    if (HANDLE syncHandle = Helpers::GetResizeSynchronizationObject(m_hwnd)) [[likely]]
+                    if (HANDLE syncHandle = Helpers::GetResizeSynchronizationObject(m_hwnd)) [[unlikely]]
                     {
                         LOG_IF_FAILED(m_windowPrivate->SetSynchronizationInfo((uint64_t)syncHandle, (uint64_t)m_hwnd));
                         CloseHandle(syncHandle);
