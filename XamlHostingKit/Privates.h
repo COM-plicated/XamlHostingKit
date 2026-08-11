@@ -230,6 +230,13 @@ IResourceManagerStaticInternalOld : public ::IInspectable
     STDMETHOD(GetCurrentResourceManagerForSystemProfile)(void** ppResourceManager) PURE;
 };
 
+MIDL_INTERFACE("c408a1f1-3ede-41e9-9a38-c203678c2df7")
+ISystemResourceManagerExtensions : public ::IInspectable
+{
+    STDMETHOD(__stub0)() PURE;
+    STDMETHOD(GetMrtResourceManagerForResourceManager)(::IInspectable** ppManager) PURE;
+};
+
 MIDL_INTERFACE("8c25e859-1042-4da0-9232-bf2aa8ff3726")
 ISystemResourceManagerExtensions2 : public ::IInspectable
 {

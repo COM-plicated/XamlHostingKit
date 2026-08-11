@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Shlobj.h>
+#include <appmodel.h>
 #include <filesystem>
 #include "Privates.h"
 #include <wil/registry.h>
@@ -51,6 +52,7 @@ namespace winrt::XamlHostingKit
     static const auto NtUserGetResizeDCompositionSynchronizationObject = reinterpret_cast<BOOL(WINAPI*)(HWND, HANDLE*)>(GetProcAddress(Win32UModule, "NtUserGetResizeDCompositionSynchronizationObject"));
     static const auto NtUserEnableResizeLayoutSynchronization = reinterpret_cast<BOOL(WINAPI*)(HWND, BOOL)>(GetProcAddress(Win32UModule, "NtUserEnableResizeLayoutSynchronization"));
     static const auto UrlmonCreateInstance = reinterpret_cast<HRESULT(WINAPI*)(REFCLSID, IUnknown*, REFIID, void**)>(GetProcAddress(UrlMonModule.get(), MAKEINTRESOURCEA(441)));
+    static const auto GetCurrentPackageInfo2Method = reinterpret_cast<decltype(&GetCurrentPackageInfo2)>(GetProcAddress(KernelBaseModule, "GetCurrentPackageInfo2"));
 
     static const auto PersonalizeKey = wil::reg::open_unique_key(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize");
 
@@ -152,6 +154,19 @@ namespace winrt::XamlHostingKit
     public:
 
         inline static std::wstring PriTempFilePath { };
+
+        inline static std::wstring CurrentPackageFamilyName = []() -> std::wstring
+        {
+            uint32_t length = 0;
+            if (GetCurrentPackageFamilyName(&length, nullptr) == ERROR_INSUFFICIENT_BUFFER) [[unlikely]]
+            {
+                std::wstring pfn(length - 1, L'\0');
+                LOG_IF_WIN32_ERROR(GetCurrentPackageFamilyName(&length, pfn.data()));
+                return pfn;
+            }
+
+            return { };
+        }();
 
         inline static winrt::hstring const& GetExecutableName()
         {

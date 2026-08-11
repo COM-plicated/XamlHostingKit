@@ -23,12 +23,14 @@ namespace winrt::XamlHostingKit::implementation
 
         inline static bool s_hasStarted { false };
         inline static bool s_propsFilled { false };
+        inline static bool s_usingDefaultResPri { false };
         inline static bool s_isWebViewAvailable { false };
         inline static bool s_mrmHookedSuccessfully { false };
         inline static wil::unique_handle s_priTempFile { nullptr };
         inline static std::wstring s_priFileName { };
         inline static winrt::XamlHostingKit::XamlWindow s_mainWindow { nullptr };
         inline static ResourceManager s_resourceManager { nullptr };
+        inline static winrt::com_ptr<mrm::IMrtResourceManager> s_mrtManager { nullptr };
         inline static IVector<winrt::XamlHostingKit::XamlWindow> s_windows { winrt::multi_threaded_vector<winrt::XamlHostingKit::XamlWindow>() };
         inline static HRESULT(WINAPI* s_originalInitializeForCurrentApplication)(mrm::IMrtResourceManager* _this) { nullptr };
         inline static HRESULT(WINAPI* s_originalTryInitializeForCurrentApplication)(mrm::IMrtResourceManager2* _this) { nullptr };
@@ -50,6 +52,7 @@ namespace winrt::XamlHostingKit::implementation
         static BOOL WINAPI GetFileAttributesExWHook(_In_ LPCWSTR lpFileName, _In_ GET_FILEEX_INFO_LEVELS fInfoLevelId, _Out_writes_bytes_(sizeof(WIN32_FILE_ATTRIBUTE_DATA)) LPVOID lpFileInformation);
         static HRESULT WINAPI InitializeForCurrentApplicationHook(mrm::IMrtResourceManager* _this);
         static HRESULT WINAPI TryInitializeForCurrentApplicationHook(mrm::IMrtResourceManager2* _this);
+        static HRESULT WINAPI CoCreateInstanceHook(REFCLSID rclsid, ::IUnknown* pUnkOuter, DWORD dwClsContext, REFIID riid, void** ppv);
         static HRESULT InitializeMrmHooks();
         static void CreateResourceManager(PCWSTR priPath);
         static HRESULT WINAPI get_ViewsHook(void* _this, void** pViews);

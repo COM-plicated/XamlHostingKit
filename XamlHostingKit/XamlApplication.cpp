@@ -99,7 +99,7 @@ namespace winrt::XamlHostingKit::implementation
             winrt::check_hresult(priv->StartInCoreWindowHostingMode({ .TransparentBackground = 1 }, winrt::get_abi(initCallback)));
         }
 
-        auto window = winrt::make_self<XamlWindow>(WindowCreationOptions { }, true);
+        auto window = winrt::make_self<XamlWindow>(WindowCreationOptions{ }, true);
 
         s_hasStarted = true;
         XamlConfig::s_isInitialized = true;
@@ -114,7 +114,7 @@ namespace winrt::XamlHostingKit::implementation
 
         window->RunMessageLoop();
 
-        XamlHostingKit::XamlWindow nextWindow { nullptr };
+        XamlHostingKit::XamlWindow nextWindow{ nullptr };
         while (s_windows.Size() > 0 && (nextWindow = s_windows.GetAt(0)))
         {
             auto thread = GetWindowThreadProcessId((HWND)nextWindow.WindowHandle().Value, nullptr);
@@ -126,8 +126,8 @@ namespace winrt::XamlHostingKit::implementation
         HMODULE edgeModule;
         HMODULE threadpoolModule;
         if (XamlConfig::s_enableWebView &&
-           (edgeModule = GetModuleHandleW(L"edgehtml.dll")) &&
-           (threadpoolModule = GetModuleHandleW(L"api-ms-win-core-threadpool-l1-2-0.dll"))) [[likely]]
+            (edgeModule = GetModuleHandleW(L"edgehtml.dll")) &&
+            (threadpoolModule = GetModuleHandleW(L"api-ms-win-core-threadpool-l1-2-0.dll"))) [[likely]]
         {
             LOG_IF_FAILED(Helpers::XWinePatchImport(edgeModule, threadpoolModule, "SubmitThreadpoolWork", &SubmitThreadpoolWorkHook));
         }
@@ -164,6 +164,13 @@ namespace winrt::XamlHostingKit::implementation
             }
         }
 
+        // note for the future: change this if anything else started to use 
+        // shouldThrowOnHookFailure=false other than the default resources.pri path
+        if (shouldThrowOnHookFailure) [[unlikely]]
+        {
+            s_usingDefaultResPri = false;
+        }
+
         CreateResourceManager(priPath.c_str());
         StartCommon(initCallback);
     }
@@ -182,12 +189,14 @@ namespace winrt::XamlHostingKit::implementation
             throw hresult_invalid_argument(L"priBuffer cannot be null.");
         }
 
+        s_usingDefaultResPri = false;
         s_priTempFile.reset(Helpers::CreateTempFileFromBuffer(priBuffer));
         Start(initCallback, winrt::hstring { (Helpers::GetExecutableFolderPath() / KNOWN_FILE_NAME).wstring() }, true);
     }
 
     void XamlApplication::Start(winrt::Windows::UI::Xaml::ApplicationInitializationCallback const& initCallback)
     {
+        s_usingDefaultResPri = true;
         Start(initCallback, winrt::hstring { (Helpers::GetExecutableFolderPath() / L"resources.pri").wstring() }, false);
     }
 
@@ -333,8 +342,8 @@ namespace winrt::XamlHostingKit::implementation
     {
         auto manager = PackageManager();
         auto packages = manager.FindPackagesForUser({ }, L"windows.immersivecontrolpanel_cw5n1h2txyewy");
-        
-        IIterator<Package> first { nullptr };
+
+        IIterator<Package> first{ nullptr };
         if (!packages || !(first = packages.First()) || !first.HasCurrent()) [[unlikely]]
         {
             LOG_HR_MSG(E_FAIL, "Failed to find Settings package, WebView might not work.");
@@ -350,7 +359,7 @@ namespace winrt::XamlHostingKit::implementation
 
         if (!settingsPFN.empty()) [[likely]]
         {
-            PACKAGE_INFO_REFERENCE pir { NULL };
+            PACKAGE_INFO_REFERENCE pir{ NULL };
             if (LOG_IF_WIN32_ERROR(OpenPackageInfoByFullName(settingsPFN.c_str(), 0, &pir)) == ERROR_SUCCESS) [[likely]]
             {
                 auto result = LOG_IF_WIN32_ERROR(GetPackageInfo(pir, flags, bufferLength, buffer, count));
@@ -397,7 +406,12 @@ namespace winrt::XamlHostingKit::implementation
             IEConfiguration_SetBrowserAppProfile) [[likely]]
         {
             RETURN_IF_FAILED(Helpers::XWinePatchImport(XAMLModule.get(), AppCoreModule.get(), "AppPolicyGetWindowingModel", &AppPolicyGetWindowingModelHook));
-            RETURN_IF_FAILED(Helpers::XWinePatchImport(XAMLModule.get(), AppCoreModule.get(), "GetCurrentPackageInfo", &GetCurrentPackageInfoHook));
+
+            if (Helpers::CurrentPackageFamilyName.empty())
+            {
+                RETURN_IF_FAILED(Helpers::XWinePatchImport(XAMLModule.get(), AppCoreModule.get(), "GetCurrentPackageInfo", &GetCurrentPackageInfoHook));
+            }
+
             RETURN_IF_FAILED(Helpers::XWinePatchImport(XAMLModule.get(), UrlMonModule.get(), MAKEINTRESOURCEA(517), &CreateAppxSecurityManagerHook));
             RETURN_IF_FAILED(Helpers::XWinePatchImport(IERTUtilModule.get(), KernelBaseModule, "GetProcAddress", &GetProcAddressHook));
             RETURN_IF_FAILED(IEConfiguration_SetBrowserAppProfile(L"MicrosoftEdge", 2, 0));
@@ -446,11 +460,24 @@ namespace winrt::XamlHostingKit::implementation
 
     HRESULT WINAPI XamlApplication::InitializeForCurrentApplicationHook(mrm::IMrtResourceManager* _this)
     {
+        /*if (s_usingDefaultResPri &&
+            SUCCEEDED_LOG(s_originalInitializeForCurrentApplication(_this))) [[likely]]
+        {
+            return S_OK;
+        }*/
+
         HMODULE mod;
         GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCWSTR)_ReturnAddress(), &mod);
+        bool isXaml = mod == XAMLModule.get();
+
+        // TODO: should we compare using IUnknown instead?
+        if (isXaml && _this == s_mrtManager.get()) [[likely]]
+        {
+            return S_OK;
+        }
 
         HRESULT hr;
-        if (mod != XAMLModule.get() || s_priFileName.empty() ||
+        if (!isXaml || s_priFileName.empty() ||
             FAILED_LOG(hr = _this->InitializeForFile(s_priFileName.c_str()))) [[unlikely]]
         {
             return s_originalInitializeForCurrentApplication(_this);
@@ -461,20 +488,46 @@ namespace winrt::XamlHostingKit::implementation
 
     HRESULT WINAPI XamlApplication::TryInitializeForCurrentApplicationHook(mrm::IMrtResourceManager2* _this)
     {
+        /*if (s_usingDefaultResPri &&
+            SUCCEEDED_LOG(s_originalTryInitializeForCurrentApplication(_this))) [[likely]]
+        {
+            return S_OK;
+        }*/
+
         HMODULE mod;
         GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCWSTR)_ReturnAddress(), &mod);
+        bool isXaml = mod == XAMLModule.get();
 
         HRESULT hr;
         winrt::com_ptr<mrm::IMrtResourceManager> manager;
+        auto queryFailed = FAILED_LOG(_this->QueryInterface(manager.put()));
 
-        if (mod != XAMLModule.get() || s_priFileName.empty() ||
-            FAILED_LOG(_this->QueryInterface(manager.put())) ||
+        // TODO: should we compare using IUnknown instead?
+        if (isXaml && !queryFailed && manager.get() == s_mrtManager.get()) [[likely]]
+        {
+            return S_OK;
+        }
+
+        if (!isXaml || s_priFileName.empty() || queryFailed ||
             FAILED_LOG(hr = manager->InitializeForFile(s_priFileName.c_str()))) [[unlikely]]
         {
             return s_originalTryInitializeForCurrentApplication(_this);
         }
 
         return hr;
+    }
+
+    HRESULT WINAPI XamlApplication::CoCreateInstanceHook(REFCLSID rclsid, ::IUnknown* pUnkOuter, DWORD dwClsContext, REFIID riid, void** ppv)
+    {
+        if (rclsid == __uuidof(mrm::MrtResourceManager))
+        {
+            if (/*!s_usingDefaultResPri &&*/ s_mrtManager && SUCCEEDED_LOG(s_mrtManager->QueryInterface(riid, ppv))) [[likely]]
+            {
+                return S_OK;
+            }
+        }
+
+        return CoCreateInstance(rclsid, pUnkOuter, dwClsContext, riid, ppv);
     }
 
     HRESULT XamlApplication::InitializeMrmHooks()
@@ -498,6 +551,7 @@ namespace winrt::XamlHostingKit::implementation
             RETURN_LAST_ERROR_IF(DetourTransactionCommit() != NO_ERROR);
             RETURN_IF_FAILED(Helpers::XWinePatchImport(MrmModule.get(), KernelBaseModule, "CreateFileW", &CreateFileWHook));
             RETURN_IF_FAILED(Helpers::XWinePatchImport(MrmModule.get(), KernelBaseModule, "GetFileAttributesExW", &GetFileAttributesExWHook));
+            RETURN_IF_FAILED(Helpers::XWinePatchImport(XAMLModule.get(), COMBaseModule, "CoCreateInstance", &CoCreateInstanceHook));
 
             return S_OK;
         }
@@ -507,6 +561,16 @@ namespace winrt::XamlHostingKit::implementation
 
     void XamlApplication::CreateResourceManager(PCWSTR priPath)
     {
+        if (!Helpers::CurrentPackageFamilyName.empty() && s_usingDefaultResPri) [[unlikely]]
+        {
+            try
+            {
+                if (s_resourceManager = warc::ResourceManager::Current()) [[likely]]
+                    return;
+            }
+            catch (...) { }
+        }
+
         winrt::com_ptr<IResourceManagerStaticInternal> mgrStatics;
         if (!(mgrStatics = winrt::try_get_activation_factory<warc::ResourceManager, IResourceManagerStaticInternal>()) ||
             FAILED_LOG(mgrStatics->GetCurrentResourceManagerForSystemProfile(winrt::put_abi(s_resourceManager))) ||
@@ -527,6 +591,81 @@ namespace winrt::XamlHostingKit::implementation
         {
             LOG_HR_MSG(E_FAIL, "Failed to get load the PRI into the ResourceManager.");
             s_resourceManager = nullptr;
+        }
+        else
+        {
+            auto const filters8 = PACKAGE_FILTER_HEAD | PACKAGE_FILTER_DIRECT;
+            auto const filters81 = filters8 | PACKAGE_FILTER_RESOURCE | PACKAGE_FILTER_BUNDLE;
+            auto const filters1607 = filters81 | PACKAGE_FILTER_OPTIONAL;
+            auto const filters2004 = filters1607 | PACKAGE_FILTER_STATIC | PACKAGE_FILTER_DYNAMIC;
+            auto const filters11 = filters2004 | PACKAGE_FILTER_HOSTRUNTIME;
+
+            uint32_t count = 0;
+            uint32_t length = 0;
+            uint32_t filters = 0;
+            std::unique_ptr<BYTE[]> buffer;
+            PACKAGE_INFO* packageInfo = nullptr;
+            if (GetCurrentPackageInfo2Method) [[likely]]
+            {
+                if (GetCurrentPackageInfo2Method(filters = filters11, PackagePathType_Effective, &length, nullptr, &count) == ERROR_INSUFFICIENT_BUFFER /*||
+                    GetCurrentPackageInfo2Method(filters = filters2004, PackagePathType_Effective, &length, nullptr, &count) == ERROR_INSUFFICIENT_BUFFER ||
+                    GetCurrentPackageInfo2Method(filters = filters1607, PackagePathType_Effective, &length, nullptr, &count) == ERROR_INSUFFICIENT_BUFFER*/) [[likely]]
+                {
+                    buffer = std::make_unique<BYTE[]>(length);
+                    packageInfo = reinterpret_cast<PACKAGE_INFO*>(buffer.get());
+                    if (LOG_IF_WIN32_ERROR(GetCurrentPackageInfo2Method(filters, PackagePathType_Effective, &length, buffer.get(), &count)) != ERROR_SUCCESS) [[unlikely]]
+                    {
+                        LOG_HR_MSG(E_FAIL, "Failed to get package info for the current process.");
+                        return;
+                    }
+                }
+            }
+
+            if (!packageInfo) [[unlikely]]
+            {
+                count = 0;
+                length = 0;
+                filters = 0;
+                if (GetCurrentPackageInfo(filters = filters1607, &length, nullptr, &count) == ERROR_INSUFFICIENT_BUFFER /*||
+                    GetCurrentPackageInfo(filters = filters81, &length, nullptr, &count) == ERROR_INSUFFICIENT_BUFFER     ||
+                    GetCurrentPackageInfo(filters = filters8, &length, nullptr, &count) == ERROR_INSUFFICIENT_BUFFER*/) [[likely]]
+                {
+                    buffer = std::make_unique<BYTE[]>(length);
+                    packageInfo = reinterpret_cast<PACKAGE_INFO*>(buffer.get());
+                    if (LOG_IF_WIN32_ERROR(GetCurrentPackageInfo(filters, &length, buffer.get(), &count)) != ERROR_SUCCESS) [[unlikely]]
+                    {
+                        LOG_HR_MSG(E_FAIL, "Failed to get package info for the current process.");
+                        return;
+                    }
+                }
+            }
+
+            for (uint32_t i = 0; i < count; ++i)
+            {
+                if (packageInfo[i].path) [[likely]]
+                {
+                    if (!Helpers::CurrentPackageFamilyName.empty() &&
+                        _wcsicmp(packageInfo[i].packageFamilyName, Helpers::CurrentPackageFamilyName.c_str()) == 0) [[unlikely]]
+                    {
+                        continue;
+                    }
+
+                    auto path = std::filesystem::path { packageInfo[i].path };
+                    path /= L"resources.pri";
+
+                    LOG_IF_FAILED(mgrEx->LoadPriFileForSystemUse(path.c_str()));
+                }
+            }
+
+            winrt::com_ptr<ISystemResourceManagerExtensions> ext;
+            if (!LOG_HR_IF(E_NOINTERFACE, !s_resourceManager.try_as(ext))) [[likely]]
+            {
+                winrt::com_ptr<::IInspectable> mgri;
+                if (SUCCEEDED_LOG(ext->GetMrtResourceManagerForResourceManager(mgri.put()))) [[likely]]
+                {
+                    LOG_IF_FAILED(mgri->QueryInterface(s_mrtManager.put()));
+                }
+            }
         }
     }
 
