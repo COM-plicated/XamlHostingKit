@@ -460,11 +460,11 @@ namespace winrt::XamlHostingKit::implementation
 
     HRESULT WINAPI XamlApplication::InitializeForCurrentApplicationHook(mrm::IMrtResourceManager* _this)
     {
-        /*if (s_usingDefaultResPri &&
+        if (s_usingDefaultResPri &&
             SUCCEEDED_LOG(s_originalInitializeForCurrentApplication(_this))) [[likely]]
         {
             return S_OK;
-        }*/
+        }
 
         HMODULE mod;
         GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCWSTR)_ReturnAddress(), &mod);
@@ -488,11 +488,11 @@ namespace winrt::XamlHostingKit::implementation
 
     HRESULT WINAPI XamlApplication::TryInitializeForCurrentApplicationHook(mrm::IMrtResourceManager2* _this)
     {
-        /*if (s_usingDefaultResPri &&
+        if (s_usingDefaultResPri &&
             SUCCEEDED_LOG(s_originalTryInitializeForCurrentApplication(_this))) [[likely]]
         {
             return S_OK;
-        }*/
+        }
 
         HMODULE mod;
         GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCWSTR)_ReturnAddress(), &mod);
@@ -521,7 +521,7 @@ namespace winrt::XamlHostingKit::implementation
     {
         if (rclsid == __uuidof(mrm::MrtResourceManager))
         {
-            if (/*!s_usingDefaultResPri &&*/ s_mrtManager && SUCCEEDED_LOG(s_mrtManager->QueryInterface(riid, ppv))) [[likely]]
+            if (!s_usingDefaultResPri && s_mrtManager && SUCCEEDED_LOG(s_mrtManager->QueryInterface(riid, ppv))) [[unlikely]]
             {
                 return S_OK;
             }
