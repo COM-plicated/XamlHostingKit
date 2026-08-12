@@ -95,11 +95,30 @@ namespace winrt::XamlHostingKit::implementation
 
             CoSetASTATestMode(ROINITIALIZEASTA_ALLOWED);
 
-            auto priv = winrt::get_activation_factory<Application, IFrameworkApplicationStaticsPrivate>();
-            winrt::check_hresult(priv->StartInCoreWindowHostingMode({ .TransparentBackground = 1 }, winrt::get_abi(initCallback)));
+            auto priv = winrt::try_get_activation_factory<Application, IFrameworkApplicationStaticsPrivate>();
+            if (!priv || FAILED_LOG(priv->StartInCoreWindowHostingMode({ .TransparentBackground = 1 }, winrt::get_abi(initCallback)))) [[unlikely]]
+            {
+                // we can reach here on 8.1 (and older)
+                // we can also reach here if IFrameworkApplicationStaticsPrivate
+                // exists but StartInCoreWindowHostingMode failed, in which case
+                // this will also fail (probably).
+
+                if (!CreateXamlUIPresenter) [[unlikely]]
+                {
+                    throw hresult_error(E_FAIL, L"Failed to find CreateXamlUIPresenter function, this function is needed to initialize DXamlCore.");
+                }
+
+                // There is a bug on older builds where GetReferenceTrackerManager (called on the Application class)
+                // doesn't call DirectUI::ReferenceTrackerManager::EnsureInitialized, which ends up with an AV in
+                // GetReferenceTrackerManager (called by .NET), to workaround that we call CreateXamlUIPresenter
+                // which calls DirectUI::DXamlCore::InitializeImpl, which in turn calls
+                // DirectUI::ReferenceTrackerManager::EnsureInitialized, which fixes the AV.
+                CreateXamlUIPresenter(nullptr, nullptr);
+                initCallback(nullptr);
+            }
         }
 
-        auto window = winrt::make_self<XamlWindow>(WindowCreationOptions{ }, true);
+        auto window = winrt::make_self<XamlWindow>(WindowCreationOptions { }, true);
 
         s_hasStarted = true;
         XamlConfig::s_isInitialized = true;
@@ -402,19 +421,32 @@ namespace winrt::XamlHostingKit::implementation
     {
         if (AppCoreModule &&
             XAMLModule &&
-            IERTUtilModule &&
-            IEConfiguration_SetBrowserAppProfile) [[likely]]
+            IERTUtilModule) [[likely]]
         {
-            RETURN_IF_FAILED(Helpers::XWinePatchImport(XAMLModule.get(), AppCoreModule.get(), "AppPolicyGetWindowingModel", &AppPolicyGetWindowingModelHook));
-
-            if (Helpers::CurrentPackageFamilyName.empty())
+            if (FAILED_LOG(Helpers::XWinePatchImport(XAMLModule.get(), AppCoreModule.get(), "AppPolicyGetWindowingModel", &AppPolicyGetWindowingModelHook))) [[unlikely]]
             {
-                RETURN_IF_FAILED(Helpers::XWinePatchImport(XAMLModule.get(), AppCoreModule.get(), "GetCurrentPackageInfo", &GetCurrentPackageInfoHook));
+                LOG_IF_FAILED(Helpers::XWinePatchImport(XAMLModule.get(), Kernel32Module, "AppPolicyGetWindowingModel", &AppPolicyGetWindowingModelHook));
+            }
+
+            if (Helpers::CurrentPackageFamilyName.empty()) [[likely]]
+            {
+                if (FAILED_LOG(Helpers::XWinePatchImport(XAMLModule.get(), AppCoreModule.get(), "GetCurrentPackageInfo", &GetCurrentPackageInfoHook))) [[unlikely]]
+                {
+                    RETURN_IF_FAILED(Helpers::XWinePatchImport(XAMLModule.get(), Kernel32Module, "GetCurrentPackageInfo", &GetCurrentPackageInfoHook));
+                }
             }
 
             RETURN_IF_FAILED(Helpers::XWinePatchImport(XAMLModule.get(), UrlMonModule.get(), MAKEINTRESOURCEA(517), &CreateAppxSecurityManagerHook));
-            RETURN_IF_FAILED(Helpers::XWinePatchImport(IERTUtilModule.get(), KernelBaseModule, "GetProcAddress", &GetProcAddressHook));
-            RETURN_IF_FAILED(IEConfiguration_SetBrowserAppProfile(L"MicrosoftEdge", 2, 0));
+            
+            if (FAILED_LOG(Helpers::XWinePatchImport(IERTUtilModule.get(), KernelBaseModule, "GetProcAddress", &GetProcAddressHook))) [[unlikely]]
+            {
+                RETURN_IF_FAILED(Helpers::XWinePatchImport(IERTUtilModule.get(), Kernel32Module, "GetProcAddress", &GetProcAddressHook));
+            }
+            
+            if (IEConfiguration_SetBrowserAppProfile) [[likely]]
+            {
+                RETURN_IF_FAILED(IEConfiguration_SetBrowserAppProfile(L"MicrosoftEdge", 2, 0));
+            }
 
             if (XamlConfig::s_enableMsAppxWebProtocolSupport) [[unlikely]]
             {

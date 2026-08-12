@@ -35,6 +35,7 @@ namespace winrt::XamlHostingKit
     static const auto ThreadPoolModule = wil::unique_hmodule(LoadLibraryW(L"threadpoolwinrt.dll"));
     static const auto COMBaseModule = GetModuleHandleW(L"combase.dll");
     static const auto KernelBaseModule = GetModuleHandleW(L"kernelbase.dll");
+    static const auto Kernel32Module = GetModuleHandleW(L"kernel32.dll");
     static const auto Win32UModule = GetModuleHandleW(L"win32u.dll");
 
     static const auto IsDarkModeAllowedForWindow = reinterpret_cast<BOOL(WINAPI*)(HWND)>(GetProcAddress(UXThemeModule.get(), MAKEINTRESOURCEA(137)));
@@ -53,6 +54,7 @@ namespace winrt::XamlHostingKit
     static const auto NtUserEnableResizeLayoutSynchronization = reinterpret_cast<BOOL(WINAPI*)(HWND, BOOL)>(GetProcAddress(Win32UModule, "NtUserEnableResizeLayoutSynchronization"));
     static const auto UrlmonCreateInstance = reinterpret_cast<HRESULT(WINAPI*)(REFCLSID, IUnknown*, REFIID, void**)>(GetProcAddress(UrlMonModule.get(), MAKEINTRESOURCEA(441)));
     static const auto GetCurrentPackageInfo2Method = reinterpret_cast<decltype(&GetCurrentPackageInfo2)>(GetProcAddress(KernelBaseModule, "GetCurrentPackageInfo2"));
+    static const auto CreateXamlUIPresenter = reinterpret_cast<HRESULT(WINAPI*)(void*, void**)>(GetProcAddress(XAMLModule.get(), "CreateXamlUIPresenter"));
 
     static const auto PersonalizeKey = wil::reg::open_unique_key(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize");
 

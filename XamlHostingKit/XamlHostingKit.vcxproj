@@ -132,6 +132,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
+      <AppContainer>false</AppContainer>
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
       <ModuleDefinitionFile>XamlHostingKit.def</ModuleDefinitionFile>
     </Link>
