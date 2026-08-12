@@ -256,12 +256,18 @@ namespace winrt::XamlHostingKit::implementation
 
     winrt::Windows::UI::Composition::Compositor XamlWindow::Compositor()
     {
-        return m_systemWindow.Compositor();
+        if (auto window3 = m_systemWindow.try_as<IWindow3>()) [[likely]]
+            return window3.Compositor();
+
+        return nullptr;
     }
 
     winrt::Windows::UI::UIContext XamlWindow::UIContext()
     {
-        return m_systemWindow.UIContext();
+        if (auto window4 = m_systemWindow.try_as<IWindow4>()) [[likely]]
+            return window4.UIContext();
+
+        return nullptr;
     }
 
     winrt::Windows::UI::Xaml::UIElement XamlWindow::Content()
