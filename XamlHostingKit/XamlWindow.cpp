@@ -29,7 +29,7 @@ namespace winrt::XamlHostingKit::implementation
             dwmFrameEnabled = TRUE;
         }
 
-        EnableMouseInPointer(TRUE);
+        //EnableMouseInPointer(TRUE);
 
         if (XamlConfig::s_enableTouchpadAwareness) [[likely]]
         {

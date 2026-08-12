@@ -19,8 +19,8 @@ namespace XamlHostingKit.ManagedSample
         {
             WebView wv = new(WebViewExecutionMode.SeparateThread)
             {
-                //Source = new Uri("ms-appx-web:///test.html"),
-                Source = new Uri("https://gist.github.com/user-attachments/assets/3e03fe73-4af4-48d7-ade6-a2af4403dbb7"),
+                //Source = new("ms-appx-web:///test.html"),
+                Source = new("https://gist.github.com/user-attachments/assets/3e03fe73-4af4-48d7-ade6-a2af4403dbb7"),
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 Width = 400,

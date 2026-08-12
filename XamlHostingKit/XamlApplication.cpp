@@ -133,7 +133,7 @@ namespace winrt::XamlHostingKit::implementation
 
         window->RunMessageLoop();
 
-        XamlHostingKit::XamlWindow nextWindow{ nullptr };
+        XamlHostingKit::XamlWindow nextWindow { nullptr };
         while (s_windows.Size() > 0 && (nextWindow = s_windows.GetAt(0)))
         {
             auto thread = GetWindowThreadProcessId((HWND)nextWindow.WindowHandle().Value, nullptr);
