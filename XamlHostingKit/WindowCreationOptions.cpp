@@ -54,22 +54,22 @@ namespace winrt::XamlHostingKit::implementation
         m_height = value;
     }
 
-    std::uint32_t WindowCreationOptions::Styles() const
+    WindowStyles WindowCreationOptions::Styles() const
     {
         return m_styles;
     }
 
-    void WindowCreationOptions::Styles(std::uint32_t value)
+    void WindowCreationOptions::Styles(WindowStyles value)
     {
         m_styles = value;
     }
 
-    std::uint32_t WindowCreationOptions::ExtendedStyles() const
+    WindowExtendedStyles WindowCreationOptions::ExtendedStyles() const
     {
         return m_extendedStyles;
     }
 
-    void WindowCreationOptions::ExtendedStyles(std::uint32_t value)
+    void WindowCreationOptions::ExtendedStyles(WindowExtendedStyles value)
     {
         m_extendedStyles = value;
     }

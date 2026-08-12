@@ -27,8 +27,8 @@ namespace winrt::XamlHostingKit::implementation
         HWND m_hwnd { nullptr };
         HWND m_coreWindowHwnd { nullptr };
         hstring m_title;
-        uint32_t m_styles { 0 };
-        uint32_t m_extendedStyles { 0 };
+        WindowStyles m_styles { 0 };
+        WindowExtendedStyles m_extendedStyles { 0 };
         Window m_systemWindow { nullptr };
         CoreApplicationView m_view { nullptr };
         CoreDispatcher m_dispatcher { nullptr };
@@ -54,11 +54,11 @@ namespace winrt::XamlHostingKit::implementation
 
         winrt::Windows::Foundation::Rect Bounds();
 
-        std::uint32_t Styles();
-        void Styles(std::uint32_t value);
+        WindowStyles Styles();
+        void Styles(WindowStyles value);
 
-        std::uint32_t ExtendedStyles();
-        void ExtendedStyles(std::uint32_t value);
+        WindowExtendedStyles ExtendedStyles();
+        void ExtendedStyles(WindowExtendedStyles value);
 
         bool IsVisible();
         winrt::Windows::UI::WindowId WindowHandle();

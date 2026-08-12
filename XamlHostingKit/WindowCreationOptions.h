@@ -15,15 +15,12 @@ namespace winrt::XamlHostingKit::implementation
         std::int32_t  m_top            { CW_USEDEFAULT };
         std::int32_t  m_width          { CW_USEDEFAULT };
         std::int32_t  m_height         { CW_USEDEFAULT };
-        std::uint32_t m_styles         { WS_OVERLAPPEDWINDOW };
-        std::uint32_t m_extendedStyles
+        WindowStyles  m_styles         { WindowStyles::OverlappedWindow };
+        WindowExtendedStyles m_extendedStyles
         { 
-            static_cast<uint32_t>
-            (
-                XamlConfig::s_disableRedirectionLayer ?
-                WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME :
-                WS_EX_DLGMODALFRAME
-            )
+            XamlConfig::s_disableRedirectionLayer ?
+                WindowExtendedStyles::NoRedirectionBitmap | WindowExtendedStyles::DialogModalFrame :
+                WindowExtendedStyles::DialogModalFrame
         };
 
     public:
@@ -44,11 +41,11 @@ namespace winrt::XamlHostingKit::implementation
         std::int32_t Height() const;
         void Height(std::int32_t value);
 
-        std::uint32_t Styles() const;
-        void Styles(std::uint32_t value);
+        WindowStyles Styles() const;
+        void Styles(WindowStyles value);
 
-        std::uint32_t ExtendedStyles() const;
-        void ExtendedStyles(std::uint32_t value);
+        WindowExtendedStyles ExtendedStyles() const;
+        void ExtendedStyles(WindowExtendedStyles value);
     };
 }
 

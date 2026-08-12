@@ -47,11 +47,11 @@ namespace winrt::XamlHostingKit::implementation
 
         winrt::check_pointer(m_hwnd = CreateWindowExW(
             dwmFrameEnabled ?
-                m_extendedStyles :
-                (m_extendedStyles &~ (WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME)),
+                static_cast<uint32_t>(m_extendedStyles) :
+                (static_cast<uint32_t>(m_extendedStyles) &~ (WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME)),
             className,
             m_title.c_str(),
-            m_styles &~ WS_VISIBLE,
+            static_cast<uint32_t>(m_styles) &~ WS_VISIBLE,
             options.Left(),
             options.Top(),
             options.Width(),
@@ -195,26 +195,26 @@ namespace winrt::XamlHostingKit::implementation
         };
     }
 
-    std::uint32_t XamlWindow::Styles()
+    WindowStyles XamlWindow::Styles()
     {
         return m_styles;
     }
 
-    void XamlWindow::Styles(std::uint32_t value)
+    void XamlWindow::Styles(WindowStyles value)
     {
-        SetWindowLongPtrW(m_hwnd, GWL_STYLE, value);
-        m_styles = static_cast<uint32_t>(GetWindowLongPtrW(m_hwnd, GWL_STYLE));
+        SetWindowLongPtrW(m_hwnd, GWL_STYLE, static_cast<uint32_t>(value));
+        m_styles = static_cast<WindowStyles>(GetWindowLongPtrW(m_hwnd, GWL_STYLE));
     }
 
-    std::uint32_t XamlWindow::ExtendedStyles()
+    WindowExtendedStyles XamlWindow::ExtendedStyles()
     {
         return m_extendedStyles;
     }
 
-    void XamlWindow::ExtendedStyles(std::uint32_t value)
+    void XamlWindow::ExtendedStyles(WindowExtendedStyles value)
     {
-        SetWindowLongPtrW(m_hwnd, GWL_EXSTYLE, value);
-        m_extendedStyles = static_cast<uint32_t>(GetWindowLongPtrW(m_hwnd, GWL_EXSTYLE));
+        SetWindowLongPtrW(m_hwnd, GWL_EXSTYLE, static_cast<uint32_t>(value));
+        m_extendedStyles = static_cast<WindowExtendedStyles>(GetWindowLongPtrW(m_hwnd, GWL_EXSTYLE));
     }
 
     bool XamlWindow::IsVisible()
@@ -482,8 +482,8 @@ namespace winrt::XamlHostingKit::implementation
             else if (msg == WM_DWMNCRENDERINGCHANGED)
             {
                 SetWindowLongW(hwnd, GWL_EXSTYLE, (BOOL)wParam ?
-                    _this->ExtendedStyles() :
-                    _this->ExtendedStyles() &~ (WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME));
+                    static_cast<uint32_t>(_this->ExtendedStyles()) :
+                    static_cast<uint32_t>(_this->ExtendedStyles()) &~ (WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME));
             }
         }
 
