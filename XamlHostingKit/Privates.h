@@ -281,3 +281,17 @@ struct DefaultWebPlatformSecurityManager : winrt::implements<DefaultWebPlatformS
     inline STDMETHODIMP QueryCustomPolicy(::IUri*, const GUID*, unsigned __int8**, unsigned int*, unsigned __int8*, unsigned int) override { return INET_E_DEFAULT_ACTION; }
     inline STDMETHODIMP GetZoneActionPolicyEx(unsigned int, unsigned int, unsigned __int8*, unsigned int, URLZONEREG, unsigned int) override { return INET_E_DEFAULT_ACTION; }
 };
+
+MIDL_INTERFACE("1095a564-7df2-476a-a853-167c61b62503")
+IUrlRedirectionPolicyManager : public ::IUnknown
+{
+    STDMETHOD(IsRedirectToBrokerNeeded)(LPCWSTR, void*) PURE;
+    STDMETHOD(GetBrowserTransitionState)(LPCWSTR, void*, void*) PURE;
+};
+
+struct DefaultUrlRedirectionPolicyManager : winrt::implements<DefaultUrlRedirectionPolicyManager, IUrlRedirectionPolicyManager>
+{
+    DefaultUrlRedirectionPolicyManager() = default;
+    inline STDMETHODIMP IsRedirectToBrokerNeeded(LPCWSTR, void*) override { return S_FALSE; }
+    inline STDMETHODIMP GetBrowserTransitionState(LPCWSTR, void*, void*) override { return E_NOTIMPL; }
+};

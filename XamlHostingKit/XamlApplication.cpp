@@ -448,6 +448,12 @@ namespace winrt::XamlHostingKit::implementation
                 RETURN_IF_FAILED(IEConfiguration_SetBrowserAppProfile(L"MicrosoftEdge", 2, 0));
             }
 
+            if (Helpers::OSBuild < 15063u && RegisterPermanentUrlRedirectionPolicyManager) [[unlikely]]
+            {
+                auto manager = winrt::make<DefaultUrlRedirectionPolicyManager>();
+                LOG_IF_FAILED(RegisterPermanentUrlRedirectionPolicyManager(manager.get()));
+            }
+
             if (XamlConfig::s_enableMsAppxWebProtocolSupport) [[unlikely]]
             {
                 RETURN_IF_FAILED(Helpers::XWinePatchImport(XAMLModule.get(), UrlMonModule.get(), MAKEINTRESOURCEA(505), &CreateAppxProtocolClassFactoryHook));

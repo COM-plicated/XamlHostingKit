@@ -55,6 +55,7 @@ namespace winrt::XamlHostingKit
     static const auto UrlmonCreateInstance = reinterpret_cast<HRESULT(WINAPI*)(REFCLSID, IUnknown*, REFIID, void**)>(GetProcAddress(UrlMonModule.get(), MAKEINTRESOURCEA(441)));
     static const auto GetCurrentPackageInfo2Method = reinterpret_cast<decltype(&GetCurrentPackageInfo2)>(GetProcAddress(KernelBaseModule, "GetCurrentPackageInfo2"));
     static const auto CreateXamlUIPresenter = reinterpret_cast<HRESULT(WINAPI*)(void*, void**)>(GetProcAddress(XAMLModule.get(), "CreateXamlUIPresenter"));
+    static const auto RegisterPermanentUrlRedirectionPolicyManager = reinterpret_cast<HRESULT(WINAPI*)(IUrlRedirectionPolicyManager*)>(GetProcAddress(UrlMonModule.get(), MAKEINTRESOURCEA(560)));
 
     static const auto PersonalizeKey = wil::reg::open_unique_key(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize");
 
