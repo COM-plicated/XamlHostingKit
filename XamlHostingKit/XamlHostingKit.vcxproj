@@ -146,16 +146,16 @@
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">Urlmon.lib;Shcore.lib;dwmapi.lib;shlwapi.lib;ntdll.lib;user32.lib;shell32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">Urlmon.lib;Shcore.lib;dwmapi.lib;shlwapi.lib;ntdll.lib;user32.lib;shell32.lib;comctl32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Link>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">Urlmon.lib;Shcore.lib;dwmapi.lib;shlwapi.lib;ntdll.lib;user32.lib;shell32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">Urlmon.lib;Shcore.lib;dwmapi.lib;shlwapi.lib;ntdll.lib;user32.lib;shell32.lib;comctl32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Link>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Urlmon.lib;Shcore.lib;dwmapi.lib;shlwapi.lib;ntdll.lib;user32.lib;shell32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Urlmon.lib;Shcore.lib;dwmapi.lib;shlwapi.lib;ntdll.lib;user32.lib;shell32.lib;comctl32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Link>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Urlmon.lib;Shcore.lib;dwmapi.lib;shlwapi.lib;ntdll.lib;user32.lib;shell32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Urlmon.lib;Shcore.lib;dwmapi.lib;shlwapi.lib;ntdll.lib;user32.lib;shell32.lib;comctl32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
@@ -181,6 +181,7 @@
     <ClInclude Include="Helpers.h" />
     <ClInclude Include="IWindowNative.h" />
     <ClInclude Include="LegacyNonImmersiveView.h" />
+    <ClInclude Include="LegacyTitleBar.h" />
     <ClInclude Include="mrm_private.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Privates.h" />
@@ -196,6 +197,7 @@
   <ItemGroup>
     <ClCompile Include="FileProtocolHandler.cpp" />
     <ClCompile Include="LegacyNonImmersiveView.cpp" />
+    <ClCompile Include="LegacyTitleBar.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

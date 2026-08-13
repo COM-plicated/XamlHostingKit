@@ -43,6 +43,7 @@ namespace winrt::XamlHostingKit::implementation
 
         static LPCWSTR const RegisterWindowClass(WNDPROC wndProc);
         static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+        static LRESULT CALLBACK CoreWindowSubClassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR idSubclass, DWORD_PTR dwRefData);
 
     public:
 

@@ -9,6 +9,7 @@
 #include <CoreWindow.h>
 #include "Features.h"
 #include "XamlApplication.h"
+#include <windowsx.h>
 
 namespace winrt::XamlHostingKit::implementation
 {
@@ -128,7 +129,7 @@ namespace winrt::XamlHostingKit::implementation
             LOG_IF_FAILED(cap2->CreateNonImmersiveView((void**)&pView));
         }
 
-        m_view = winrt::make<LegacyNonImmersiveView>(m_coreWindow, isMain, pView)
+        m_view = winrt::make<LegacyNonImmersiveView>(m_coreWindow, isMain, pView, m_hwnd)
             .as<winrt::Windows::ApplicationModel::Core::CoreApplicationView>();
 
         m_frameworkView = { };
@@ -181,7 +182,9 @@ namespace winrt::XamlHostingKit::implementation
 
         SetParent(m_coreWindowHwnd, m_hwnd);
         SetWindowLongW(m_coreWindowHwnd, GWL_STYLE, WS_CHILD | WS_VISIBLE);
-        SetWindowPos(m_coreWindowHwnd, NULL, 0, 0, clientRect.right - clientRect.left, clientRect.bottom - clientRect.top, SWP_NOZORDER | SWP_SHOWWINDOW | SWP_NOACTIVATE);
+        SetWindowPos(m_coreWindowHwnd, HWND_BOTTOM, 0, 0, clientRect.right - clientRect.left, clientRect.bottom - clientRect.top, SWP_SHOWWINDOW | SWP_NOACTIVATE);
+
+        SetWindowSubclass(m_coreWindowHwnd, CoreWindowSubClassProc, 1, NULL);
 
         s_currentWindow = this;
     }
@@ -346,9 +349,9 @@ namespace winrt::XamlHostingKit::implementation
         if (!IsZoomed(m_hwnd) && !IsIconic(m_hwnd)) [[likely]]
         {
             SetWindowPos(m_hwnd, NULL,
-                         static_cast<int>(left * dpi),
-                         static_cast<int>(top * dpi),
-                         0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+                static_cast<int>(left * dpi),
+                static_cast<int>(top * dpi),
+                0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
         }
         else
         {
@@ -379,9 +382,9 @@ namespace winrt::XamlHostingKit::implementation
         if (!IsZoomed(m_hwnd) && !IsIconic(m_hwnd)) [[likely]]
         {
             SetWindowPos(m_hwnd, NULL, 0, 0,
-                         static_cast<int>(width * dpi),
-                         static_cast<int>(height * dpi),
-                         SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+                static_cast<int>(width * dpi),
+                static_cast<int>(height * dpi),
+                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
         }
         else
         {
@@ -531,15 +534,25 @@ namespace winrt::XamlHostingKit::implementation
                     }
                 }
 
-                SetWindowPos(_this->m_coreWindowHwnd, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam), SWP_NOZORDER | SWP_SHOWWINDOW | SWP_NOACTIVATE);
-                SendMessageW(_this->m_coreWindowHwnd, msg, wParam, lParam);           
+                auto width = LOWORD(lParam);
+                auto height = HIWORD(lParam);
+                auto y = 0;
+
+                if (_this->m_view.TitleBar().ExtendViewIntoTitleBar())
+                {
+                    y = Helpers::GetTopBorderSize(hwnd);
+                    height -= y;
+                }
+
+                SetWindowPos(_this->m_coreWindowHwnd, HWND_BOTTOM, 0, y, width, height, SWP_SHOWWINDOW | SWP_NOACTIVATE);
+                SendMessageW(_this->m_coreWindowHwnd, msg, wParam, MAKELPARAM(width, height));
             }
             else if (msg == WM_SHOWWINDOW && _this->m_visibilityChanged)
             {
                 _this->m_dispatcher.RunAsync(CoreDispatcherPriority::Normal, [=]()
-                {
-                    _this->m_visibilityChanged(*_this, wParam != FALSE);
-                });
+                    {
+                        _this->m_visibilityChanged(*_this, wParam != FALSE);
+                    });
             }
             else if (msg == WM_SETFOCUS)
             {
@@ -559,4 +572,31 @@ namespace winrt::XamlHostingKit::implementation
 
         return DefWindowProcW(hwnd, msg, wParam, lParam);
     }
+
+    LRESULT XamlWindow::CoreWindowSubClassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR idSubclass, DWORD_PTR dwRefData)
+    {
+
+        if (msg == WM_NCHITTEST)
+        {
+            auto x = GET_X_LPARAM(lParam);
+            auto y = GET_Y_LPARAM(lParam);
+            auto ret = DefSubclassProc(hwnd, msg, wParam, lParam);
+
+            auto _this = reinterpret_cast<XamlWindow*>(GetPropW(GetParent(hwnd), XHK_WINDOW_OBJECT_PROP));
+
+            if (ret == HTCLIENT && _this->m_view.TitleBar().ExtendViewIntoTitleBar())
+            {
+                RECT rc;
+                GetWindowRect(hwnd, &rc);
+                auto fakeborder = 1 * Helpers::GetDpiScaleForWindow(hwnd);
+                if (y < rc.top + Helpers::GetCaptionSize(hwnd) + Helpers::GetTopBorderSize(hwnd) - fakeborder)
+                    return HTTRANSPARENT;
+                else
+                    return ret;
+            }
+        }
+
+        return DefSubclassProc(hwnd, msg, wParam, lParam);
+    }
+
 }

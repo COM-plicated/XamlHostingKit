@@ -272,14 +272,19 @@ namespace winrt::XamlHostingKit
 
         inline static const float GetDpiScaleForWindow(HWND hwnd)
         {
+            return GetDpiForWindow(hwnd) / 96.0f;
+        }
+
+        inline static const uint32_t GetDpiForWindow(HWND hwnd)
+        {
             if (GetDpiForWindowMethod) [[likely]]
-                return GetDpiForWindowMethod(hwnd) / 96.0f;
+                return GetDpiForWindowMethod(hwnd);
 
             uint32_t dpi = 96;
             HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
             GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi, &dpi);
 
-            return dpi / 96.0f;
+            return dpi;
         }
 
         inline static SWITCH_CONTEXT* GetSwitchContext(APPCOMPAT_EXE_DATA* pShim)
@@ -528,6 +533,29 @@ namespace winrt::XamlHostingKit
                 return nullptr;
 
             return handle;
+        }
+
+        inline static int GetCaptionSize(HWND hwnd)
+        {
+            auto dpi = Helpers::GetDpiForWindow(hwnd);
+            auto border = GetSystemMetricsForDpi(SM_CYFRAME, dpi) + GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
+            auto caption = GetSystemMetricsForDpi(SM_CYCAPTION, dpi) + 1.0f * (dpi / 96.0f);
+            return static_cast<int>(border + caption);
+        }
+
+        inline static int GetTopBorderSize(HWND hwnd)
+        {
+            if (IsZoomed(hwnd))
+            {
+                auto dpi = Helpers::GetDpiForWindow(hwnd);
+                auto border = GetSystemMetricsForDpi(SM_CYFRAME, dpi) + GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
+                return static_cast<int>(border);
+            }
+            else
+            {
+                auto border = 1 * Helpers::GetDpiScaleForWindow(hwnd);
+                return static_cast<int>(border);
+            }
         }
     };
 
