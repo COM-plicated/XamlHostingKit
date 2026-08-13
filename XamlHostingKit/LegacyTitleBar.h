@@ -23,7 +23,8 @@ namespace winrt::XamlHostingKit::implementation
 	{
 	private:
 		static const constexpr auto XHK_TITLEBAR_OBJECT_PROP = L"COMplicated.XamlHostingKit.TileBarObject";
-		static const constexpr auto XHK_TITLEBAR_CAPTION_WIDTH = 188;
+		static const constexpr auto XHK_TITLEBAR_CAPTION_WIDTH = 188.0f;
+		static const constexpr auto XHK_TITLEBAR_CAPTION_BUTTON_WIDTH = 46.0f;
 
 		bool m_extend{ false };
 		bool m_isVisible{ false };
@@ -32,6 +33,10 @@ namespace winrt::XamlHostingKit::implementation
 		DesktopWindowTarget m_target{ nullptr };
 		ContainerVisual m_rootVisual{ nullptr };
 		ContainerVisual m_caption{ nullptr };
+		CoreDispatcher m_dispatcher{ nullptr };
+		ContainerVisual m_captionClose{ nullptr };
+		ContainerVisual m_captionMaximize{ nullptr };
+		ContainerVisual m_captionMinimize{ nullptr };
 
 		winrt::event<winrt::Windows::Foundation::TypedEventHandler<CoreApplicationViewTitleBar, IInspectable>> m_isVisibleChanged;
 		winrt::event<winrt::Windows::Foundation::TypedEventHandler<CoreApplicationViewTitleBar, IInspectable>> m_layoutMetricsChanged;
@@ -41,7 +46,7 @@ namespace winrt::XamlHostingKit::implementation
 
 	public:
 		LegacyTitleBar() = default;
-		LegacyTitleBar(HWND window);
+		LegacyTitleBar(HWND const& window, CoreDispatcher const& dispatcher);
 
 		bool ExtendViewIntoTitleBar() const;
 		void ExtendViewIntoTitleBar(bool const& value);

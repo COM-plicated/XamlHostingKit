@@ -9,7 +9,7 @@ namespace winrt::XamlHostingKit::implementation
           m_isMain(isMain)
     {
         m_realView.attach(realView);
-        m_titleBar = winrt::make<LegacyTitleBar>(parent)
+        m_titleBar = winrt::make<LegacyTitleBar>(parent, coreWindow.Dispatcher())
             .as<winrt::Windows::ApplicationModel::Core::CoreApplicationViewTitleBar>();
     }
 

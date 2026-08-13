@@ -7,8 +7,8 @@
 namespace winrt::XamlHostingKit::implementation
 {
 
-	LegacyTitleBar::LegacyTitleBar(HWND window)
-		: m_window(window)
+	LegacyTitleBar::LegacyTitleBar(HWND const& window, CoreDispatcher const& dispatcher)
+		: m_window(window), m_dispatcher(dispatcher)
 	{
 		m_isVisible = true;
 
@@ -39,9 +39,9 @@ namespace winrt::XamlHostingKit::implementation
 		test.Offset({ 0.0f, 0.0f });
 
 		m_caption.Children().InsertAtBottom(captionBg);
-		m_caption.Children().InsertAtTop(CreateCaptionButton(m_compositor, test, 1));
-		m_caption.Children().InsertAtTop(CreateCaptionButton(m_compositor, test, 2));
-		m_caption.Children().InsertAtTop(CreateCaptionButton(m_compositor, test, 3));
+		m_caption.Children().InsertAtTop(m_captionClose = CreateCaptionButton(m_compositor, test, 1));
+		m_caption.Children().InsertAtTop(m_captionMaximize = CreateCaptionButton(m_compositor, test, 2));
+		m_caption.Children().InsertAtTop(m_captionMinimize = CreateCaptionButton(m_compositor, test, 3));
 
 		m_caption.IsVisible(m_extend);
 
@@ -58,9 +58,14 @@ namespace winrt::XamlHostingKit::implementation
 		m_extend = value;
 		m_caption.IsVisible(value);
 		SetWindowPos(m_window, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-		
-		auto strong_this = this->get_strong();
-		m_layoutMetricsChanged(strong_this.as<CoreApplicationViewTitleBar>(), nullptr);
+
+		if (m_layoutMetricsChanged) {
+			m_dispatcher.RunAsync(CoreDispatcherPriority::Normal, [=]()
+			{
+				auto strong_this = this->get_strong();
+				m_layoutMetricsChanged(strong_this.as<CoreApplicationViewTitleBar>(), nullptr);
+			});
+		}
 	}
 
 	float LegacyTitleBar::Height() const
@@ -115,11 +120,21 @@ namespace winrt::XamlHostingKit::implementation
 		{
 			if (msg == WM_SIZE)
 			{
-				auto width = static_cast<float>(LOWORD(lParam));
-				auto height = static_cast<float>(HIWORD(lParam));
+				auto scaling = Helpers::GetDpiScaleForWindow(hwnd);
 
-				_this->m_caption.Offset({ -_this->SystemOverlayRightInset(), static_cast<float>(Helpers::GetTopBorderSize(hwnd)), 0 });
-				_this->m_caption.Size({ _this->SystemOverlayRightInset(), static_cast<float>(Helpers::GetCaptionSize(hwnd)) });
+				auto scaledCaptionSize = XHK_TITLEBAR_CAPTION_WIDTH * scaling;
+				_this->m_caption.Offset({ -scaledCaptionSize, static_cast<float>(Helpers::GetTopBorderSize(hwnd)), 0 });
+				_this->m_caption.Size({ scaledCaptionSize, static_cast<float>(Helpers::GetCaptionSize(hwnd)) });
+
+				auto scaledButtonSize = XHK_TITLEBAR_CAPTION_BUTTON_WIDTH * scaling;
+				_this->m_captionClose.Size({ scaledButtonSize, 0.0f });
+				_this->m_captionClose.Offset({ -scaledButtonSize , 0.0f, 0.0f });
+
+				_this->m_captionMaximize.Size({ scaledButtonSize, 0.0f });
+				_this->m_captionMaximize.Offset({ -scaledButtonSize * 2 , 0.0f, 0.0f });
+
+				_this->m_captionMinimize.Size({ scaledButtonSize, 0.0f });
+				_this->m_captionMinimize.Offset({ -scaledButtonSize * 3 , 0.0f, 0.0f });
 
 			}
 			else if (msg == WM_NCHITTEST && _this->m_extend)
@@ -140,7 +155,7 @@ namespace winrt::XamlHostingKit::implementation
 
 					if (y > rc.top && y < rc.top + caption)
 					{
-						auto buttonSize = 46;
+						auto buttonSize = 46.0f * Helpers::GetDpiScaleForWindow(hwnd);
 						auto relative = rc.right - border;
 						if (x < relative && x > relative - buttonSize)
 						{
@@ -207,10 +222,10 @@ namespace winrt::XamlHostingKit::implementation
 	ContainerVisual LegacyTitleBar::CreateCaptionButton(Compositor const& compositor, CompositionGeometry const& geometry, int index)
 	{
 		auto container = compositor.CreateContainerVisual();
-		container.Size({ 46.0f, 0.0f });
-		container.Offset({ -container.Size().x * index , 0.0f, 0.0f });
+		container.Size({ XHK_TITLEBAR_CAPTION_BUTTON_WIDTH, 0.0f });
+		container.Offset({ -XHK_TITLEBAR_CAPTION_BUTTON_WIDTH * index , 0.0f, 0.0f });
 		container.RelativeSizeAdjustment({ 0.0f, 1.0f });
-		container.RelativeOffsetAdjustment({ 1.0, 0.0f, 0.0f });
+		container.RelativeOffsetAdjustment({ 1.0f, 0.0f, 0.0f });
 
 		auto background = compositor.CreateSpriteVisual();
 		background.RelativeSizeAdjustment({ 1.0f, 1.0f });
@@ -227,8 +242,10 @@ namespace winrt::XamlHostingKit::implementation
 
 		auto shape = compositor.CreateShapeVisual();
 		shape.Size({ 10.0f, 10.0f });
-		shape.Offset({ 18.0f, 11.0f, 0.0f });
+		//shape.Offset({ 18.0f, 11.0f, 0.0f });
 		shape.Shapes().Append(sprite);
+		shape.RelativeOffsetAdjustment({ 0.5f, 0.5f, 0.0f });
+		shape.AnchorPoint({ 0.5f, 0.5f });
 
 		container.Children().InsertAtTop(shape);
 

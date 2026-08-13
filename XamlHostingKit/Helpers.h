@@ -539,7 +539,7 @@ namespace winrt::XamlHostingKit
         {
             auto dpi = Helpers::GetDpiForWindow(hwnd);
             auto border = GetSystemMetricsForDpi(SM_CYFRAME, dpi) + GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
-            auto caption = GetSystemMetricsForDpi(SM_CYCAPTION, dpi) + 1.0f * (dpi / 96.0f);
+            auto caption = GetSystemMetricsForDpi(SM_CYCAPTION, dpi) + std::ceil(1.0f * (dpi / 96.0f));
             return static_cast<int>(border + caption);
         }
 
@@ -553,7 +553,7 @@ namespace winrt::XamlHostingKit
             }
             else
             {
-                auto border = 1 * Helpers::GetDpiScaleForWindow(hwnd);
+                auto border = std::ceil(1 * Helpers::GetDpiScaleForWindow(hwnd));
                 return static_cast<int>(border);
             }
         }
