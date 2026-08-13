@@ -88,7 +88,7 @@ namespace winrt::XamlHostingKit::implementation
             RegisterTouchpadCapableWindowMethod(m_coreWindowHwnd, TRUE);
         }
 
-        if (SetWindowCompositionAttribute) [[likely]]
+        if (SetWindowCompositionAttribute && Helpers::OSBuild >= 17763u) [[likely]]
         {
             ACCENT_POLICY policy { ACCENT_ENABLE_HOSTBACKDROP };
 
@@ -102,7 +102,7 @@ namespace winrt::XamlHostingKit::implementation
         }
         else
         {
-            LOG_HR_MSG(E_FAIL, "Host Backrop cannot be enabled due to SetWindowCompositionAttribute function not being found on the current OS environment.");
+            LOG_HR_MSG(E_FAIL, "Host Backrop cannot be enabled due to SetWindowCompositionAttribute function not being found on (or not compatible with) the current OS environment.");
         }
 
         ::IUnknown* pView = nullptr;

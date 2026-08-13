@@ -60,6 +60,8 @@ namespace winrt::XamlHostingKit
 
     #define NtCurrentPeb() (NtCurrentTeb()->ProcessEnvironmentBlock)
 
+    EXTERN_C NTSTATUS RtlGetVersion(_Out_ PRTL_OSVERSIONINFOW lpVersionInformation);
+
     namespace wss = winrt::Windows::Storage::Streams;
 
     class Helpers
@@ -168,6 +170,16 @@ namespace winrt::XamlHostingKit
             }
 
             return { };
+        }();
+
+        inline static uint32_t OSBuild = []() -> uint32_t
+        {
+            OSVERSIONINFOEXW osvi { };
+            osvi.dwOSVersionInfoSize = sizeof(osvi);
+            if (SUCCEEDED_NTSTATUS_LOG(RtlGetVersion(reinterpret_cast<PRTL_OSVERSIONINFOW>(&osvi)))) [[likely]]
+                return osvi.dwBuildNumber;
+
+            return 0;
         }();
 
         inline static winrt::hstring const& GetExecutableName()

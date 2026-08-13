@@ -610,7 +610,7 @@ namespace winrt::XamlHostingKit::implementation
         {
             winrt::com_ptr<IResourceManagerStaticInternalOld> mgrStaticsOld;
             if (!(mgrStaticsOld = try_get_activation_factory<warc::ResourceManager, IResourceManagerStaticInternalOld>()) ||
-                FAILED_LOG(mgrStatics->GetCurrentResourceManagerForSystemProfile(winrt::put_abi(s_resourceManager))) ||
+                FAILED_LOG(mgrStaticsOld->GetCurrentResourceManagerForSystemProfile(winrt::put_abi(s_resourceManager))) ||
                 !s_resourceManager) [[unlikely]]
             {
                 LOG_HR_MSG(E_FAIL, "Failed to create ResourceManager.");
