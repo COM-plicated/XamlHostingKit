@@ -5,7 +5,7 @@
     <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
     <WindowsSdkPackageVersion>10.0.26100.87</WindowsSdkPackageVersion>
     <TargetPlatformVersion>10.0.26100.0</TargetPlatformVersion>
-    <TargetPlatformMinVersion>10.0.14393.0</TargetPlatformMinVersion>
+    <TargetPlatformMinVersion>10.0.10240.0</TargetPlatformMinVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PublishAot>true</PublishAot>
@@ -27,6 +27,13 @@
     <LangVersion>preview</LangVersion>
     <CsWinRTIIDOptimizerOptOut>true</CsWinRTIIDOptimizerOptOut>
     <SkipXamlDesignerSdkCheck>true</SkipXamlDesignerSdkCheck>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!--Needed to be able to compile while TargetPlatformMinVersion is lower than 14393-->
+    <WindowsKitsPath Condition="'$(WindowsKitsPath)' == '' and '$(TargetPlatformSdkRootOverride)' != ''">$(TargetPlatformSdkRootOverride)\</WindowsKitsPath>
+    <WindowsKitsPath Condition="'$(WindowsKitsPath)'==''">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots', 'KitsRoot10', null, RegistryView.Registry32, RegistryView.Default))</WindowsKitsPath>
+    <WindowsKitsXamlCompilerTargetsPath>$(WindowsKitsPath)bin\$(TargetPlatformVersion)\XamlCompiler\Microsoft.Windows.UI.Xaml.Common.targets</WindowsKitsXamlCompilerTargetsPath>
   </PropertyGroup>
 
   <ItemGroup>

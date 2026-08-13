@@ -285,8 +285,8 @@ namespace winrt::XamlHostingKit
 
                     while (current <= end)
                     {
-                        if (Windows10_PlatformID == *(GUID*)current /*||
-                            WindowsBlue_PlatformID == *(GUID*)current ||
+                        if (Windows10_PlatformID == *(GUID*)current ||
+                            WindowsBlue_PlatformID == *(GUID*)current /*||
                             Windows8_PlatformID == *(GUID*)current*/)
                         {
                             _switchContextOffset = (intptr_t)(current - (byte*)pShim) - offset;
