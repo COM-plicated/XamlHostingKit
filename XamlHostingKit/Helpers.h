@@ -38,7 +38,7 @@ namespace winrt::XamlHostingKit
     static const auto Kernel32Module = GetModuleHandleW(L"kernel32.dll");
     static const auto Win32UModule = GetModuleHandleW(L"win32u.dll");
 
-    static const auto IsDarkModeAllowedForWindow = reinterpret_cast<BOOL(WINAPI*)(HWND)>(GetProcAddress(UXThemeModule.get(), MAKEINTRESOURCEA(137)));
+    static const auto IsDarkModeAllowedForWindow = reinterpret_cast<bool(WINAPI*)(HWND)>(GetProcAddress(UXThemeModule.get(), MAKEINTRESOURCEA(137)));
     static const auto SetWindowCompositionAttribute = reinterpret_cast<BOOL(WINAPI*)(HWND, WINDOWCOMPOSITIONATTRIBDATA*)>(GetProcAddress(User32Module.get(), "SetWindowCompositionAttribute"));
     static const auto SetPreferredAppMode = reinterpret_cast<void(WINAPI*)(PreferredAppMode)>(GetProcAddress(UXThemeModule.get(), MAKEINTRESOURCEA(135)));
     static const auto RefreshImmersiveColorPolicyState = reinterpret_cast<void(WINAPI*)()>(GetProcAddress(UXThemeModule.get(), MAKEINTRESOURCEA(104)));
@@ -92,7 +92,7 @@ namespace winrt::XamlHostingKit
 
         inline static bool ShouldAppsUseDarkMode()
         {
-            if (!PersonalizeKey.is_valid()) [[unlikely]]
+            if (!PersonalizeKey.is_valid() || !PersonalizeKey) [[unlikely]]
                 return false;
 
             return !wil::reg::try_get_value_dword(PersonalizeKey.get(), L"AppsUseLightTheme").value_or(true);
@@ -211,7 +211,8 @@ namespace winrt::XamlHostingKit
         inline static void EnsureTitleBarTheme(HWND hwnd)
         {
             if (IsDarkModeAllowedForWindow &&
-                SetWindowCompositionAttribute) [[likely]]
+                SetWindowCompositionAttribute &&
+                Helpers::OSBuild >= 18363u) [[likely]]
             {
                 bool isDarkMode = IsDarkModeAllowedForWindow(hwnd) && ShouldAppsUseDarkMode();
 
