@@ -208,27 +208,40 @@ namespace winrt::XamlHostingKit
             return _executablePath.c_str();
         }
 
+        inline static bool IsDarkModeAllowedForHwnd(HWND hwnd)
+        {
+            if (IsDarkModeAllowedForWindow && OSBuild >= 17763u) [[likely]]
+                return IsDarkModeAllowedForWindow(hwnd);
+
+            return true;
+        }
+
         inline static void EnsureTitleBarTheme(HWND hwnd)
         {
-            if (IsDarkModeAllowedForWindow &&
-                SetWindowCompositionAttribute &&
-                Helpers::OSBuild >= 18363u) [[likely]]
+            if (IsDarkModeAllowedForWindow) [[likely]]
             {
-                bool isDarkMode = IsDarkModeAllowedForWindow(hwnd) && ShouldAppsUseDarkMode();
+                bool isDarkMode = IsDarkModeAllowedForHwnd(hwnd) && ShouldAppsUseDarkMode();
 
-                WINDOWCOMPOSITIONATTRIBDATA data
+                if (SetWindowCompositionAttribute && OSBuild >= 18363u) [[likely]]
                 {
-                    .Attrib = WCA_USEDARKMODECOLORS,
-                    .pvData = &isDarkMode,
-                    .cbData = sizeof(BOOL)
-                };
+                    WINDOWCOMPOSITIONATTRIBDATA data
+                    {
+                        .Attrib = WCA_USEDARKMODECOLORS,
+                        .pvData = &isDarkMode,
+                        .cbData = sizeof(BOOL)
+                    };
 
-                SetWindowCompositionAttribute(hwnd, &data);
+                    SetWindowCompositionAttribute(hwnd, &data);
+                }
+                else
+                {
+                    SetPropW(hwnd, L"UseImmersiveDarkModeColors", reinterpret_cast<HANDLE>(static_cast<INT_PTR>(isDarkMode)));
+                }
             }
             else
             {
                 LOG_HR_MSG(E_FAIL,
-                    "Dark Mode functions cannot be found, "
+                    "Dark Mode functions cannot be found or not compatible, "
                     "IsDarkModeAllowedForWindow = 0x%08llx, SetWindowCompositionAttribute = 0x%08llx.",
                     (uint64_t)IsDarkModeAllowedForWindow, (uint64_t)SetWindowCompositionAttribute);
             }
@@ -238,7 +251,7 @@ namespace winrt::XamlHostingKit
         {
             if (SetPreferredAppMode &&
                 RefreshImmersiveColorPolicyState &&
-                AllowDarkModeForWindow) [[likely]]
+                AllowDarkModeForWindow && OSBuild >= 17763u) [[likely]]
             {
                 SetPreferredAppMode(PreferredAppMode::AllowDark);
                 RefreshImmersiveColorPolicyState();
@@ -247,7 +260,7 @@ namespace winrt::XamlHostingKit
             else
             {
                 LOG_HR_MSG(E_FAIL,
-                    "Dark Mode functions cannot be found, "
+                    "Dark Mode functions cannot be found or not compatible, "
                     "SetPreferredAppMode = 0x%08llx, RefreshImmersiveColorPolicyState = 0x%08llx, AllowDarkModeForWindow = 0x%08llx.",
                     (uint64_t)SetPreferredAppMode, (uint64_t)RefreshImmersiveColorPolicyState, (uint64_t)AllowDarkModeForWindow);
             }
