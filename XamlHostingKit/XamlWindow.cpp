@@ -63,14 +63,27 @@ namespace winrt::XamlHostingKit::implementation
             GetModuleHandleW(nullptr),
             nullptr));
 
-        winrt::check_hresult(PrivateCreateCoreWindow(
-            IMMERSIVE_HOSTED,
-            L"",
-            0, 0, 0, 0,
-            0,
-            m_hwnd,
-            winrt::guid_of<ICoreWindow>(),
-            winrt::put_abi(m_coreWindow)));
+        if (Helpers::OSBuild >= 10240u) [[likely]]
+        {
+            winrt::check_hresult(PrivateCreateCoreWindow(
+                IMMERSIVE_HOSTED,
+                L"",
+                0, 0, 0, 0,
+                0,
+                m_hwnd,
+                winrt::guid_of<ICoreWindow>(),
+                winrt::put_abi(m_coreWindow)));
+        }
+        else
+        {
+            winrt::check_hresult(PrivateCreateCoreWindowOld(
+                IMMERSIVE_HOSTED,
+                L"",
+                0, 0, 0, 0,
+                m_hwnd,
+                winrt::guid_of<ICoreWindow>(),
+                winrt::put_abi(m_coreWindow)));
+        }
 
         winrt::com_ptr<ICoreWindowInterop> interop = m_coreWindow.as<ICoreWindowInterop>();
         winrt::check_hresult(interop->get_WindowHandle(&m_coreWindowHwnd));

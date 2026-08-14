@@ -45,6 +45,7 @@ namespace winrt::XamlHostingKit
     static const auto AllowDarkModeForWindow = reinterpret_cast<void(WINAPI*)(HWND, BOOL)>(GetProcAddress(UXThemeModule.get(), MAKEINTRESOURCEA(133)));
     static const auto IEConfiguration_SetBrowserAppProfile = reinterpret_cast<HRESULT(WINAPI*)(const wchar_t*, uint32_t, uint32_t)>(GetProcAddress(IERTUtilModule.get(), MAKEINTRESOURCEA(797)));
     static const auto PrivateCreateCoreWindow = reinterpret_cast<HRESULT(WINAPI*)(CoreWindowType, const wchar_t*, int, int, int, int, uint32_t, HWND, REFGUID, void**)>(GetProcAddress(WinUIModule.get(), MAKEINTRESOURCEA(1500)));
+    static const auto PrivateCreateCoreWindowOld = reinterpret_cast<HRESULT(WINAPI*)(CoreWindowType, const wchar_t*, int, int, int, int, HWND, REFGUID, void**)>(GetProcAddress(WinUIModule.get(), MAKEINTRESOURCEA(1500)));
     static const auto CoSetASTATestMode = reinterpret_cast<void(WINAPI*)(ASTA_TEST_MODE_FLAGS)>(GetProcAddress(COMBaseModule, MAKEINTRESOURCEA(100)));
     static const auto GetDpiForWindowMethod = reinterpret_cast<decltype(&GetDpiForWindow)>(GetProcAddress(User32Module.get(), "GetDpiForWindow"));
     static const auto NtUserRegisterTouchPadCapable = reinterpret_cast<BOOL(WINAPI*)(BOOL)>(GetProcAddress(Win32UModule, "NtUserRegisterTouchPadCapable"));
@@ -61,7 +62,8 @@ namespace winrt::XamlHostingKit
     static const auto LCIEGetRedirectionPolicyForURL2 = reinterpret_cast<HRESULT(WINAPI*)(LPCWSTR, int, int, unsigned int, unsigned int*, int*, LPCWSTR*)>(GetProcAddress(UrlMonModule.get(), MAKEINTRESOURCEA(493)));
     static const auto IEConfiguration_SetBool = reinterpret_cast<HRESULT(WINAPI*)(int, bool)>(GetProcAddress(IERTUtilModule.get(), MAKEINTRESOURCEA(792)));
 
-    static const auto PersonalizeKey = wil::reg::open_unique_key(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize");
+    static wil::unique_hkey PersonalizeKey;
+    static const auto PersonalizeKeyResult = wil::reg::open_unique_key_nothrow(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", PersonalizeKey);
 
     #define NtCurrentPeb() (NtCurrentTeb()->ProcessEnvironmentBlock)
 
@@ -90,6 +92,9 @@ namespace winrt::XamlHostingKit
 
         inline static bool ShouldAppsUseDarkMode()
         {
+            if (!PersonalizeKey.is_valid()) [[unlikely]]
+                return false;
+
             return !wil::reg::try_get_value_dword(PersonalizeKey.get(), L"AppsUseLightTheme").value_or(true);
         }
 

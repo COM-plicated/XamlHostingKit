@@ -530,7 +530,7 @@ MakeWindow:
 
     HRESULT WINAPI XamlApplication::InitializeForCurrentApplicationHook(mrm::IMrtResourceManager* _this)
     {
-        if (s_usingDefaultResPri &&
+        if (s_usingDefaultResPri && Helpers::OSBuild >= 18362u &&
             SUCCEEDED_LOG(s_originalInitializeForCurrentApplication(_this))) [[likely]]
         {
             return S_OK;
@@ -558,7 +558,7 @@ MakeWindow:
 
     HRESULT WINAPI XamlApplication::TryInitializeForCurrentApplicationHook(mrm::IMrtResourceManager2* _this)
     {
-        if (s_usingDefaultResPri &&
+        if (s_usingDefaultResPri && Helpers::OSBuild >= 18362u &&
             SUCCEEDED_LOG(s_originalTryInitializeForCurrentApplication(_this))) [[likely]]
         {
             return S_OK;
@@ -591,7 +591,7 @@ MakeWindow:
     {
         if (rclsid == __uuidof(mrm::MrtResourceManager))
         {
-            if (!s_usingDefaultResPri && s_mrtManager && SUCCEEDED_LOG(s_mrtManager->QueryInterface(riid, ppv))) [[unlikely]]
+            if ((!s_usingDefaultResPri || Helpers::OSBuild < 18362u) && s_mrtManager && SUCCEEDED_LOG(s_mrtManager->QueryInterface(riid, ppv))) [[unlikely]]
             {
                 return S_OK;
             }
