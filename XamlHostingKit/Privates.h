@@ -260,11 +260,20 @@ IWindowPrivate : public ::IInspectable
 MIDL_INTERFACE("b3ab45d8-6a4e-4e76-a00d-32d4643a9f1a")
 IFrameworkApplicationPrivate : public ::IInspectable
 {
-    STDMETHOD(_stub6)(BOOL* pValue) PURE;
-    STDMETHOD(_stub7)(BOOL value) PURE;
+    STDMETHOD(_stub6)() PURE;
+    STDMETHOD(_stub7)() PURE;
     STDMETHOD(_stub8)() PURE;
     STDMETHOD(_stub9)() PURE;
     STDMETHOD(_stub10)() PURE;
+    STDMETHOD(SetSynchronizationWindow)(UINT64 hwnd) PURE;
+};
+
+MIDL_INTERFACE("b3ab45d8-6a4e-4e76-a00d-32d4643a9f1a")
+IFrameworkApplicationPrivateOld : public ::IInspectable
+{
+    STDMETHOD(_stub6)() PURE;
+    STDMETHOD(_stub7)() PURE;
+    STDMETHOD(_stub8)() PURE;
     STDMETHOD(SetSynchronizationWindow)(UINT64 hwnd) PURE;
 };
 

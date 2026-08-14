@@ -37,6 +37,7 @@ namespace winrt::XamlHostingKit::implementation
         FrameworkView m_frameworkView { nullptr };
         winrt::com_ptr<IWindowPrivate> m_windowPrivate { nullptr };
         winrt::com_ptr<IFrameworkApplicationPrivate> m_applicationPrivate { nullptr };
+        winrt::com_ptr<IFrameworkApplicationPrivateOld> m_applicationPrivateOld { nullptr };
         winrt::event<winrt::Windows::Foundation::TypedEventHandler<winrt::XamlHostingKit::XamlWindow, bool>> m_visibilityChanged;
 
         static LPCWSTR const RegisterWindowClass(WNDPROC wndProc);

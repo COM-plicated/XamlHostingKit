@@ -142,17 +142,27 @@ namespace winrt::XamlHostingKit::implementation
                 {
                     Helpers::EnableResizeSynchronization(m_coreWindowHwnd, true);
 
-                    if (Helpers::OSBuild >= 17134u) [[likely]]
-                    {
-                        if (Application::Current().try_as(m_applicationPrivate)) [[likely]]
-                        {
-                            m_isSyncObjEnabled = true;
-                        }
-                    }
-                    else if (Helpers::OSBuild <= 16299u)
+                    if (Helpers::OSBuild >= 19041u || Helpers::OSBuild <= 16299u) [[likely]]
                     {
                         m_windowPrivate.attach(wPriv.detach());
                         m_isSyncObjEnabled = true;
+                    }
+                    else
+                    {
+                        if (Helpers::OSBuild >= 18362u) [[likely]]
+                        {
+                            if (Application::Current().try_as(m_applicationPrivate)) [[likely]]
+                            {
+                                m_isSyncObjEnabled = true;
+                            }
+                        }
+                        else if (Helpers::OSBuild >= 17134u)
+                        {
+                            if (Application::Current().try_as(m_applicationPrivateOld)) [[likely]]
+                            {
+                                m_isSyncObjEnabled = true;
+                            }
+                        }
                     }
                 }
             }
@@ -474,17 +484,21 @@ namespace winrt::XamlHostingKit::implementation
             {
                 if (_this->m_isSyncObjEnabled) [[likely]]
                 {
-                    if (_this->m_applicationPrivate) [[likely]]
-                    {
-                        _this->m_applicationPrivate->SetSynchronizationWindow((uint64_t)hwnd);
-                    }
-                    else
+                    if (_this->m_windowPrivate) [[likely]]
                     {
                         if (HANDLE syncHandle = Helpers::GetResizeSynchronizationObject(hwnd)) [[likely]]
                         {
                             _this->m_windowPrivate->SetSynchronizationInfo((uint64_t)syncHandle, (uint64_t)hwnd);
                             CloseHandle(syncHandle);
                         }
+                    }
+                    else if (_this->m_applicationPrivate)
+                    {
+                        _this->m_applicationPrivate->SetSynchronizationWindow((uint64_t)hwnd);
+                    }
+                    else if (_this->m_applicationPrivateOld)
+                    {
+                        _this->m_applicationPrivateOld->SetSynchronizationWindow((uint64_t)hwnd);
                     }
                 }
 
