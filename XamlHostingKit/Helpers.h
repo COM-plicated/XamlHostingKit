@@ -48,6 +48,7 @@ namespace winrt::XamlHostingKit
     static const auto PrivateCreateCoreWindowOld = reinterpret_cast<HRESULT(WINAPI*)(CoreWindowType, const wchar_t*, int, int, int, int, HWND, REFGUID, void**)>(GetProcAddress(WinUIModule.get(), MAKEINTRESOURCEA(1500)));
     static const auto CoSetASTATestMode = reinterpret_cast<void(WINAPI*)(ASTA_TEST_MODE_FLAGS)>(GetProcAddress(COMBaseModule, MAKEINTRESOURCEA(100)));
     static const auto GetDpiForWindowMethod = reinterpret_cast<decltype(&GetDpiForWindow)>(GetProcAddress(User32Module.get(), "GetDpiForWindow"));
+    static const auto GetSystemMetricsForDpiMethod = reinterpret_cast<decltype(&GetSystemMetricsForDpi)>(GetProcAddress(User32Module.get(), "GetSystemMetricsForDpi"));
     static const auto NtUserRegisterTouchPadCapable = reinterpret_cast<BOOL(WINAPI*)(BOOL)>(GetProcAddress(Win32UModule, "NtUserRegisterTouchPadCapable"));
     static const auto RegisterTouchPadCapable = reinterpret_cast<BOOL(WINAPI*)(BOOL)>(GetProcAddress(User32Module.get(), MAKEINTRESOURCEA(2546)));
     static const auto RegisterTouchpadCapableWindowMethod = reinterpret_cast<BOOL(WINAPI*)(HWND, BOOL)>(GetProcAddress(User32Module.get(), MAKEINTRESOURCEA(2689)));
@@ -535,11 +536,19 @@ namespace winrt::XamlHostingKit
             return handle;
         }
 
+        inline static int GetSystemMetricsForDpi(int nIndex, UINT dpi)
+        {
+            if (GetSystemMetricsForDpiMethod) [[likely]]
+                return GetSystemMetricsForDpiMethod(nIndex, dpi);
+
+            return static_cast<int>(GetSystemMetrics(nIndex) * (dpi / 96.f));
+        }
+
         inline static int GetCaptionSize(HWND hwnd)
         {
             auto dpi = Helpers::GetDpiForWindow(hwnd);
-            auto border = GetSystemMetricsForDpi(SM_CYFRAME, dpi) + GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
-            auto caption = GetSystemMetricsForDpi(SM_CYCAPTION, dpi) + std::ceil(1.0f * (dpi / 96.0f));
+            auto border = Helpers::GetSystemMetricsForDpi(SM_CYFRAME, dpi) + Helpers::GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
+            auto caption = Helpers::GetSystemMetricsForDpi(SM_CYCAPTION, dpi) + std::ceil(1.0f * (dpi / 96.0f));
             return static_cast<int>(border + caption);
         }
 
@@ -548,7 +557,7 @@ namespace winrt::XamlHostingKit
             if (IsZoomed(hwnd))
             {
                 auto dpi = Helpers::GetDpiForWindow(hwnd);
-                auto border = GetSystemMetricsForDpi(SM_CYFRAME, dpi) + GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
+                auto border = Helpers::GetSystemMetricsForDpi(SM_CYFRAME, dpi) + Helpers::GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
                 return static_cast<int>(border);
             }
             else

@@ -10,6 +10,7 @@
 #include "Features.h"
 #include "XamlApplication.h"
 #include <windowsx.h>
+#include "TitleBar.h"
 
 namespace winrt::XamlHostingKit::implementation
 {
@@ -129,13 +130,15 @@ namespace winrt::XamlHostingKit::implementation
             LOG_IF_FAILED(cap2->CreateNonImmersiveView((void**)&pView));
         }
 
-        m_view = winrt::make<LegacyNonImmersiveView>(m_coreWindow, isMain, pView, m_hwnd)
+        m_view = winrt::make<LegacyNonImmersiveView>(m_coreWindow, isMain, pView)
             .as<winrt::Windows::ApplicationModel::Core::CoreApplicationView>();
 
         m_frameworkView = { };
         m_frameworkView.Initialize(m_view);
         m_frameworkView.SetWindow(m_coreWindow);
         m_systemWindow = Window::Current();
+
+        m_titleBar = winrt::make<winrt::XamlHostingKit::implementation::TitleBar>(m_hwnd, m_coreWindowHwnd, m_coreWindow.Dispatcher());
 
         if (auto wPriv = m_systemWindow.try_as<IWindowPrivate>()) [[likely]]
         {
@@ -183,8 +186,6 @@ namespace winrt::XamlHostingKit::implementation
         SetParent(m_coreWindowHwnd, m_hwnd);
         SetWindowLongW(m_coreWindowHwnd, GWL_STYLE, WS_CHILD | WS_VISIBLE);
         SetWindowPos(m_coreWindowHwnd, NULL, 0, 0, clientRect.right - clientRect.left, clientRect.bottom - clientRect.top, SWP_NOZORDER | SWP_SHOWWINDOW | SWP_NOACTIVATE);
-
-        SetWindowSubclass(m_coreWindowHwnd, CoreWindowSubClassProc, 1, NULL);
 
         s_currentWindow = this;
     }
@@ -276,6 +277,11 @@ namespace winrt::XamlHostingKit::implementation
     winrt::Windows::ApplicationModel::Core::CoreApplicationView XamlWindow::CoreApplicationView()
     {
         return m_view;
+    }
+
+    winrt::XamlHostingKit::TitleBar XamlWindow::TitleBar()
+    {
+        return m_titleBar;
     }
 
     winrt::Windows::UI::Core::CoreDispatcher XamlWindow::Dispatcher()
@@ -538,7 +544,7 @@ namespace winrt::XamlHostingKit::implementation
                 auto height = HIWORD(lParam);
                 auto y = 0;
 
-                if (_this->m_view.TitleBar().ExtendViewIntoTitleBar())
+                if (_this->m_titleBar && _this->m_titleBar.ExtendViewIntoTitleBar())
                 {
                     y = Helpers::GetTopBorderSize(hwnd);
                     height -= y;
@@ -571,32 +577,6 @@ namespace winrt::XamlHostingKit::implementation
         }
 
         return DefWindowProcW(hwnd, msg, wParam, lParam);
-    }
-
-    LRESULT XamlWindow::CoreWindowSubClassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR idSubclass, DWORD_PTR dwRefData)
-    {
-
-        if (msg == WM_NCHITTEST)
-        {
-            auto x = GET_X_LPARAM(lParam);
-            auto y = GET_Y_LPARAM(lParam);
-            auto ret = DefSubclassProc(hwnd, msg, wParam, lParam);
-
-            auto _this = reinterpret_cast<XamlWindow*>(GetPropW(GetParent(hwnd), XHK_WINDOW_OBJECT_PROP));
-
-            if (ret == HTCLIENT && _this && _this->m_view.TitleBar().ExtendViewIntoTitleBar())
-            {
-                RECT rc;
-                GetWindowRect(hwnd, &rc);
-                auto fakeborder = std::ceil(1 * Helpers::GetDpiScaleForWindow(hwnd));
-                if (y < rc.top + Helpers::GetCaptionSize(hwnd) + Helpers::GetTopBorderSize(hwnd) - fakeborder)
-                    return HTTRANSPARENT;
-                else
-                    return ret;
-            }
-        }
-
-        return DefSubclassProc(hwnd, msg, wParam, lParam);
     }
 
 }

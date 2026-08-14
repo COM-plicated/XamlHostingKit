@@ -1,0 +1,18 @@
+namespace XamlHostingKit
+{
+    runtimeclass TitleBar
+    {
+        [interface_name("ITitleBar", CE11E370-A818-4DCB-B6E0-EF79C26700A1)]
+        {
+            Boolean ExtendViewIntoTitleBar { get; set; };
+
+            Single Height { get; };
+            Boolean IsVisible { get; };
+            Single SystemOverlayLeftInset { get; };
+            Single SystemOverlayRightInset { get; };
+
+            event Windows.Foundation.TypedEventHandler<TitleBar, Object> IsVisibleChanged;
+            event Windows.Foundation.TypedEventHandler<TitleBar, Object> LayoutMetricsChanged;
+        }
+    };
+}

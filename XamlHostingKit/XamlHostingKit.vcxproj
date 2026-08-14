@@ -169,10 +169,10 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">Urlmon.lib;Shcore.lib;dwmapi.lib;shlwapi.lib;ntdll.lib;user32.lib;shell32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">Urlmon.lib;Shcore.lib;dwmapi.lib;shlwapi.lib;ntdll.lib;user32.lib;shell32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Urlmon.lib;Shcore.lib;dwmapi.lib;shlwapi.lib;ntdll.lib;user32.lib;shell32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Urlmon.lib;Shcore.lib;dwmapi.lib;shlwapi.lib;ntdll.lib;user32.lib;shell32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">Urlmon.lib;Shcore.lib;dwmapi.lib;shlwapi.lib;ntdll.lib;user32.lib;shell32.lib;comctl32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">Urlmon.lib;Shcore.lib;dwmapi.lib;shlwapi.lib;ntdll.lib;user32.lib;shell32.lib;comctl32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Urlmon.lib;Shcore.lib;dwmapi.lib;shlwapi.lib;ntdll.lib;user32.lib;shell32.lib;comctl32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Urlmon.lib;Shcore.lib;dwmapi.lib;shlwapi.lib;ntdll.lib;user32.lib;shell32.lib;comctl32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -181,7 +181,7 @@
     <ClInclude Include="Helpers.h" />
     <ClInclude Include="IWindowNative.h" />
     <ClInclude Include="LegacyNonImmersiveView.h" />
-    <ClInclude Include="LegacyTitleBar.h" />
+    <ClInclude Include="TitleBar.h" />
     <ClInclude Include="mrm_private.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Privates.h" />
@@ -197,7 +197,7 @@
   <ItemGroup>
     <ClCompile Include="FileProtocolHandler.cpp" />
     <ClCompile Include="LegacyNonImmersiveView.cpp" />
-    <ClCompile Include="LegacyTitleBar.cpp" />
+    <ClCompile Include="TitleBar.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -221,6 +221,7 @@
     <ClCompile Include="XamlWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <Midl Include="TitleBar.idl" />
     <Midl Include="XamlApplication.idl" />
     <Midl Include="XamlWindow.idl" />
   </ItemGroup>

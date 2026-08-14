@@ -36,6 +36,7 @@ namespace winrt::XamlHostingKit::implementation
         DispatcherQueue m_dispatcherQueue { nullptr };
         CoreWindow m_coreWindow { nullptr };
         FrameworkView m_frameworkView { nullptr };
+        winrt::XamlHostingKit::TitleBar m_titleBar { nullptr };
         winrt::com_ptr<IWindowPrivate> m_windowPrivate { nullptr };
         winrt::com_ptr<IFrameworkApplicationPrivate> m_applicationPrivate { nullptr };
         winrt::com_ptr<IFrameworkApplicationPrivateOld> m_applicationPrivateOld { nullptr };
@@ -43,7 +44,6 @@ namespace winrt::XamlHostingKit::implementation
 
         static LPCWSTR const RegisterWindowClass(WNDPROC wndProc);
         static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-        static LRESULT CALLBACK CoreWindowSubClassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR idSubclass, DWORD_PTR dwRefData);
 
     public:
 
@@ -69,6 +69,7 @@ namespace winrt::XamlHostingKit::implementation
         winrt::Windows::UI::Xaml::Window SystemWindow();
         winrt::Windows::ApplicationModel::Core::CoreApplicationView CoreApplicationView();
 
+        winrt::XamlHostingKit::TitleBar TitleBar();
         winrt::Windows::UI::Core::CoreDispatcher Dispatcher();
         winrt::Windows::System::DispatcherQueue DispatcherQueue();
         winrt::Windows::UI::Core::CoreWindow CoreWindow();
