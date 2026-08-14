@@ -141,13 +141,18 @@ namespace winrt::XamlHostingKit::implementation
                 if (!LOG_LAST_ERROR_IF(!Helpers::EnableResizeSynchronization(m_hwnd, true))) [[likely]]
                 {
                     Helpers::EnableResizeSynchronization(m_coreWindowHwnd, true);
-                    m_windowPrivate.attach(wPriv.detach());
-                    m_isSyncObjEnabled = true;
 
-                    if (HANDLE syncHandle = Helpers::GetResizeSynchronizationObject(m_hwnd)) [[unlikely]]
+                    if (Helpers::OSBuild >= 17134u) [[likely]]
                     {
-                        LOG_IF_FAILED(m_windowPrivate->SetSynchronizationInfo((uint64_t)syncHandle, (uint64_t)m_hwnd));
-                        CloseHandle(syncHandle);
+                        if (Application::Current().try_as(m_applicationPrivate)) [[likely]]
+                        {
+                            m_isSyncObjEnabled = true;
+                        }
+                    }
+                    else if (Helpers::OSBuild <= 16299u)
+                    {
+                        m_windowPrivate.attach(wPriv.detach());
+                        m_isSyncObjEnabled = true;
                     }
                 }
             }
@@ -467,23 +472,24 @@ namespace winrt::XamlHostingKit::implementation
         {
             if (msg == WM_SIZE)
             {
-                // TODO: Should this be after SetSynchronizationInfo instead?
-                // this is currently here before it because XAML sets the CoreWindow synchronization object
-                // on every WM_SIZE message, so it seems like we should send that message before we set
-                // the synchronization object so that XAML doesn't override it (with CoreWindow's one),
-                // but also the code around (NtUser)LayoutCompleted in WUX.dll seems to suggest that we are supposed to resize
-                // after setting the synchronization object, this is so confusing...
-                SetWindowPos(_this->m_coreWindowHwnd, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam), SWP_NOZORDER | SWP_SHOWWINDOW | SWP_NOACTIVATE);
-                SendMessageW(_this->m_coreWindowHwnd, msg, wParam, lParam);
-
                 if (_this->m_isSyncObjEnabled) [[likely]]
                 {
-                    if (HANDLE syncHandle = Helpers::GetResizeSynchronizationObject(hwnd)) [[likely]]
+                    if (_this->m_applicationPrivate) [[likely]]
                     {
-                        _this->m_windowPrivate->SetSynchronizationInfo((uint64_t)syncHandle, (uint64_t)hwnd);
-                        CloseHandle(syncHandle);
+                        _this->m_applicationPrivate->SetSynchronizationWindow((uint64_t)hwnd);
+                    }
+                    else
+                    {
+                        if (HANDLE syncHandle = Helpers::GetResizeSynchronizationObject(hwnd)) [[likely]]
+                        {
+                            _this->m_windowPrivate->SetSynchronizationInfo((uint64_t)syncHandle, (uint64_t)hwnd);
+                            CloseHandle(syncHandle);
+                        }
                     }
                 }
+
+                SetWindowPos(_this->m_coreWindowHwnd, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam), SWP_NOZORDER | SWP_SHOWWINDOW | SWP_NOACTIVATE);
+                SendMessageW(_this->m_coreWindowHwnd, msg, wParam, lParam);           
             }
             else if (msg == WM_SHOWWINDOW && _this->m_visibilityChanged)
             {
