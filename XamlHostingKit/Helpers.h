@@ -95,14 +95,6 @@ namespace winrt::XamlHostingKit
             return winrt::hstring { _executablePath.stem().wstring() };
         }
 
-        inline static bool ShouldAppsUseDarkMode()
-        {
-            if (!PersonalizeKey.is_valid() || !PersonalizeKey) [[unlikely]]
-                return false;
-
-            return !wil::reg::try_get_value_dword(PersonalizeKey.get(), L"AppsUseLightTheme").value_or(true);
-        }
-
 #if USE_PATH_HASH_FOR_TEMP_PRI
         inline static std::wstring ToBase64(std::wstring const& input)
         {
@@ -565,6 +557,14 @@ namespace winrt::XamlHostingKit
                 auto border = std::ceil(1 * Helpers::GetDpiScaleForWindow(hwnd));
                 return static_cast<int>(border);
             }
+        }
+
+        inline static bool ShouldAppsUseDarkMode()
+        {
+            if (!PersonalizeKey.is_valid() || !PersonalizeKey) [[unlikely]]
+                return false;
+
+            return !wil::reg::try_get_value_dword(PersonalizeKey.get(), L"AppsUseLightTheme").value_or(true);
         }
     };
 

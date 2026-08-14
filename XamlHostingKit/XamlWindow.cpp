@@ -138,7 +138,8 @@ namespace winrt::XamlHostingKit::implementation
         m_frameworkView.SetWindow(m_coreWindow);
         m_systemWindow = Window::Current();
 
-        m_titleBar = winrt::make<winrt::XamlHostingKit::implementation::TitleBar>(m_hwnd, m_coreWindowHwnd, m_coreWindow.Dispatcher());
+        if (Features::IsDesktopWindowTargetAvailable)
+            m_titleBar = winrt::make<winrt::XamlHostingKit::implementation::TitleBar>(m_hwnd, m_coreWindowHwnd, m_coreWindow.Dispatcher());
 
         if (auto wPriv = m_systemWindow.try_as<IWindowPrivate>()) [[likely]]
         {
