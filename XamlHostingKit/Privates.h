@@ -282,11 +282,26 @@ struct DefaultWebPlatformSecurityManager : winrt::implements<DefaultWebPlatformS
     inline STDMETHODIMP GetZoneActionPolicyEx(unsigned int, unsigned int, unsigned __int8*, unsigned int, URLZONEREG, unsigned int) override { return INET_E_DEFAULT_ACTION; }
 };
 
-MIDL_INTERFACE("1095a564-7df2-476a-a853-167c61b62503")
+MIDL_INTERFACE("00000000-0000-0000-C000-000000000046")
 IUrlRedirectionPolicyManager : public ::IUnknown
 {
     STDMETHOD(IsRedirectToBrokerNeeded)(LPCWSTR, void*) PURE;
     STDMETHOD(GetBrowserTransitionState)(LPCWSTR, void*, void*) PURE;
+};
+
+MIDL_INTERFACE("00000000-0000-0000-C000-000000000046")
+IUrlRedirectionPolicyManagerOld : public ::IUnknown
+{
+    STDMETHOD(LCIEGetRedirectionPolicyForURL)(LPCWSTR, int, int, unsigned int, unsigned int*, int*) PURE;
+    STDMETHOD(IsRedirectToBrokerNeeded)(LPCWSTR, void*) PURE;
+    STDMETHOD(LCIEGetRedirectionPolicyForURL2)(LPCWSTR, int, int, unsigned int, unsigned int*, int*, LPCWSTR*) PURE;
+};
+
+MIDL_INTERFACE("00000000-0000-0000-C000-000000000046")
+IUrlRedirectionPolicyManagerOlder : public ::IUnknown
+{
+    STDMETHOD(LCIEGetRedirectionPolicyForURL)(LPCWSTR, int, int, unsigned int, unsigned int*, int*) PURE;
+    STDMETHOD(IsRedirectToBrokerNeeded)(LPCWSTR, void*) PURE;
 };
 
 struct DefaultUrlRedirectionPolicyManager : winrt::implements<DefaultUrlRedirectionPolicyManager, IUrlRedirectionPolicyManager>
@@ -294,4 +309,19 @@ struct DefaultUrlRedirectionPolicyManager : winrt::implements<DefaultUrlRedirect
     DefaultUrlRedirectionPolicyManager() = default;
     inline STDMETHODIMP IsRedirectToBrokerNeeded(LPCWSTR, void*) override { return S_FALSE; }
     inline STDMETHODIMP GetBrowserTransitionState(LPCWSTR, void*, void*) override { return E_NOTIMPL; }
+};
+
+struct OldDefaultUrlRedirectionPolicyManager : winrt::implements<OldDefaultUrlRedirectionPolicyManager, IUrlRedirectionPolicyManagerOld>
+{
+    OldDefaultUrlRedirectionPolicyManager() = default;
+    inline STDMETHODIMP IsRedirectToBrokerNeeded(LPCWSTR, void*) override { return S_FALSE; }
+    inline STDMETHODIMP LCIEGetRedirectionPolicyForURL(LPCWSTR, int, int, unsigned int, unsigned int*, int*) override { return E_NOTIMPL; }
+    inline STDMETHODIMP LCIEGetRedirectionPolicyForURL2(LPCWSTR, int, int, unsigned int, unsigned int*, int*, LPCWSTR*) override { return E_NOTIMPL; }
+};
+
+struct OlderDefaultUrlRedirectionPolicyManager : winrt::implements<OlderDefaultUrlRedirectionPolicyManager, IUrlRedirectionPolicyManagerOlder>
+{
+    OlderDefaultUrlRedirectionPolicyManager() = default;
+    inline STDMETHODIMP IsRedirectToBrokerNeeded(LPCWSTR, void*) override { return S_FALSE; }
+    inline STDMETHODIMP LCIEGetRedirectionPolicyForURL(LPCWSTR, int, int, unsigned int, unsigned int*, int*) override { return E_NOTIMPL; }
 };

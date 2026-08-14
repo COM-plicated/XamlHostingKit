@@ -56,12 +56,16 @@ namespace winrt::XamlHostingKit
     static const auto GetCurrentPackageInfo2Method = reinterpret_cast<decltype(&GetCurrentPackageInfo2)>(GetProcAddress(KernelBaseModule, "GetCurrentPackageInfo2"));
     static const auto CreateXamlUIPresenter = reinterpret_cast<HRESULT(WINAPI*)(void*, void**)>(GetProcAddress(XAMLModule.get(), "CreateXamlUIPresenter"));
     static const auto RegisterPermanentUrlRedirectionPolicyManager = reinterpret_cast<HRESULT(WINAPI*)(IUrlRedirectionPolicyManager*)>(GetProcAddress(UrlMonModule.get(), MAKEINTRESOURCEA(560)));
+    static const auto GetBrowserTransitionState = reinterpret_cast<HRESULT(WINAPI*)(LPCWSTR, void*, void*)>(GetProcAddress(UrlMonModule.get(), MAKEINTRESOURCEA(575)));
+    static const auto LCIEGetRedirectionPolicyForURL = reinterpret_cast<HRESULT(WINAPI*)(LPCWSTR, int, int, unsigned int, unsigned int*, int*)>(GetProcAddress(UrlMonModule.get(), MAKEINTRESOURCEA(494)));
+    static const auto LCIEGetRedirectionPolicyForURL2 = reinterpret_cast<HRESULT(WINAPI*)(LPCWSTR, int, int, unsigned int, unsigned int*, int*, LPCWSTR*)>(GetProcAddress(UrlMonModule.get(), MAKEINTRESOURCEA(493)));
+    static const auto IEConfiguration_SetBool = reinterpret_cast<HRESULT(WINAPI*)(int, bool)>(GetProcAddress(IERTUtilModule.get(), MAKEINTRESOURCEA(792)));
 
     static const auto PersonalizeKey = wil::reg::open_unique_key(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize");
 
     #define NtCurrentPeb() (NtCurrentTeb()->ProcessEnvironmentBlock)
 
-    EXTERN_C NTSTATUS RtlGetVersion(_Out_ PRTL_OSVERSIONINFOW lpVersionInformation);
+    EXTERN_C NTSTATUS WINAPI RtlGetVersion(_Out_ PRTL_OSVERSIONINFOW lpVersionInformation);
 
     namespace wss = winrt::Windows::Storage::Streams;
 
@@ -220,7 +224,7 @@ namespace winrt::XamlHostingKit
                 LOG_HR_MSG(E_FAIL,
                     "Dark Mode functions cannot be found, "
                     "IsDarkModeAllowedForWindow = 0x%08llx, SetWindowCompositionAttribute = 0x%08llx.",
-                    (uintptr_t)IsDarkModeAllowedForWindow, (uintptr_t)SetWindowCompositionAttribute);
+                    (uint64_t)IsDarkModeAllowedForWindow, (uint64_t)SetWindowCompositionAttribute);
             }
         }
 
@@ -239,7 +243,7 @@ namespace winrt::XamlHostingKit
                 LOG_HR_MSG(E_FAIL,
                     "Dark Mode functions cannot be found, "
                     "SetPreferredAppMode = 0x%08llx, RefreshImmersiveColorPolicyState = 0x%08llx, AllowDarkModeForWindow = 0x%08llx.",
-                    (uintptr_t)SetPreferredAppMode, (uintptr_t)RefreshImmersiveColorPolicyState, (uintptr_t)AllowDarkModeForWindow);
+                    (uint64_t)SetPreferredAppMode, (uint64_t)RefreshImmersiveColorPolicyState, (uint64_t)AllowDarkModeForWindow);
             }
         }
 

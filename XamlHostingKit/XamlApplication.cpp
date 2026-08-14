@@ -103,6 +103,15 @@ namespace winrt::XamlHostingKit::implementation
                 // exists but StartInCoreWindowHostingMode failed, in which case
                 // this will also fail (probably).
 
+                try
+                {
+                    if (Application::Current()) [[unlikely]]
+                    {
+                        goto MakeWindow;
+                    }
+                }
+                catch (...) { }
+
                 if (!CreateXamlUIPresenter) [[unlikely]]
                 {
                     throw hresult_error(E_FAIL, L"Failed to find CreateXamlUIPresenter function, this function is needed to initialize DXamlCore.");
@@ -118,6 +127,7 @@ namespace winrt::XamlHostingKit::implementation
             }
         }
 
+MakeWindow:
         auto window = winrt::make_self<XamlWindow>(WindowCreationOptions { }, true);
 
         s_hasStarted = true;
@@ -450,8 +460,30 @@ namespace winrt::XamlHostingKit::implementation
 
             if (Helpers::OSBuild < 15063u && RegisterPermanentUrlRedirectionPolicyManager) [[unlikely]]
             {
-                auto manager = winrt::make<DefaultUrlRedirectionPolicyManager>();
-                LOG_IF_FAILED(RegisterPermanentUrlRedirectionPolicyManager(manager.get()));
+                if (GetBrowserTransitionState) [[likely]]
+                {
+                    auto manager = winrt::make<DefaultUrlRedirectionPolicyManager>();
+                    LOG_IF_FAILED(RegisterPermanentUrlRedirectionPolicyManager(manager.get()));
+                }
+                else if (LCIEGetRedirectionPolicyForURL2)
+                {
+                    auto manager = winrt::make<OldDefaultUrlRedirectionPolicyManager>();
+                    LOG_IF_FAILED(RegisterPermanentUrlRedirectionPolicyManager(reinterpret_cast<IUrlRedirectionPolicyManager*>(manager.get())));
+                }
+                else if (LCIEGetRedirectionPolicyForURL)
+                {
+                    auto manager = winrt::make<OlderDefaultUrlRedirectionPolicyManager>();
+                    LOG_IF_FAILED(RegisterPermanentUrlRedirectionPolicyManager(reinterpret_cast<IUrlRedirectionPolicyManager*>(manager.get())));
+                    goto SetConfig;
+                }
+                else
+                {
+                SetConfig:
+                    if (IEConfiguration_SetBool) [[likely]]
+                    {
+                        LOG_IF_FAILED(IEConfiguration_SetBool(0x10000035, true));
+                    }
+                }
             }
 
             if (XamlConfig::s_enableMsAppxWebProtocolSupport) [[unlikely]]
