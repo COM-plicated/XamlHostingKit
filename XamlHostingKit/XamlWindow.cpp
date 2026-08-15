@@ -138,8 +138,7 @@ namespace winrt::XamlHostingKit::implementation
         m_frameworkView.SetWindow(m_coreWindow);
         m_systemWindow = Window::Current();
 
-        if (Features::IsDesktopWindowTargetAvailable)
-            m_titleBar = winrt::make<winrt::XamlHostingKit::implementation::TitleBar>(m_hwnd, m_coreWindowHwnd, m_coreWindow.Dispatcher());
+        //m_titleBar = winrt::make<winrt::XamlHostingKit::implementation::TitleBar>(m_hwnd, m_coreWindowHwnd, m_coreWindow.Dispatcher());
 
         if (auto wPriv = m_systemWindow.try_as<IWindowPrivate>()) [[likely]]
         {
@@ -548,7 +547,7 @@ namespace winrt::XamlHostingKit::implementation
                 if (_this->m_titleBar && _this->m_titleBar.ExtendViewIntoTitleBar())
                 {
                     y = Helpers::GetTopBorderSize(hwnd);
-                    height -= y;
+                    height -= static_cast<WORD>(y);
                 }
 
                 SetWindowPos(_this->m_coreWindowHwnd, NULL, 0, y, width, height, SWP_NOZORDER | SWP_SHOWWINDOW | SWP_NOACTIVATE);

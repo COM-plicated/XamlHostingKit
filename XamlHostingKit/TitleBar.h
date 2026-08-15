@@ -3,6 +3,10 @@
 #include <winrt/Windows.UI.Core.h>
 #include <winrt/Windows.UI.Composition.Desktop.h>
 #include <windows.ui.composition.interop.h>
+#include <dcomp.h>
+#include <d3d11.h>
+
+//#define TITLEBAR_USE_VISUALS
 
 namespace winrt::XamlHostingKit
 {
@@ -10,12 +14,29 @@ namespace winrt::XamlHostingKit
 
 	struct TitleBarCaptionButton
 	{
+#ifdef TITLEBAR_USE_VISUALS
 		ContainerVisual m_container{ nullptr };
 		SpriteVisual m_background{ nullptr };
 		ShapeVisual m_shape{ nullptr };
 		ShapeVisual m_shape_ext{ nullptr };
 
 		void Update(CompositionColorBrush const& foreground, CompositionColorBrush const& background = nullptr);
+#endif
+	};
+
+	enum class TitleBarCaptionButtonType
+	{
+		NONE = 0,
+		CLOSE = 20,
+		MAXIMIZE = 9,
+		MINIMIZE = 8
+	};
+
+	enum class TitleBarCaptionButtonState
+	{
+		NORMAL = 0,
+		HOVER = 1,
+		ACTIVE = 2
 	};
 }
 
@@ -48,7 +69,7 @@ namespace winrt::XamlHostingKit::implementation
 		static const constexpr auto XHK_TITLEBAR_CAPTION_CLOSE_HOVER_BACKGROUND_DARK = Color({ 255, 196, 43, 28 });
 		static const constexpr auto XHK_TITLEBAR_CAPTION_CLOSE_ACTIVE_BACKGROUND_LIGHT = Color({ 255, 200, 60, 49 });
 		static const constexpr auto XHK_TITLEBAR_CAPTION_CLOSE_ACTIVE_BACKGROUND_DARK = Color({ 255, 179, 39, 28 });
-		
+
 		static const constexpr auto XHK_TITLEBAR_CAPTION_FOREGROUND_LIGHT = Color({ 255, 25, 25, 25 });
 		static const constexpr auto XHK_TITLEBAR_CAPTION_FOREGROUND_DARK = Color({ 255, 255, 255, 255 });
 		static const constexpr auto XHK_TITLEBAR_CAPTION_HOVER_FOREGROUND_LIGHT = Color({ 255, 25, 25, 25 });
@@ -61,14 +82,16 @@ namespace winrt::XamlHostingKit::implementation
 		bool m_extend{ false };
 		bool m_isVisible{ false };
 		bool m_isActive{ false };
+		bool m_isMaximized{ false };
 		HWND m_xamlWindow{ nullptr };
 		HWND m_coreWindow{ nullptr };
+		CoreDispatcher m_dispatcher{ nullptr };
 
+#ifdef TITLEBAR_USE_VISUALS
 		Compositor m_compositor{ nullptr };
 		DesktopWindowTarget m_target{ nullptr };
 		ContainerVisual m_rootVisual{ nullptr };
 		ContainerVisual m_caption{ nullptr };
-		CoreDispatcher m_dispatcher{ nullptr };
 
 		CompositionColorBrush m_captionOtherBackground{ nullptr };
 		CompositionColorBrush m_captionCloseBackground{ nullptr };
@@ -78,7 +101,7 @@ namespace winrt::XamlHostingKit::implementation
 
 		CompositionColorBrush m_captionOtherActiveBackground{ nullptr };
 		CompositionColorBrush m_captionCloseActiveBackground{ nullptr };
-		
+
 		CompositionColorBrush m_captionForeground{ nullptr };
 		CompositionColorBrush m_captionHoverForeground{ nullptr };
 		CompositionColorBrush m_captionActiveForeground{ nullptr };;
@@ -87,15 +110,48 @@ namespace winrt::XamlHostingKit::implementation
 		winrt::XamlHostingKit::TitleBarCaptionButton m_captionClose{ nullptr };
 		winrt::XamlHostingKit::TitleBarCaptionButton m_captionMaximize{ nullptr };
 		winrt::XamlHostingKit::TitleBarCaptionButton m_captionMinimize{ nullptr };
+#else
+		ID3D11Device* m_d3d11Device{ nullptr };
+		ID2D1Device* m_d2d1Device{ nullptr };
+		IDCompositionDevice* m_dcompDevice{ nullptr };
+		IDCompositionTarget* m_target{ nullptr };
+		IDCompositionVisual* m_rootVisual{ nullptr };
+		IDCompositionVisual* m_caption{ nullptr };
+		IDCompositionSurface* m_captionSurface{ nullptr };
+
+		D2D1::ColorF m_captionOtherBackground{ 0, 1.0f };
+		D2D1::ColorF m_captionCloseBackground{ 0, 1.0f };
+
+		D2D1::ColorF m_captionOtherHoverBackground{ 0, 1.0f };
+		D2D1::ColorF m_captionCloseHoverBackground{ 0, 1.0f };
+
+		D2D1::ColorF m_captionOtherActiveBackground{ 0, 1.0f };
+		D2D1::ColorF m_captionCloseActiveBackground{ 0, 1.0f };
+
+		D2D1::ColorF m_captionForeground{ 0, 1.0f };
+		D2D1::ColorF m_captionHoverForeground{ 0, 1.0f };
+		D2D1::ColorF m_captionActiveForeground{ 0, 1.0f };
+		D2D1::ColorF m_captionInactiveForeground{ 0, 1.0f };
+#endif
 
 		winrt::event<winrt::Windows::Foundation::TypedEventHandler<winrt::XamlHostingKit::TitleBar, IInspectable>> m_isVisibleChanged;
 		winrt::event<winrt::Windows::Foundation::TypedEventHandler<winrt::XamlHostingKit::TitleBar, IInspectable>> m_layoutMetricsChanged;
 
 		void UpdateCaptionColors();
+#ifndef TITLEBAR_USE_VISUALS
+		void CreateCaptionSurface(float scale);
+		void DrawCaption(float scale, winrt::XamlHostingKit::TitleBarCaptionButtonType const& buttonType, winrt::XamlHostingKit::TitleBarCaptionButtonState const& buttonState);
+		void CaptionButtonColor(winrt::XamlHostingKit::TitleBarCaptionButtonType const& buttonType, winrt::XamlHostingKit::TitleBarCaptionButtonState const& buttonState, D2D1::ColorF* bgColor, D2D1::ColorF* stColor);
+		void ReleaseResources();
+#endif
 
 		static LRESULT CALLBACK XamlWindowSubClassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR idSubclass, DWORD_PTR dwRefData);
 		static LRESULT CALLBACK CoreWindowSubClassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR idSubclass, DWORD_PTR dwRefData);
+#ifdef TITLEBAR_USE_VISUALS
 		static winrt::XamlHostingKit::TitleBarCaptionButton CreateCaptionButton(Compositor const& compositor, std::vector<CompositionGeometry> const& geometry, std::vector<CompositionGeometry> const& geometry_ext, int index);
+#else
+		static D2D1::ColorF ToColorF(Color const& color);
+#endif
 
 	public:
 		TitleBar() = default;

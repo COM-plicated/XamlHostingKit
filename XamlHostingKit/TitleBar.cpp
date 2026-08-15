@@ -8,6 +8,7 @@
 
 namespace winrt::XamlHostingKit
 {
+#ifdef TITLEBAR_USE_VISUALS
 	void winrt::XamlHostingKit::TitleBarCaptionButton::Update(CompositionColorBrush const& foreground, CompositionColorBrush const& background)
 	{
 		for (const auto& part : m_shape.Shapes())
@@ -20,6 +21,7 @@ namespace winrt::XamlHostingKit
 		if (background)
 			m_background.Brush(background);
 	}
+#endif
 }
 
 namespace winrt::XamlHostingKit::implementation
@@ -30,6 +32,7 @@ namespace winrt::XamlHostingKit::implementation
 	{
 		m_isVisible = true;
 
+#ifdef TITLEBAR_USE_VISUALS
 		namespace abi = ABI::Windows::UI::Composition::Desktop;
 		m_compositor = Compositor();
 
@@ -98,6 +101,35 @@ namespace winrt::XamlHostingKit::implementation
 		m_caption.Children().InsertAtTop((m_captionMinimize = CreateCaptionButton(m_compositor, { min }, { }, 3)).m_container);
 
 		m_caption.IsVisible(m_extend);
+#else
+		UpdateCaptionColors();
+
+		D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, NULL,
+			D3D11_CREATE_DEVICE_BGRA_SUPPORT, nullptr, 0, D3D11_SDK_VERSION,
+			&m_d3d11Device, nullptr, nullptr);
+
+		IDXGIDevice* pDXGIDevice = nullptr;
+		m_d3d11Device->QueryInterface(__uuidof(IDXGIDevice), (void**)&pDXGIDevice);
+
+		D2D1CreateDevice(pDXGIDevice, nullptr, &m_d2d1Device);
+
+		DCompositionCreateDevice2(m_d2d1Device, __uuidof(IDCompositionDevice), (void**)&m_dcompDevice);
+		pDXGIDevice->Release();
+
+		m_dcompDevice->CreateTargetForHwnd(m_xamlWindow, TRUE, &m_target);
+		m_dcompDevice->CreateVisual(&m_rootVisual);
+		m_target->SetRoot(m_rootVisual);
+
+		m_dcompDevice->CreateVisual(&m_caption);
+		if (m_extend)
+			m_rootVisual->AddVisual(m_caption, TRUE, nullptr);
+
+		auto scale = Helpers::GetDpiScaleForWindow(m_xamlWindow);
+		CreateCaptionSurface(scale);
+		DrawCaption(scale, TitleBarCaptionButtonType::NONE, TitleBarCaptionButtonState::NORMAL);
+
+		m_dcompDevice->Commit();
+#endif
 
 		SetPropW(m_xamlWindow, XHK_TITLEBAR_OBJECT_PROP, this);
 		SetPropW(m_coreWindow, XHK_TITLEBAR_OBJECT_PROP, this);
@@ -112,7 +144,14 @@ namespace winrt::XamlHostingKit::implementation
 
 	void TitleBar::ExtendViewIntoTitleBar(bool const& value) {
 		m_extend = value;
+#ifdef TITLEBAR_USE_VISUALS
 		m_caption.IsVisible(value);
+#else
+		if (value)
+			m_rootVisual->AddVisual(m_caption, TRUE, nullptr);
+		else
+			m_rootVisual->RemoveVisual(m_caption);
+#endif
 		SetWindowPos(m_xamlWindow, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
 		if (m_layoutMetricsChanged) {
@@ -167,6 +206,7 @@ namespace winrt::XamlHostingKit::implementation
 	{
 		auto dark = Helpers::ShouldAppsUseDarkMode();
 
+#ifdef TITLEBAR_USE_VISUALS
 		m_captionOtherBackground = m_compositor.CreateColorBrush(dark ? XHK_TITLEBAR_CAPTION_OTHER_BACKGROUND_DARK : XHK_TITLEBAR_CAPTION_OTHER_BACKGROUND_LIGHT);
 		m_captionOtherHoverBackground = m_compositor.CreateColorBrush(dark ? XHK_TITLEBAR_CAPTION_OTHER_HOVER_BACKGROUND_DARK : XHK_TITLEBAR_CAPTION_OTHER_HOVER_BACKGROUND_LIGHT);
 		m_captionOtherActiveBackground = m_compositor.CreateColorBrush(dark ? XHK_TITLEBAR_CAPTION_OTHER_ACTIVE_BACKGROUND_DARK : XHK_TITLEBAR_CAPTION_OTHER_ACTIVE_BACKGROUND_LIGHT);
@@ -179,7 +219,182 @@ namespace winrt::XamlHostingKit::implementation
 		m_captionHoverForeground = m_compositor.CreateColorBrush(dark ? XHK_TITLEBAR_CAPTION_HOVER_FOREGROUND_DARK : XHK_TITLEBAR_CAPTION_HOVER_FOREGROUND_LIGHT);
 		m_captionActiveForeground = m_compositor.CreateColorBrush(dark ? XHK_TITLEBAR_CAPTION_ACTIVE_FOREGROUND_DARK : XHK_TITLEBAR_CAPTION_ACTIVE_FOREGROUND_LIGHT);
 		m_captionInactiveForeground = m_compositor.CreateColorBrush(dark ? XHK_TITLEBAR_CAPTION_INACTIVE_FOREGROUND_DARK : XHK_TITLEBAR_CAPTION_INACTIVE_FOREGROUND_LIGHT);
+#else
+		m_captionOtherBackground = ToColorF(dark ? XHK_TITLEBAR_CAPTION_OTHER_BACKGROUND_DARK : XHK_TITLEBAR_CAPTION_OTHER_BACKGROUND_LIGHT);
+		m_captionOtherHoverBackground = ToColorF(dark ? XHK_TITLEBAR_CAPTION_OTHER_HOVER_BACKGROUND_DARK : XHK_TITLEBAR_CAPTION_OTHER_HOVER_BACKGROUND_LIGHT);
+		m_captionOtherActiveBackground = ToColorF(dark ? XHK_TITLEBAR_CAPTION_OTHER_ACTIVE_BACKGROUND_DARK : XHK_TITLEBAR_CAPTION_OTHER_ACTIVE_BACKGROUND_LIGHT);
+
+		m_captionCloseBackground = ToColorF(dark ? XHK_TITLEBAR_CAPTION_CLOSE_BACKGROUND_DARK : XHK_TITLEBAR_CAPTION_CLOSE_BACKGROUND_LIGHT);
+		m_captionCloseHoverBackground = ToColorF(dark ? XHK_TITLEBAR_CAPTION_CLOSE_HOVER_BACKGROUND_DARK : XHK_TITLEBAR_CAPTION_CLOSE_HOVER_BACKGROUND_LIGHT);
+		m_captionCloseActiveBackground = ToColorF(dark ? XHK_TITLEBAR_CAPTION_CLOSE_ACTIVE_BACKGROUND_DARK : XHK_TITLEBAR_CAPTION_CLOSE_ACTIVE_BACKGROUND_LIGHT);
+
+		m_captionForeground = ToColorF(dark ? XHK_TITLEBAR_CAPTION_FOREGROUND_DARK : XHK_TITLEBAR_CAPTION_FOREGROUND_LIGHT);
+		m_captionHoverForeground = ToColorF(dark ? XHK_TITLEBAR_CAPTION_HOVER_FOREGROUND_DARK : XHK_TITLEBAR_CAPTION_HOVER_FOREGROUND_LIGHT);
+		m_captionActiveForeground = ToColorF(dark ? XHK_TITLEBAR_CAPTION_ACTIVE_FOREGROUND_DARK : XHK_TITLEBAR_CAPTION_ACTIVE_FOREGROUND_LIGHT);
+		m_captionInactiveForeground = ToColorF(dark ? XHK_TITLEBAR_CAPTION_INACTIVE_FOREGROUND_DARK : XHK_TITLEBAR_CAPTION_INACTIVE_FOREGROUND_LIGHT);
+#endif
 	}
+
+#ifndef TITLEBAR_USE_VISUALS
+
+	void TitleBar::CreateCaptionSurface(float scale) {
+		if (m_captionSurface)
+			m_captionSurface->Release();
+
+		m_dcompDevice->CreateSurface(static_cast<UINT>(XHK_TITLEBAR_CAPTION_WIDTH * scale), static_cast<UINT>(Helpers::GetCaptionSize(m_xamlWindow)), DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_ALPHA_MODE_PREMULTIPLIED, &m_captionSurface);
+		m_caption->SetContent(m_captionSurface);
+	}
+
+	void TitleBar::DrawCaption(float scale, winrt::XamlHostingKit::TitleBarCaptionButtonType const& buttonType, winrt::XamlHostingKit::TitleBarCaptionButtonState const& buttonState) {
+		POINT offset = {};
+		ID2D1DeviceContext* d2d1Context = nullptr;
+
+		m_captionSurface->BeginDraw(nullptr, IID_PPV_ARGS(&d2d1Context), &offset);
+
+		d2d1Context->SetDpi(96.0f, 96.0f);
+		d2d1Context->Clear(D2D1::ColorF(0x0, 0.0f));
+
+		auto scaleMatrix = D2D1::Matrix3x2F::Scale(scale, scale);
+		auto translationMatrix = D2D1::Matrix3x2F::Translation(static_cast<FLOAT>(offset.x), static_cast<FLOAT>(offset.y));
+		auto baseTransform = scaleMatrix * translationMatrix;
+
+		// Close button
+		d2d1Context->SetTransform(D2D1::Matrix3x2F::Translation(XHK_TITLEBAR_CAPTION_WIDTH - XHK_TITLEBAR_CAPTION_BUTTON_WIDTH, 0.0f) * baseTransform);
+		{
+			D2D1::ColorF bgColor = m_captionCloseBackground;
+			D2D1::ColorF stColor = m_isActive ? m_captionForeground : m_captionInactiveForeground;
+
+			if (buttonType == winrt::XamlHostingKit::TitleBarCaptionButtonType::CLOSE)
+				CaptionButtonColor(buttonType, buttonState, &bgColor, &stColor);
+
+			ID2D1SolidColorBrush* background;
+			ID2D1SolidColorBrush* stroke;
+			d2d1Context->CreateSolidColorBrush(bgColor, &background);
+			d2d1Context->CreateSolidColorBrush(stColor, &stroke);
+
+			auto point = D2D1::Point2F(0.0f, 0.0f);
+			auto rectangle = D2D1::RectF(point.x, point.y, point.x + XHK_TITLEBAR_CAPTION_BUTTON_WIDTH, point.y + XHK_TITLEBAR_CAPTION_BUTTON_HEIGHT);
+			d2d1Context->FillRectangle(rectangle, background);
+			background->Release();
+
+			point = D2D1::Point2F(18.0f, 11.0f);
+			rectangle = D2D1::RectF(point.x, point.y, point.x + 10.0f, point.y + 10.0f);
+			d2d1Context->PushAxisAlignedClip(rectangle, D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+			{
+				auto point1 = D2D1::Point2F(18.0f, 11.0f);
+				auto point2 = D2D1::Point2F(28.0f, 21.0f);
+				d2d1Context->DrawLine(point1, point2, stroke);
+				point1 = D2D1::Point2F(18.0f, 21.0f);
+				point2 = D2D1::Point2F(28.0f, 11.0f);
+				d2d1Context->DrawLine(point1, point2, stroke);
+				stroke->Release();
+			}
+			d2d1Context->PopAxisAlignedClip();
+		}
+		// Max button
+		d2d1Context->SetTransform(D2D1::Matrix3x2F::Translation(XHK_TITLEBAR_CAPTION_WIDTH - XHK_TITLEBAR_CAPTION_BUTTON_WIDTH * 2.0f, 0.0f) * baseTransform);
+		{
+			D2D1::ColorF bgColor = m_captionOtherBackground;
+			D2D1::ColorF stColor = m_isActive ? m_captionForeground : m_captionInactiveForeground;
+
+			if (buttonType == winrt::XamlHostingKit::TitleBarCaptionButtonType::MAXIMIZE)
+				CaptionButtonColor(buttonType, buttonState, &bgColor, &stColor);
+
+			ID2D1SolidColorBrush* background;
+			ID2D1SolidColorBrush* stroke;
+			d2d1Context->CreateSolidColorBrush(bgColor, &background);
+			d2d1Context->CreateSolidColorBrush(stColor, &stroke);
+
+			auto point = D2D1::Point2F(0.0f, 0.0f);
+			auto rectangle = D2D1::RectF(point.x, point.y, point.x + XHK_TITLEBAR_CAPTION_BUTTON_WIDTH, point.y + XHK_TITLEBAR_CAPTION_BUTTON_HEIGHT);
+			d2d1Context->FillRectangle(rectangle, background);
+			background->Release();
+
+			if (m_isMaximized)
+			{
+				point = D2D1::Point2F(18.5f, 13.5f);
+				rectangle = D2D1::RectF(point.x, point.y, point.x + 7.0f, point.y + 7.0f);
+				d2d1Context->DrawRoundedRectangle(D2D1::RoundedRect(rectangle, 1.0f, 1.0f), stroke, 1.0f);
+
+				/*point = D2D1::Point2F(19.5f, 11.5f);
+				rectangle = D2D1::RectF(point.x, point.y, point.x + 8.0f, point.y + 8.0f);
+				d2d1Context->DrawRoundedRectangle(D2D1::RoundedRect(rectangle, 2.0f, 2.0f), stroke, 1.0f);*/
+
+				auto point1 = D2D1::Point2F(20.5f, 11.5f);
+				auto point2 = D2D1::Point2F(26.0f, 11.5f);
+				d2d1Context->DrawLine(point1, point2, stroke);
+
+				point1 = D2D1::Point2F(26.0f, 11.5f);
+				point2 = D2D1::Point2F(27.5f, 13.0f);
+				d2d1Context->DrawLine(point1, point2, stroke);
+
+				point1 = D2D1::Point2F(27.5f, 13.0f);
+				point2 = D2D1::Point2F(27.5f, 18.5f);
+				d2d1Context->DrawLine(point1, point2, stroke);
+			}
+			else
+			{
+				point = D2D1::Point2F(18.5f, 11.5f);
+				rectangle = D2D1::RectF(point.x, point.y, point.x + 9.0f, point.y + 9.0f);
+				d2d1Context->DrawRoundedRectangle(D2D1::RoundedRect(rectangle, 1.0f, 1.0f), stroke, 1.0f);
+			}
+			stroke->Release();
+		}
+
+		// Min button
+		d2d1Context->SetTransform(D2D1::Matrix3x2F::Translation(XHK_TITLEBAR_CAPTION_WIDTH - XHK_TITLEBAR_CAPTION_BUTTON_WIDTH * 3.0f, 0.0f) * baseTransform);
+		{
+			D2D1::ColorF bgColor = m_captionOtherBackground;
+			D2D1::ColorF stColor = m_isActive ? m_captionForeground : m_captionInactiveForeground;
+
+			if (buttonType == winrt::XamlHostingKit::TitleBarCaptionButtonType::MINIMIZE)
+				CaptionButtonColor(buttonType, buttonState, &bgColor, &stColor);
+
+			ID2D1SolidColorBrush* background;
+			ID2D1SolidColorBrush* stroke;
+			d2d1Context->CreateSolidColorBrush(bgColor, &background);
+			d2d1Context->CreateSolidColorBrush(stColor, &stroke);
+
+			auto point = D2D1::Point2F(0.0f, 0.0f);
+			auto rectangle = D2D1::RectF(point.x, point.y, point.x + XHK_TITLEBAR_CAPTION_BUTTON_WIDTH, point.y + XHK_TITLEBAR_CAPTION_BUTTON_HEIGHT);
+			d2d1Context->FillRectangle(rectangle, background);
+			background->Release();
+
+			auto point1 = D2D1::Point2F(18.0f, 15.5f);
+			auto point2 = D2D1::Point2F(28.0f, 15.5f);
+			d2d1Context->DrawLine(point1, point2, stroke);
+			stroke->Release();
+		}
+
+		d2d1Context->Release();
+		m_captionSurface->EndDraw();
+	}
+
+	void TitleBar::CaptionButtonColor(winrt::XamlHostingKit::TitleBarCaptionButtonType const& buttonType, winrt::XamlHostingKit::TitleBarCaptionButtonState const& buttonState, D2D1::ColorF* bgColor, D2D1::ColorF* stColor)
+	{
+		switch (buttonState)
+		{
+		case winrt::XamlHostingKit::TitleBarCaptionButtonState::HOVER:
+			*bgColor = buttonType == winrt::XamlHostingKit::TitleBarCaptionButtonType::CLOSE ? m_captionCloseHoverBackground : m_captionOtherHoverBackground;
+			*stColor = m_captionHoverForeground;
+			break;
+		case winrt::XamlHostingKit::TitleBarCaptionButtonState::ACTIVE:
+			*bgColor = buttonType == winrt::XamlHostingKit::TitleBarCaptionButtonType::CLOSE ? m_captionCloseActiveBackground : m_captionOtherActiveBackground;
+			*stColor = m_captionActiveForeground;
+			break;
+		}
+	}
+
+	void TitleBar::ReleaseResources()
+	{
+		if (m_caption) { m_caption->Release(); m_caption = nullptr; }
+		if (m_rootVisual) { m_rootVisual->Release(); m_rootVisual = nullptr; }
+		if (m_target) { m_target->Release(); m_target = nullptr; }
+		if (m_dcompDevice) { m_dcompDevice->Release(); m_dcompDevice = nullptr; }
+		if (m_d2d1Device) { m_d2d1Device->Release(); m_d2d1Device = nullptr; }
+		if (m_d3d11Device) { m_d3d11Device->Release(); m_d3d11Device = nullptr; }
+	}
+#endif
 
 	LRESULT TitleBar::XamlWindowSubClassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR, DWORD_PTR)
 	{
@@ -187,6 +402,9 @@ namespace winrt::XamlHostingKit::implementation
 
 		if (msg == WM_DESTROY)
 		{
+#ifndef TITLEBAR_USE_VISUALS
+			_this->ReleaseResources();
+#endif
 			RemovePropW(hwnd, XHK_TITLEBAR_OBJECT_PROP);
 		}
 		else if (_this)
@@ -194,8 +412,9 @@ namespace winrt::XamlHostingKit::implementation
 			if (msg == WM_SIZE)
 			{
 				auto scaling = Helpers::GetDpiScaleForWindow(hwnd);
-
 				auto scaledCaptionSize = XHK_TITLEBAR_CAPTION_WIDTH * scaling;
+
+#ifdef TITLEBAR_USE_VISUALS
 				_this->m_caption.Offset({ -scaledCaptionSize, static_cast<float>(Helpers::GetTopBorderSize(hwnd)), 0 });
 				_this->m_caption.Size({ scaledCaptionSize, static_cast<float>(Helpers::GetCaptionSize(hwnd)) });
 
@@ -211,7 +430,27 @@ namespace winrt::XamlHostingKit::implementation
 
 				_this->m_captionMaximize.m_shape.IsVisible(wParam != SIZE_MAXIMIZED);
 				_this->m_captionMaximize.m_shape_ext.IsVisible(wParam == SIZE_MAXIMIZED);
+#else
+				auto width = LOWORD(lParam);
+				auto height = HIWORD(lParam);
 
+				_this->m_isMaximized = wParam == SIZE_MAXIMIZED;
+
+				_this->m_caption->SetOffsetX(width - scaledCaptionSize);
+				_this->m_caption->SetOffsetY(static_cast<float>(Helpers::GetTopBorderSize(hwnd)));
+				_this->m_dcompDevice->Commit();
+#endif
+
+			}
+			else if (msg == WM_DPICHANGED)
+			{
+#ifndef TITLEBAR_USE_VISUALS
+				auto dpi = static_cast<float>(LOWORD(wParam));
+				auto scale = dpi / 96.0f;
+				_this->CreateCaptionSurface(scale);
+				_this->DrawCaption(scale, TitleBarCaptionButtonType::NONE, TitleBarCaptionButtonState::NORMAL);
+				_this->m_dcompDevice->Commit();
+#endif
 			}
 			else if (msg == WM_NCHITTEST && _this->m_extend)
 			{
@@ -281,6 +520,7 @@ namespace winrt::XamlHostingKit::implementation
 			}
 			else if (msg == WM_NCLBUTTONDOWN || msg == WM_NCLBUTTONDBLCLK)
 			{
+#ifdef TITLEBAR_USE_VISUALS
 				switch (wParam)
 				{
 				case HTCLOSE:
@@ -293,9 +533,14 @@ namespace winrt::XamlHostingKit::implementation
 					_this->m_captionMinimize.Update(_this->m_captionActiveForeground, _this->m_captionOtherActiveBackground);
 					break;
 				}
+#else
+				_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::ACTIVE);
+				_this->m_dcompDevice->Commit();
+#endif
 			}
 			else if (msg == WM_NCLBUTTONUP)
 			{
+#ifdef TITLEBAR_USE_VISUALS
 				switch (wParam)
 				{
 				case HTCLOSE:
@@ -308,9 +553,14 @@ namespace winrt::XamlHostingKit::implementation
 					_this->m_captionMinimize.Update(_this->m_captionHoverForeground, _this->m_captionOtherHoverBackground);
 					break;
 				}
+#else
+				_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::HOVER);
+				_this->m_dcompDevice->Commit();
+#endif
 			}
 			else if (msg == WM_NCMOUSEMOVE)
 			{
+#ifdef TITLEBAR_USE_VISUALS
 				switch (wParam)
 				{
 				case HTCLOSE:
@@ -334,16 +584,26 @@ namespace winrt::XamlHostingKit::implementation
 					_this->m_captionMinimize.Update(_this->m_isActive ? _this->m_captionForeground : _this->m_captionInactiveForeground, _this->m_captionOtherBackground);
 					break;
 				}
+#else
+				_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::HOVER);
+				_this->m_dcompDevice->Commit();
+#endif
 			}
 			else if (msg == WM_NCMOUSELEAVE || msg == WM_MOUSELEAVE)
 			{
+#ifdef TITLEBAR_USE_VISUALS
 				_this->m_captionClose.Update(_this->m_isActive ? _this->m_captionForeground : _this->m_captionInactiveForeground, _this->m_captionCloseBackground);
 				_this->m_captionMaximize.Update(_this->m_isActive ? _this->m_captionForeground : _this->m_captionInactiveForeground, _this->m_captionOtherBackground);
 				_this->m_captionMinimize.Update(_this->m_isActive ? _this->m_captionForeground : _this->m_captionInactiveForeground, _this->m_captionOtherBackground);
+#else
+				_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::HOVER);
+				_this->m_dcompDevice->Commit();
+#endif
 			}
 			else if (msg == WM_NCACTIVATE)
 			{
-				if (_this->m_isActive = wParam)
+#ifdef TITLEBAR_USE_VISUALS
+				if ((_this->m_isActive = wParam))
 				{
 					_this->m_captionClose.Update(_this->m_captionForeground);
 					_this->m_captionMaximize.Update(_this->m_captionForeground);
@@ -355,6 +615,11 @@ namespace winrt::XamlHostingKit::implementation
 					_this->m_captionMaximize.Update(_this->m_captionInactiveForeground);
 					_this->m_captionMinimize.Update(_this->m_captionInactiveForeground);
 				}
+#else
+				_this->m_isActive = wParam;
+				_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::NORMAL);
+				_this->m_dcompDevice->Commit();
+#endif
 			}
 			else if (msg == WM_SETTINGCHANGE)
 			{
@@ -397,6 +662,7 @@ namespace winrt::XamlHostingKit::implementation
 		return DefSubclassProc(hwnd, msg, wParam, lParam);
 	}
 
+#ifdef TITLEBAR_USE_VISUALS
 	winrt::XamlHostingKit::TitleBarCaptionButton TitleBar::CreateCaptionButton(Compositor const& compositor, std::vector<CompositionGeometry> const& geometry, std::vector<CompositionGeometry> const& geometry_ext, int index)
 	{
 		TitleBarCaptionButton button = { };
@@ -451,5 +717,11 @@ namespace winrt::XamlHostingKit::implementation
 
 		return button;
 	}
+#else
+	D2D1::ColorF TitleBar::ToColorF(Color const& color)
+	{
+		return D2D1::ColorF((color.R << 16) | (color.G << 8) | color.B, color.A / 255.0f);
+	}
+#endif
 
 }
