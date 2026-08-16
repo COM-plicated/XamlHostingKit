@@ -27,14 +27,13 @@ namespace winrt::XamlHostingKit
 namespace winrt::XamlHostingKit::implementation
 {
 
-	TitleBar::TitleBar(HWND const& xamlWindow, HWND const& coreWindow, CoreDispatcher const& dispatcher)
-		: m_xamlWindow(xamlWindow), m_coreWindow(coreWindow), m_dispatcher(dispatcher)
+	TitleBar::TitleBar(HWND const& xamlWindow, HWND const& coreWindow, Compositor const& compositor, CoreDispatcher const& dispatcher)
+		: m_xamlWindow(xamlWindow), m_coreWindow(coreWindow), m_dispatcher(dispatcher), m_compositor(compositor)
 	{
 		m_isVisible = true;
 
 #ifdef TITLEBAR_USE_VISUALS
 		namespace abi = ABI::Windows::UI::Composition::Desktop;
-		m_compositor = Compositor();
 
 		auto interop = m_compositor.as<abi::ICompositorDesktopInterop>();
 
@@ -104,31 +103,7 @@ namespace winrt::XamlHostingKit::implementation
 #else
 		UpdateCaptionColors();
 
-		D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, NULL,
-			D3D11_CREATE_DEVICE_BGRA_SUPPORT, nullptr, 0, D3D11_SDK_VERSION,
-			&m_d3d11Device, nullptr, nullptr);
-
-		IDXGIDevice* pDXGIDevice = nullptr;
-		m_d3d11Device->QueryInterface(__uuidof(IDXGIDevice), (void**)&pDXGIDevice);
-
-		D2D1CreateDevice(pDXGIDevice, nullptr, &m_d2d1Device);
-
-		DCompositionCreateDevice2(m_d2d1Device, __uuidof(IDCompositionDevice), (void**)&m_dcompDevice);
-		pDXGIDevice->Release();
-
-		m_dcompDevice->CreateTargetForHwnd(m_xamlWindow, TRUE, &m_target);
-		m_dcompDevice->CreateVisual(&m_rootVisual);
-		m_target->SetRoot(m_rootVisual);
-
-		m_dcompDevice->CreateVisual(&m_caption);
-		if (m_extend)
-			m_rootVisual->AddVisual(m_caption, TRUE, nullptr);
-
-		auto scale = Helpers::GetDpiScaleForWindow(m_xamlWindow);
-		CreateCaptionSurface(scale);
-		DrawCaption(scale, TitleBarCaptionButtonType::NONE, TitleBarCaptionButtonState::NORMAL);
-
-		m_dcompDevice->Commit();
+		CreateCompositionDevice();
 #endif
 
 		SetPropW(m_xamlWindow, XHK_TITLEBAR_OBJECT_PROP, this);
@@ -148,10 +123,11 @@ namespace winrt::XamlHostingKit::implementation
 		m_caption.IsVisible(value);
 #else
 		if (value)
-			m_rootVisual->AddVisual(m_caption, TRUE, nullptr);
+			m_rootVisual->AddVisual(m_caption.get(), TRUE, nullptr);
 		else
-			m_rootVisual->RemoveVisual(m_caption);
+			m_rootVisual->RemoveVisual(m_caption.get());
 #endif
+
 		SetWindowPos(m_xamlWindow, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
 		if (m_layoutMetricsChanged) {
@@ -237,22 +213,103 @@ namespace winrt::XamlHostingKit::implementation
 
 #ifndef TITLEBAR_USE_VISUALS
 
-	void TitleBar::CreateCaptionSurface(float scale) {
-		if (m_captionSurface)
-			m_captionSurface->Release();
+	HRESULT TitleBar::CreateCompositionDevice()
+	{
+		winrt::com_ptr<ID3D11Device> device;
 
-		m_dcompDevice->CreateSurface(static_cast<UINT>(XHK_TITLEBAR_CAPTION_WIDTH * scale), static_cast<UINT>(Helpers::GetCaptionSize(m_xamlWindow)), DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_ALPHA_MODE_PREMULTIPLIED, &m_captionSurface);
-		m_caption->SetContent(m_captionSurface);
+		auto d3dDriverTypes = { D3D_DRIVER_TYPE_HARDWARE, D3D_DRIVER_TYPE_WARP };
+
+		HRESULT d3d11HR = NULL;
+
+		for (const auto& driver : d3dDriverTypes) {
+			d3d11HR = D3D11CreateDevice(nullptr, driver, NULL, D3D11_CREATE_DEVICE_BGRA_SUPPORT, nullptr, 0, D3D11_SDK_VERSION, device.put(), nullptr, nullptr);
+			if (SUCCEEDED(d3d11HR))
+				break;
+		}
+
+		RETURN_IF_FAILED(d3d11HR);
+
+		winrt::com_ptr<ID2D1Device> d2d1Device;
+		auto pDXGIDevice = device.as<IDXGIDevice>();
+		RETURN_IF_FAILED(D2D1CreateDevice(pDXGIDevice.get(), nullptr, d2d1Device.put()));
+
+		winrt::com_ptr<IDCompositionSurfaceFactory> surfaceFactory;
+		if (m_compositor && (m_dcompDevice = m_compositor.try_as<IDCompositionDesktopDevice>())) [[likely]]
+		{
+			RETURN_IF_FAILED(m_dcompDevice->CreateSurfaceFactory(d2d1Device.get(), surfaceFactory.put()));
+		}
+		else
+		{
+			RETURN_IF_FAILED(DCompositionCreateDevice2(d2d1Device.get(), __uuidof(IDCompositionDesktopDevice), m_dcompDevice.put_void()));
+		}
+
+		winrt::com_ptr<IDCompositionTarget> target;
+		RETURN_IF_FAILED(m_dcompDevice->CreateTargetForHwnd(m_xamlWindow, TRUE, target.put()));
+
+		winrt::com_ptr<IDCompositionVisual2> rootVisual;
+		RETURN_IF_FAILED(m_dcompDevice->CreateVisual(rootVisual.put()));
+		RETURN_IF_FAILED(target->SetRoot(rootVisual.get()));
+
+		winrt::com_ptr<IDCompositionVisual2> caption;
+		RETURN_IF_FAILED(m_dcompDevice->CreateVisual(caption.put()));
+
+		if (m_extend)
+		{
+			RETURN_IF_FAILED(rootVisual->AddVisual(caption.get(), TRUE, nullptr));
+		}
+
+		m_d3d11Device = device;
+		m_d2d1Device = d2d1Device;
+		m_surfaceFactory = surfaceFactory;
+		m_target = target;
+		m_rootVisual = rootVisual;
+		m_caption = caption;
+
+		auto scale = Helpers::GetDpiScaleForWindow(m_xamlWindow);
+
+		CreateCaptionSurface(scale);
+
+		DrawCaption(scale, TitleBarCaptionButtonType::NONE, TitleBarCaptionButtonState::NORMAL);
+
+		RECT clientRect{ };
+		GetClientRect(m_xamlWindow, &clientRect);
+
+		auto scaledCaptionSize = XHK_TITLEBAR_CAPTION_WIDTH * scale;
+
+		m_caption->SetOffsetX(clientRect.right - scaledCaptionSize);
+		m_caption->SetOffsetY(static_cast<float>(Helpers::GetTopBorderSize(m_xamlWindow)));
+
+		m_dcompDevice->Commit();
+
+		RETURN_HR(S_OK);
 	}
 
-	void TitleBar::DrawCaption(float scale, winrt::XamlHostingKit::TitleBarCaptionButtonType const& buttonType, winrt::XamlHostingKit::TitleBarCaptionButtonState const& buttonState) {
+	void TitleBar::CreateCaptionSurface(float scale)
+	{
+		if (!m_dcompDevice) [[unlikely]]
+			return;
+		if (m_surfaceFactory)
+		{
+			m_surfaceFactory->CreateSurface(static_cast<UINT>(XHK_TITLEBAR_CAPTION_WIDTH * scale), static_cast<UINT>(Helpers::GetCaptionSize(m_xamlWindow)), DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_ALPHA_MODE_PREMULTIPLIED, m_captionSurface.put());
+		}
+		else
+		{
+			m_dcompDevice->CreateSurface(static_cast<UINT>(XHK_TITLEBAR_CAPTION_WIDTH * scale), static_cast<UINT>(Helpers::GetCaptionSize(m_xamlWindow)), DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_ALPHA_MODE_PREMULTIPLIED, m_captionSurface.put());
+		}
+		m_caption->SetContent(m_captionSurface.get());
+	}
+
+	void TitleBar::DrawCaption(float scale, winrt::XamlHostingKit::TitleBarCaptionButtonType const& buttonType, winrt::XamlHostingKit::TitleBarCaptionButtonState const& buttonState)
+	{
+		if (!m_dcompDevice) [[unlikely]]
+			return;
 		POINT offset = {};
 		ID2D1DeviceContext* d2d1Context = nullptr;
 
 		m_captionSurface->BeginDraw(nullptr, IID_PPV_ARGS(&d2d1Context), &offset);
 
 		d2d1Context->SetDpi(96.0f, 96.0f);
-		d2d1Context->Clear(D2D1::ColorF(0x0, 0.0f));
+		d2d1Context->Clear(D2D1::ColorF(0x0078D7, 0.0f));
 
 		auto scaleMatrix = D2D1::Matrix3x2F::Scale(scale, scale);
 		auto translationMatrix = D2D1::Matrix3x2F::Translation(static_cast<FLOAT>(offset.x), static_cast<FLOAT>(offset.y));
@@ -310,33 +367,57 @@ namespace winrt::XamlHostingKit::implementation
 			d2d1Context->FillRectangle(rectangle, background);
 			background->Release();
 
+			auto isWin11 = Helpers::OSBuild >= 22000u;
+			auto radius = isWin11 ? 1.0f : 0.0f;
+
 			if (m_isMaximized)
 			{
 				point = D2D1::Point2F(18.5f, 13.5f);
 				rectangle = D2D1::RectF(point.x, point.y, point.x + 7.0f, point.y + 7.0f);
-				d2d1Context->DrawRoundedRectangle(D2D1::RoundedRect(rectangle, 1.0f, 1.0f), stroke, 1.0f);
+				d2d1Context->DrawRoundedRectangle(D2D1::RoundedRect(rectangle, radius, radius), stroke, 1.0f);
 
 				/*point = D2D1::Point2F(19.5f, 11.5f);
 				rectangle = D2D1::RectF(point.x, point.y, point.x + 8.0f, point.y + 8.0f);
 				d2d1Context->DrawRoundedRectangle(D2D1::RoundedRect(rectangle, 2.0f, 2.0f), stroke, 1.0f);*/
 
-				auto point1 = D2D1::Point2F(20.5f, 11.5f);
-				auto point2 = D2D1::Point2F(26.0f, 11.5f);
-				d2d1Context->DrawLine(point1, point2, stroke);
+				if (isWin11)
+				{
+					auto point1 = D2D1::Point2F(20.5f, 11.5f);
+					auto point2 = D2D1::Point2F(26.0f, 11.5f);
+					d2d1Context->DrawLine(point1, point2, stroke);
 
-				point1 = D2D1::Point2F(26.0f, 11.5f);
-				point2 = D2D1::Point2F(27.5f, 13.0f);
-				d2d1Context->DrawLine(point1, point2, stroke);
+					point1 = D2D1::Point2F(26.0f, 11.5f);
+					point2 = D2D1::Point2F(27.5f, 13.0f);
+					d2d1Context->DrawLine(point1, point2, stroke);
 
-				point1 = D2D1::Point2F(27.5f, 13.0f);
-				point2 = D2D1::Point2F(27.5f, 18.5f);
-				d2d1Context->DrawLine(point1, point2, stroke);
+					point1 = D2D1::Point2F(27.5f, 13.0f);
+					point2 = D2D1::Point2F(27.5f, 18.5f);
+					d2d1Context->DrawLine(point1, point2, stroke);
+				}
+				else
+				{
+					auto point1 = D2D1::Point2F(20.5f, 13.5f);
+					auto point2 = D2D1::Point2F(20.5f, 11.5f);
+					d2d1Context->DrawLine(point1, point2, stroke);
+
+					point1 = D2D1::Point2F(20.0f, 11.5f);
+					point2 = D2D1::Point2F(28.0f, 11.5f);
+					d2d1Context->DrawLine(point1, point2, stroke);
+
+					point1 = D2D1::Point2F(27.5f, 11.5f);
+					point2 = D2D1::Point2F(27.5f, 19.0f);
+					d2d1Context->DrawLine(point1, point2, stroke);
+
+					point1 = D2D1::Point2F(25.5f, 18.5f);
+					point2 = D2D1::Point2F(27.5f, 18.5f);
+					d2d1Context->DrawLine(point1, point2, stroke);
+				}
 			}
 			else
 			{
 				point = D2D1::Point2F(18.5f, 11.5f);
 				rectangle = D2D1::RectF(point.x, point.y, point.x + 9.0f, point.y + 9.0f);
-				d2d1Context->DrawRoundedRectangle(D2D1::RoundedRect(rectangle, 1.0f, 1.0f), stroke, 1.0f);
+				d2d1Context->DrawRoundedRectangle(D2D1::RoundedRect(rectangle, radius, radius), stroke, 1.0f);
 			}
 			stroke->Release();
 		}
@@ -385,14 +466,22 @@ namespace winrt::XamlHostingKit::implementation
 		}
 	}
 
+	void TitleBar::CommitComposition()
+	{
+		if (m_dcompDevice) [[unlikely]]
+			m_dcompDevice->Commit();
+	}
+
 	void TitleBar::ReleaseResources()
 	{
-		if (m_caption) { m_caption->Release(); m_caption = nullptr; }
-		if (m_rootVisual) { m_rootVisual->Release(); m_rootVisual = nullptr; }
-		if (m_target) { m_target->Release(); m_target = nullptr; }
-		if (m_dcompDevice) { m_dcompDevice->Release(); m_dcompDevice = nullptr; }
-		if (m_d2d1Device) { m_d2d1Device->Release(); m_d2d1Device = nullptr; }
-		if (m_d3d11Device) { m_d3d11Device->Release(); m_d3d11Device = nullptr; }
+		m_captionSurface = nullptr;
+		m_caption = nullptr;
+		m_rootVisual = nullptr;
+		m_target = nullptr;
+		m_dcompDevice = nullptr;
+		m_surfaceFactory = nullptr;
+		m_d2d1Device = nullptr;
+		m_d3d11Device = nullptr;
 	}
 #endif
 
@@ -438,7 +527,12 @@ namespace winrt::XamlHostingKit::implementation
 
 				_this->m_caption->SetOffsetX(width - scaledCaptionSize);
 				_this->m_caption->SetOffsetY(static_cast<float>(Helpers::GetTopBorderSize(hwnd)));
-				_this->m_dcompDevice->Commit();
+
+				if (!_this->m_surfaceFactory)
+				{
+					// Not running on XAML's dcomp, manually commit this resize
+					_this->CommitComposition();
+				}
 #endif
 
 			}
@@ -449,48 +543,45 @@ namespace winrt::XamlHostingKit::implementation
 				auto scale = dpi / 96.0f;
 				_this->CreateCaptionSurface(scale);
 				_this->DrawCaption(scale, TitleBarCaptionButtonType::NONE, TitleBarCaptionButtonState::NORMAL);
-				_this->m_dcompDevice->Commit();
+				_this->CommitComposition();
 #endif
 			}
 			else if (msg == WM_NCHITTEST && _this->m_extend)
 			{
 				auto x = GET_X_LPARAM(lParam);
 				auto y = GET_Y_LPARAM(lParam);
-				auto ret = DefSubclassProc(hwnd, msg, wParam, lParam);
 
-				if (ret == HTCLIENT)
+				RECT rc;
+				GetWindowRect(hwnd, &rc);
+				auto dpi = Helpers::GetDpiForWindow(hwnd);
+				auto border = Helpers::GetSystemMetricsForDpi(SM_CXFRAME, dpi) + Helpers::GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
+				auto caption = Helpers::GetTopBorderSize(hwnd) + Helpers::GetCaptionSize(hwnd);
+
+				if (y > rc.top && y < rc.top + caption)
 				{
-					RECT rc;
-					GetWindowRect(hwnd, &rc);
-					auto dpi = Helpers::GetDpiForWindow(hwnd);
-					auto border = Helpers::GetSystemMetricsForDpi(SM_CXFRAME, dpi) + Helpers::GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
-					auto caption = Helpers::GetTopBorderSize(hwnd) + Helpers::GetCaptionSize(hwnd);
-
-					if (y > rc.top && y < rc.top + caption)
-					{
-						auto buttonSize = XHK_TITLEBAR_CAPTION_BUTTON_WIDTH * Helpers::GetDpiScaleForWindow(hwnd);
-						auto relative = rc.right - border;
-						if (x < relative && x >= relative - buttonSize)
-							return HTCLOSE;
-						else if (x < relative - buttonSize && x >= relative - buttonSize * 2)
-							return HTMAXBUTTON;
-						else  if (x < relative - buttonSize * 2 && x >= relative - buttonSize * 3)
-							return HTMINBUTTON;
-					}
-
-					if (y < rc.top + border)
-					{
-						if (x < rc.left + border * 2)
-							return HTTOPLEFT;
-						else if (x > rc.right - border * 2)
-							return HTTOPRIGHT;
-						else
-							return HTTOP;
-					}
-					else
-						return HTCAPTION;
+					auto buttonSize = XHK_TITLEBAR_CAPTION_BUTTON_WIDTH * Helpers::GetDpiScaleForWindow(hwnd);
+					auto relative = rc.right - border;
+					if (x < relative && x >= relative - buttonSize)
+						return HTCLOSE;
+					else if (x < relative - buttonSize && x >= relative - buttonSize * 2)
+						return HTMAXBUTTON;
+					else  if (x < relative - buttonSize * 2 && x >= relative - buttonSize * 3)
+						return HTMINBUTTON;
 				}
-				return ret;
+
+				if (y < rc.top + border)
+				{
+					if (x < rc.left + border * 2)
+						return HTTOPLEFT;
+					else if (x > rc.right - border * 2)
+						return HTTOPRIGHT;
+					else
+						return HTTOP;
+				}
+				else if (y < rc.top + border + caption)
+					return HTCAPTION;
+				else
+					DefSubclassProc(hwnd, msg, wParam, lParam);
 			}
 			else if (msg == WM_NCCALCSIZE)
 			{
@@ -535,27 +626,73 @@ namespace winrt::XamlHostingKit::implementation
 				}
 #else
 				_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::ACTIVE);
-				_this->m_dcompDevice->Commit();
+				_this->CommitComposition();
+
 #endif
+				if (wParam == HTMINBUTTON ||
+					wParam == HTMAXBUTTON ||
+					wParam == HTCLOSE)
+				{
+					return 0;
+				}
 			}
 			else if (msg == WM_NCLBUTTONUP)
 			{
-#ifdef TITLEBAR_USE_VISUALS
 				switch (wParam)
 				{
 				case HTCLOSE:
+#ifdef TITLEBAR_USE_VISUALS
 					_this->m_captionClose.Update(_this->m_captionHoverForeground, _this->m_captionCloseHoverBackground);
+#endif
+					SendMessageW(hwnd, WM_SYSCOMMAND, SC_CLOSE, 0);
 					break;
 				case HTMAXBUTTON:
+#ifdef TITLEBAR_USE_VISUALS
 					_this->m_captionMaximize.Update(_this->m_captionHoverForeground, _this->m_captionOtherHoverBackground);
+#endif
+					SendMessageW(hwnd, WM_SYSCOMMAND, IsZoomed(hwnd) ? SC_RESTORE : SC_MAXIMIZE, 0);
 					break;
 				case HTMINBUTTON:
+#ifdef TITLEBAR_USE_VISUALS
 					_this->m_captionMinimize.Update(_this->m_captionHoverForeground, _this->m_captionOtherHoverBackground);
+#endif
+					SendMessageW(hwnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
 					break;
 				}
-#else
+#ifndef TITLEBAR_USE_VISUALS
 				_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::HOVER);
-				_this->m_dcompDevice->Commit();
+				_this->CommitComposition();
+#endif
+			}
+			else if (msg == WM_NCPOINTERUP)
+			{
+				if (IS_POINTER_FIRSTBUTTON_WPARAM(wParam))
+				{
+					switch (HIWORD(wParam))
+					{
+					case HTCLOSE:
+#ifdef TITLEBAR_USE_VISUALS
+						_this->m_captionClose.Update(_this->m_captionHoverForeground, _this->m_captionCloseHoverBackground);
+#endif
+						SendMessageW(hwnd, WM_SYSCOMMAND, SC_CLOSE, 0);
+						break;
+					case HTMAXBUTTON:
+#ifdef TITLEBAR_USE_VISUALS
+						_this->m_captionMaximize.Update(_this->m_captionHoverForeground, _this->m_captionOtherHoverBackground);
+#endif
+						SendMessageW(hwnd, WM_SYSCOMMAND, IsZoomed(hwnd) ? SC_RESTORE : SC_MAXIMIZE, 0);
+						break;
+					case HTMINBUTTON:
+#ifdef TITLEBAR_USE_VISUALS
+						_this->m_captionMinimize.Update(_this->m_captionHoverForeground, _this->m_captionOtherHoverBackground);
+#endif
+						SendMessageW(hwnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+						break;
+					}
+				}
+#ifndef TITLEBAR_USE_VISUALS
+				_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::HOVER);
+				_this->CommitComposition();
 #endif
 			}
 			else if (msg == WM_NCMOUSEMOVE)
@@ -586,7 +723,7 @@ namespace winrt::XamlHostingKit::implementation
 				}
 #else
 				_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::HOVER);
-				_this->m_dcompDevice->Commit();
+				_this->CommitComposition();
 #endif
 			}
 			else if (msg == WM_NCMOUSELEAVE || msg == WM_MOUSELEAVE)
@@ -597,7 +734,7 @@ namespace winrt::XamlHostingKit::implementation
 				_this->m_captionMinimize.Update(_this->m_isActive ? _this->m_captionForeground : _this->m_captionInactiveForeground, _this->m_captionOtherBackground);
 #else
 				_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::HOVER);
-				_this->m_dcompDevice->Commit();
+				_this->CommitComposition();
 #endif
 			}
 			else if (msg == WM_NCACTIVATE)
@@ -618,12 +755,23 @@ namespace winrt::XamlHostingKit::implementation
 #else
 				_this->m_isActive = wParam;
 				_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::NORMAL);
-				_this->m_dcompDevice->Commit();
+				_this->CommitComposition();
 #endif
 			}
 			else if (msg == WM_SETTINGCHANGE)
 			{
 				_this->UpdateCaptionColors();
+			}
+			else if (msg == WM_PAINT)
+			{
+#ifndef TITLEBAR_USE_VISUALS
+				auto hr = _this->m_d3d11Device->GetDeviceRemovedReason();
+				if (!SUCCEEDED(hr))
+				{
+					_this->ReleaseResources();
+					_this->CreateCompositionDevice();
+				}
+#endif
 			}
 		}
 

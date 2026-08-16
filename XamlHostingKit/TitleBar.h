@@ -86,9 +86,9 @@ namespace winrt::XamlHostingKit::implementation
 		HWND m_xamlWindow{ nullptr };
 		HWND m_coreWindow{ nullptr };
 		CoreDispatcher m_dispatcher{ nullptr };
+		Compositor m_compositor{ nullptr };
 
 #ifdef TITLEBAR_USE_VISUALS
-		Compositor m_compositor{ nullptr };
 		DesktopWindowTarget m_target{ nullptr };
 		ContainerVisual m_rootVisual{ nullptr };
 		ContainerVisual m_caption{ nullptr };
@@ -111,13 +111,14 @@ namespace winrt::XamlHostingKit::implementation
 		winrt::XamlHostingKit::TitleBarCaptionButton m_captionMaximize{ nullptr };
 		winrt::XamlHostingKit::TitleBarCaptionButton m_captionMinimize{ nullptr };
 #else
-		ID3D11Device* m_d3d11Device{ nullptr };
-		ID2D1Device* m_d2d1Device{ nullptr };
-		IDCompositionDevice* m_dcompDevice{ nullptr };
-		IDCompositionTarget* m_target{ nullptr };
-		IDCompositionVisual* m_rootVisual{ nullptr };
-		IDCompositionVisual* m_caption{ nullptr };
-		IDCompositionSurface* m_captionSurface{ nullptr };
+		winrt::com_ptr<ID3D11Device> m_d3d11Device{ nullptr };
+		winrt::com_ptr<ID2D1Device> m_d2d1Device{ nullptr };
+		winrt::com_ptr<IDCompositionDesktopDevice> m_dcompDevice{ nullptr };
+		winrt::com_ptr<IDCompositionTarget> m_target{ nullptr };
+		winrt::com_ptr<IDCompositionVisual2> m_rootVisual{ nullptr };
+		winrt::com_ptr<IDCompositionVisual2> m_caption{ nullptr };
+		winrt::com_ptr<IDCompositionSurface> m_captionSurface{ nullptr };
+		winrt::com_ptr<IDCompositionSurfaceFactory> m_surfaceFactory{ nullptr };
 
 		D2D1::ColorF m_captionOtherBackground{ 0, 1.0f };
 		D2D1::ColorF m_captionCloseBackground{ 0, 1.0f };
@@ -139,9 +140,11 @@ namespace winrt::XamlHostingKit::implementation
 
 		void UpdateCaptionColors();
 #ifndef TITLEBAR_USE_VISUALS
+		HRESULT CreateCompositionDevice();
 		void CreateCaptionSurface(float scale);
 		void DrawCaption(float scale, winrt::XamlHostingKit::TitleBarCaptionButtonType const& buttonType, winrt::XamlHostingKit::TitleBarCaptionButtonState const& buttonState);
 		void CaptionButtonColor(winrt::XamlHostingKit::TitleBarCaptionButtonType const& buttonType, winrt::XamlHostingKit::TitleBarCaptionButtonState const& buttonState, D2D1::ColorF* bgColor, D2D1::ColorF* stColor);
+		void CommitComposition();
 		void ReleaseResources();
 #endif
 
@@ -155,7 +158,7 @@ namespace winrt::XamlHostingKit::implementation
 
 	public:
 		TitleBar() = default;
-		TitleBar(HWND const& xamlWindow, HWND const& coreWindow, CoreDispatcher const& dispatcher);
+		TitleBar(HWND const& xamlWindow, HWND const& coreWindow, Compositor const& compositor, CoreDispatcher const& dispatcher);
 
 		bool ExtendViewIntoTitleBar() const;
 		void ExtendViewIntoTitleBar(bool const& value);
