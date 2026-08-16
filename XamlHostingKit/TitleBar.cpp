@@ -213,7 +213,7 @@ namespace winrt::XamlHostingKit::implementation
 
 #ifndef TITLEBAR_USE_VISUALS
 
-	HRESULT TitleBar::CreateCompositionDevice()
+	void TitleBar::CreateCompositionDevice()
 	{
 		winrt::com_ptr<ID3D11Device> device;
 
@@ -227,35 +227,35 @@ namespace winrt::XamlHostingKit::implementation
 				break;
 		}
 
-		RETURN_IF_FAILED(d3d11HR);
+		winrt::check_hresult(d3d11HR);
 
 		winrt::com_ptr<ID2D1Device> d2d1Device;
 		auto pDXGIDevice = device.as<IDXGIDevice>();
-		RETURN_IF_FAILED(D2D1CreateDevice(pDXGIDevice.get(), nullptr, d2d1Device.put()));
+		winrt::check_hresult(D2D1CreateDevice(pDXGIDevice.get(), nullptr, d2d1Device.put()));
 
 		winrt::com_ptr<IDCompositionSurfaceFactory> surfaceFactory;
 		if (m_compositor && (m_dcompDevice = m_compositor.try_as<IDCompositionDesktopDevice>())) [[likely]]
 		{
-			RETURN_IF_FAILED(m_dcompDevice->CreateSurfaceFactory(d2d1Device.get(), surfaceFactory.put()));
+			winrt::check_hresult(m_dcompDevice->CreateSurfaceFactory(d2d1Device.get(), surfaceFactory.put()));
 		}
 		else
 		{
-			RETURN_IF_FAILED(DCompositionCreateDevice2(d2d1Device.get(), __uuidof(IDCompositionDesktopDevice), m_dcompDevice.put_void()));
+			winrt::check_hresult(DCompositionCreateDevice2(d2d1Device.get(), __uuidof(IDCompositionDesktopDevice), m_dcompDevice.put_void()));
 		}
 
 		winrt::com_ptr<IDCompositionTarget> target;
-		RETURN_IF_FAILED(m_dcompDevice->CreateTargetForHwnd(m_xamlWindow, TRUE, target.put()));
+		winrt::check_hresult(m_dcompDevice->CreateTargetForHwnd(m_xamlWindow, TRUE, target.put()));
 
 		winrt::com_ptr<IDCompositionVisual2> rootVisual;
-		RETURN_IF_FAILED(m_dcompDevice->CreateVisual(rootVisual.put()));
-		RETURN_IF_FAILED(target->SetRoot(rootVisual.get()));
+		winrt::check_hresult(m_dcompDevice->CreateVisual(rootVisual.put()));
+		winrt::check_hresult(target->SetRoot(rootVisual.get()));
 
 		winrt::com_ptr<IDCompositionVisual2> caption;
-		RETURN_IF_FAILED(m_dcompDevice->CreateVisual(caption.put()));
+		winrt::check_hresult(m_dcompDevice->CreateVisual(caption.put()));
 
 		if (m_extend)
 		{
-			RETURN_IF_FAILED(rootVisual->AddVisual(caption.get(), TRUE, nullptr));
+			winrt::check_hresult(rootVisual->AddVisual(caption.get(), TRUE, nullptr));
 		}
 
 		m_d3d11Device = device;
@@ -280,23 +280,21 @@ namespace winrt::XamlHostingKit::implementation
 		m_caption->SetOffsetY(static_cast<float>(Helpers::GetTopBorderSize(m_xamlWindow)));
 
 		m_dcompDevice->Commit();
-
-		RETURN_HR(S_OK);
 	}
 
 	void TitleBar::CreateCaptionSurface(float scale)
 	{
 		if (!m_dcompDevice) [[unlikely]]
 			return;
-		if (m_surfaceFactory)
+		if (m_surfaceFactory) [[likely]]
 		{
-			m_surfaceFactory->CreateSurface(static_cast<UINT>(XHK_TITLEBAR_CAPTION_WIDTH * scale), static_cast<UINT>(Helpers::GetCaptionSize(m_xamlWindow)), DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_ALPHA_MODE_PREMULTIPLIED, m_captionSurface.put());
+			winrt::check_hresult(m_surfaceFactory->CreateSurface(static_cast<UINT>(XHK_TITLEBAR_CAPTION_WIDTH * scale), static_cast<UINT>(Helpers::GetCaptionSize(m_xamlWindow)), DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_ALPHA_MODE_PREMULTIPLIED, m_captionSurface.put()));
 		}
 		else
 		{
-			m_dcompDevice->CreateSurface(static_cast<UINT>(XHK_TITLEBAR_CAPTION_WIDTH * scale), static_cast<UINT>(Helpers::GetCaptionSize(m_xamlWindow)), DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_ALPHA_MODE_PREMULTIPLIED, m_captionSurface.put());
+			winrt::check_hresult(m_dcompDevice->CreateSurface(static_cast<UINT>(XHK_TITLEBAR_CAPTION_WIDTH * scale), static_cast<UINT>(Helpers::GetCaptionSize(m_xamlWindow)), DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_ALPHA_MODE_PREMULTIPLIED, m_captionSurface.put()));
 		}
-		m_caption->SetContent(m_captionSurface.get());
+		winrt::check_hresult(m_caption->SetContent(m_captionSurface.get()));
 	}
 
 	void TitleBar::DrawCaption(float scale, winrt::XamlHostingKit::TitleBarCaptionButtonType const& buttonType, winrt::XamlHostingKit::TitleBarCaptionButtonState const& buttonState)
@@ -304,9 +302,8 @@ namespace winrt::XamlHostingKit::implementation
 		if (!m_dcompDevice) [[unlikely]]
 			return;
 		POINT offset = {};
-		ID2D1DeviceContext* d2d1Context = nullptr;
-
-		m_captionSurface->BeginDraw(nullptr, IID_PPV_ARGS(&d2d1Context), &offset);
+		winrt::com_ptr<ID2D1DeviceContext> d2d1Context;
+		winrt::check_hresult(m_captionSurface->BeginDraw(nullptr, IID_ID2D1DeviceContext, d2d1Context.put_void(), &offset));
 
 		d2d1Context->SetDpi(96.0f, 96.0f);
 		d2d1Context->Clear(D2D1::ColorF(0x0078D7, 0.0f));
@@ -324,15 +321,14 @@ namespace winrt::XamlHostingKit::implementation
 			if (buttonType == winrt::XamlHostingKit::TitleBarCaptionButtonType::CLOSE)
 				CaptionButtonColor(buttonType, buttonState, &bgColor, &stColor);
 
-			ID2D1SolidColorBrush* background;
-			ID2D1SolidColorBrush* stroke;
-			d2d1Context->CreateSolidColorBrush(bgColor, &background);
-			d2d1Context->CreateSolidColorBrush(stColor, &stroke);
+			winrt::com_ptr<ID2D1SolidColorBrush> background;
+			winrt::com_ptr<ID2D1SolidColorBrush> stroke;
+			winrt::check_hresult(d2d1Context->CreateSolidColorBrush(bgColor, background.put()));
+			winrt::check_hresult(d2d1Context->CreateSolidColorBrush(stColor, stroke.put()));
 
 			auto point = D2D1::Point2F(0.0f, 0.0f);
 			auto rectangle = D2D1::RectF(point.x, point.y, point.x + XHK_TITLEBAR_CAPTION_BUTTON_WIDTH, point.y + XHK_TITLEBAR_CAPTION_BUTTON_HEIGHT);
-			d2d1Context->FillRectangle(rectangle, background);
-			background->Release();
+			d2d1Context->FillRectangle(rectangle, background.get());
 
 			point = D2D1::Point2F(18.0f, 11.0f);
 			rectangle = D2D1::RectF(point.x, point.y, point.x + 10.0f, point.y + 10.0f);
@@ -340,11 +336,10 @@ namespace winrt::XamlHostingKit::implementation
 			{
 				auto point1 = D2D1::Point2F(18.0f, 11.0f);
 				auto point2 = D2D1::Point2F(28.0f, 21.0f);
-				d2d1Context->DrawLine(point1, point2, stroke);
+				d2d1Context->DrawLine(point1, point2, stroke.get());
 				point1 = D2D1::Point2F(18.0f, 21.0f);
 				point2 = D2D1::Point2F(28.0f, 11.0f);
-				d2d1Context->DrawLine(point1, point2, stroke);
-				stroke->Release();
+				d2d1Context->DrawLine(point1, point2, stroke.get());
 			}
 			d2d1Context->PopAxisAlignedClip();
 		}
@@ -357,15 +352,14 @@ namespace winrt::XamlHostingKit::implementation
 			if (buttonType == winrt::XamlHostingKit::TitleBarCaptionButtonType::MAXIMIZE)
 				CaptionButtonColor(buttonType, buttonState, &bgColor, &stColor);
 
-			ID2D1SolidColorBrush* background;
-			ID2D1SolidColorBrush* stroke;
-			d2d1Context->CreateSolidColorBrush(bgColor, &background);
-			d2d1Context->CreateSolidColorBrush(stColor, &stroke);
+			winrt::com_ptr<ID2D1SolidColorBrush> background;
+			winrt::com_ptr<ID2D1SolidColorBrush> stroke;
+			winrt::check_hresult(d2d1Context->CreateSolidColorBrush(bgColor, background.put()));
+			winrt::check_hresult(d2d1Context->CreateSolidColorBrush(stColor, stroke.put()));
 
 			auto point = D2D1::Point2F(0.0f, 0.0f);
 			auto rectangle = D2D1::RectF(point.x, point.y, point.x + XHK_TITLEBAR_CAPTION_BUTTON_WIDTH, point.y + XHK_TITLEBAR_CAPTION_BUTTON_HEIGHT);
-			d2d1Context->FillRectangle(rectangle, background);
-			background->Release();
+			d2d1Context->FillRectangle(rectangle, background.get());
 
 			auto isWin11 = Helpers::OSBuild >= 22000u;
 			auto radius = isWin11 ? 1.0f : 0.0f;
@@ -374,7 +368,7 @@ namespace winrt::XamlHostingKit::implementation
 			{
 				point = D2D1::Point2F(18.5f, 13.5f);
 				rectangle = D2D1::RectF(point.x, point.y, point.x + 7.0f, point.y + 7.0f);
-				d2d1Context->DrawRoundedRectangle(D2D1::RoundedRect(rectangle, radius, radius), stroke, 1.0f);
+				d2d1Context->DrawRoundedRectangle(D2D1::RoundedRect(rectangle, radius, radius), stroke.get(), 1.0f);
 
 				/*point = D2D1::Point2F(19.5f, 11.5f);
 				rectangle = D2D1::RectF(point.x, point.y, point.x + 8.0f, point.y + 8.0f);
@@ -384,42 +378,41 @@ namespace winrt::XamlHostingKit::implementation
 				{
 					auto point1 = D2D1::Point2F(20.5f, 11.5f);
 					auto point2 = D2D1::Point2F(26.0f, 11.5f);
-					d2d1Context->DrawLine(point1, point2, stroke);
+					d2d1Context->DrawLine(point1, point2, stroke.get());
 
 					point1 = D2D1::Point2F(26.0f, 11.5f);
 					point2 = D2D1::Point2F(27.5f, 13.0f);
-					d2d1Context->DrawLine(point1, point2, stroke);
+					d2d1Context->DrawLine(point1, point2, stroke.get());
 
 					point1 = D2D1::Point2F(27.5f, 13.0f);
 					point2 = D2D1::Point2F(27.5f, 18.5f);
-					d2d1Context->DrawLine(point1, point2, stroke);
+					d2d1Context->DrawLine(point1, point2, stroke.get());
 				}
 				else
 				{
 					auto point1 = D2D1::Point2F(20.5f, 13.5f);
 					auto point2 = D2D1::Point2F(20.5f, 11.5f);
-					d2d1Context->DrawLine(point1, point2, stroke);
+					d2d1Context->DrawLine(point1, point2, stroke.get());
 
 					point1 = D2D1::Point2F(20.0f, 11.5f);
 					point2 = D2D1::Point2F(28.0f, 11.5f);
-					d2d1Context->DrawLine(point1, point2, stroke);
+					d2d1Context->DrawLine(point1, point2, stroke.get());
 
 					point1 = D2D1::Point2F(27.5f, 11.5f);
 					point2 = D2D1::Point2F(27.5f, 19.0f);
-					d2d1Context->DrawLine(point1, point2, stroke);
+					d2d1Context->DrawLine(point1, point2, stroke.get());
 
 					point1 = D2D1::Point2F(25.5f, 18.5f);
 					point2 = D2D1::Point2F(27.5f, 18.5f);
-					d2d1Context->DrawLine(point1, point2, stroke);
+					d2d1Context->DrawLine(point1, point2, stroke.get());
 				}
 			}
 			else
 			{
 				point = D2D1::Point2F(18.5f, 11.5f);
 				rectangle = D2D1::RectF(point.x, point.y, point.x + 9.0f, point.y + 9.0f);
-				d2d1Context->DrawRoundedRectangle(D2D1::RoundedRect(rectangle, radius, radius), stroke, 1.0f);
+				d2d1Context->DrawRoundedRectangle(D2D1::RoundedRect(rectangle, radius, radius), stroke.get(), 1.0f);
 			}
-			stroke->Release();
 		}
 
 		// Min button
@@ -431,23 +424,20 @@ namespace winrt::XamlHostingKit::implementation
 			if (buttonType == winrt::XamlHostingKit::TitleBarCaptionButtonType::MINIMIZE)
 				CaptionButtonColor(buttonType, buttonState, &bgColor, &stColor);
 
-			ID2D1SolidColorBrush* background;
-			ID2D1SolidColorBrush* stroke;
-			d2d1Context->CreateSolidColorBrush(bgColor, &background);
-			d2d1Context->CreateSolidColorBrush(stColor, &stroke);
+			winrt::com_ptr<ID2D1SolidColorBrush> background;
+			winrt::com_ptr<ID2D1SolidColorBrush> stroke;
+			winrt::check_hresult(d2d1Context->CreateSolidColorBrush(bgColor, background.put()));
+			winrt::check_hresult(d2d1Context->CreateSolidColorBrush(stColor, stroke.put()));
 
 			auto point = D2D1::Point2F(0.0f, 0.0f);
 			auto rectangle = D2D1::RectF(point.x, point.y, point.x + XHK_TITLEBAR_CAPTION_BUTTON_WIDTH, point.y + XHK_TITLEBAR_CAPTION_BUTTON_HEIGHT);
-			d2d1Context->FillRectangle(rectangle, background);
-			background->Release();
+			d2d1Context->FillRectangle(rectangle, background.get());
 
 			auto point1 = D2D1::Point2F(18.0f, 15.5f);
 			auto point2 = D2D1::Point2F(28.0f, 15.5f);
-			d2d1Context->DrawLine(point1, point2, stroke);
-			stroke->Release();
+			d2d1Context->DrawLine(point1, point2, stroke.get());
 		}
 
-		d2d1Context->Release();
 		m_captionSurface->EndDraw();
 	}
 

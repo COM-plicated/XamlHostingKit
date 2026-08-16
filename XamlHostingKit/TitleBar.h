@@ -140,7 +140,7 @@ namespace winrt::XamlHostingKit::implementation
 
 		void UpdateCaptionColors();
 #ifndef TITLEBAR_USE_VISUALS
-		HRESULT CreateCompositionDevice();
+		void CreateCompositionDevice();
 		void CreateCaptionSurface(float scale);
 		void DrawCaption(float scale, winrt::XamlHostingKit::TitleBarCaptionButtonType const& buttonType, winrt::XamlHostingKit::TitleBarCaptionButtonState const& buttonState);
 		void CaptionButtonColor(winrt::XamlHostingKit::TitleBarCaptionButtonType const& buttonType, winrt::XamlHostingKit::TitleBarCaptionButtonState const& buttonState, D2D1::ColorF* bgColor, D2D1::ColorF* stColor);
