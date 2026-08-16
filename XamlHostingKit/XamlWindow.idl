@@ -1,4 +1,4 @@
-import "TitleBar.idl";
+import "XamlTitleBar.idl";
 
 namespace XamlHostingKit
 {
@@ -32,7 +32,7 @@ namespace XamlHostingKit
             Windows.UI.Xaml.Window                            SystemWindow        { get; };
             Windows.ApplicationModel.Core.CoreApplicationView CoreApplicationView { get; };
 
-            XamlHostingKit.TitleBar           TitleBar        { get; };
+            XamlHostingKit.XamlTitleBar       TitleBar        { get; };
             Windows.UI.Core.CoreDispatcher    Dispatcher      { get; };
             Windows.System.DispatcherQueue    DispatcherQueue { get; };
             Windows.UI.Core.CoreWindow        CoreWindow      { get; };

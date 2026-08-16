@@ -1,5 +1,5 @@
 #pragma once
-#include "TitleBar.g.h"
+#include "XamlTitleBar.g.h"
 #include <winrt/Windows.UI.Core.h>
 #include <winrt/Windows.UI.Composition.Desktop.h>
 #include <windows.ui.composition.interop.h>
@@ -48,7 +48,7 @@ namespace winrt::XamlHostingKit::implementation
 	using namespace winrt::Windows::UI::Composition;
 	using namespace winrt::Windows::UI::Composition::Desktop;
 
-	struct TitleBar : TitleBarT<TitleBar>
+	struct XamlTitleBar : XamlTitleBarT<XamlTitleBar>
 	{
 	private:
 		static const constexpr auto XHK_TITLEBAR_OBJECT_PROP = L"COMplicated.XamlHostingKit.TileBarObject";
@@ -135,8 +135,8 @@ namespace winrt::XamlHostingKit::implementation
 		D2D1::ColorF m_captionInactiveForeground{ 0, 1.0f };
 #endif
 
-		winrt::event<winrt::Windows::Foundation::TypedEventHandler<winrt::XamlHostingKit::TitleBar, IInspectable>> m_isVisibleChanged;
-		winrt::event<winrt::Windows::Foundation::TypedEventHandler<winrt::XamlHostingKit::TitleBar, IInspectable>> m_layoutMetricsChanged;
+		winrt::event<winrt::Windows::Foundation::TypedEventHandler<winrt::XamlHostingKit::XamlTitleBar, IInspectable>> m_isVisibleChanged;
+		winrt::event<winrt::Windows::Foundation::TypedEventHandler<winrt::XamlHostingKit::XamlTitleBar, IInspectable>> m_layoutMetricsChanged;
 
 		void UpdateCaptionColors();
 #ifndef TITLEBAR_USE_VISUALS
@@ -157,8 +157,8 @@ namespace winrt::XamlHostingKit::implementation
 #endif
 
 	public:
-		TitleBar() = default;
-		TitleBar(HWND const& xamlWindow, HWND const& coreWindow, Compositor const& compositor, CoreDispatcher const& dispatcher);
+		XamlTitleBar() = default;
+		XamlTitleBar(HWND const& xamlWindow, HWND const& coreWindow, Compositor const& compositor, CoreDispatcher const& dispatcher);
 
 		bool ExtendViewIntoTitleBar() const;
 		void ExtendViewIntoTitleBar(bool const& value);
@@ -168,9 +168,9 @@ namespace winrt::XamlHostingKit::implementation
 		float SystemOverlayLeftInset() const;
 		float SystemOverlayRightInset() const;
 
-		winrt::event_token IsVisibleChanged(TypedEventHandler<winrt::XamlHostingKit::TitleBar, IInspectable> const& handler);
+		winrt::event_token IsVisibleChanged(TypedEventHandler<winrt::XamlHostingKit::XamlTitleBar, IInspectable> const& handler);
 		void IsVisibleChanged(winrt::event_token const& token) noexcept;
-		winrt::event_token LayoutMetricsChanged(TypedEventHandler<winrt::XamlHostingKit::TitleBar, IInspectable> const& handler);
+		winrt::event_token LayoutMetricsChanged(TypedEventHandler<winrt::XamlHostingKit::XamlTitleBar, IInspectable> const& handler);
 		void LayoutMetricsChanged(winrt::event_token const& token) noexcept;
 
 	};

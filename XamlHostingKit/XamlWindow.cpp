@@ -10,7 +10,7 @@
 #include "Features.h"
 #include "XamlApplication.h"
 #include <windowsx.h>
-#include "TitleBar.h"
+#include "XamlTitleBar.h"
 
 namespace winrt::XamlHostingKit::implementation
 {
@@ -138,7 +138,7 @@ namespace winrt::XamlHostingKit::implementation
         m_frameworkView.SetWindow(m_coreWindow);
         m_systemWindow = Window::Current();
 
-        m_titleBar = winrt::make<winrt::XamlHostingKit::implementation::TitleBar>(m_hwnd, m_coreWindowHwnd, Compositor(), m_coreWindow.Dispatcher());
+        m_titleBar = winrt::make<winrt::XamlHostingKit::implementation::XamlTitleBar>(m_hwnd, m_coreWindowHwnd, Compositor(), m_coreWindow.Dispatcher());
 
         if (auto wPriv = m_systemWindow.try_as<IWindowPrivate>()) [[likely]]
         {
@@ -279,7 +279,7 @@ namespace winrt::XamlHostingKit::implementation
         return m_view;
     }
 
-    winrt::XamlHostingKit::TitleBar XamlWindow::TitleBar()
+    winrt::XamlHostingKit::XamlTitleBar XamlWindow::TitleBar()
     {
         return m_titleBar;
     }

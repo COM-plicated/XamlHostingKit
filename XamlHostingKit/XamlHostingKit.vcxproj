@@ -181,7 +181,7 @@
     <ClInclude Include="Helpers.h" />
     <ClInclude Include="IWindowNative.h" />
     <ClInclude Include="LegacyNonImmersiveView.h" />
-    <ClInclude Include="TitleBar.h" />
+    <ClInclude Include="XamlTitleBar.h" />
     <ClInclude Include="mrm_private.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Privates.h" />
@@ -197,7 +197,7 @@
   <ItemGroup>
     <ClCompile Include="FileProtocolHandler.cpp" />
     <ClCompile Include="LegacyNonImmersiveView.cpp" />
-    <ClCompile Include="TitleBar.cpp" />
+    <ClCompile Include="XamlTitleBar.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -221,7 +221,7 @@
     <ClCompile Include="XamlWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Midl Include="TitleBar.idl" />
+    <Midl Include="XamlTitleBar.idl" />
     <Midl Include="XamlApplication.idl" />
     <Midl Include="XamlWindow.idl" />
   </ItemGroup>

@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "TitleBar.h"
-#include "TitleBar.g.cpp"
+#include "XamlTitleBar.h"
+#include "XamlTitleBar.g.cpp"
 #include "Helpers.h"
 #include <windowsx.h>
 #include <dwmapi.h>
@@ -27,7 +27,7 @@ namespace winrt::XamlHostingKit
 namespace winrt::XamlHostingKit::implementation
 {
 
-	TitleBar::TitleBar(HWND const& xamlWindow, HWND const& coreWindow, Compositor const& compositor, CoreDispatcher const& dispatcher)
+	XamlTitleBar::XamlTitleBar(HWND const& xamlWindow, HWND const& coreWindow, Compositor const& compositor, CoreDispatcher const& dispatcher)
 		: m_xamlWindow(xamlWindow), m_coreWindow(coreWindow), m_dispatcher(dispatcher), m_compositor(compositor)
 	{
 		m_isVisible = true;
@@ -113,11 +113,11 @@ namespace winrt::XamlHostingKit::implementation
 		SetWindowSubclass(m_coreWindow, CoreWindowSubClassProc, 1, NULL);
 	}
 
-	bool TitleBar::ExtendViewIntoTitleBar() const {
+	bool XamlTitleBar::ExtendViewIntoTitleBar() const {
 		return m_extend;
 	}
 
-	void TitleBar::ExtendViewIntoTitleBar(bool const& value) {
+	void XamlTitleBar::ExtendViewIntoTitleBar(bool const& value) {
 		m_extend = value;
 #ifdef TITLEBAR_USE_VISUALS
 		m_caption.IsVisible(value);
@@ -138,47 +138,47 @@ namespace winrt::XamlHostingKit::implementation
 		}
 	}
 
-	float TitleBar::Height() const
+	float XamlTitleBar::Height() const
 	{
 		return static_cast<float>(Helpers::GetCaptionSize(m_xamlWindow));
 	}
 
-	bool TitleBar::IsVisible() const
+	bool XamlTitleBar::IsVisible() const
 	{
 		return m_isVisible;
 	}
 
-	float TitleBar::SystemOverlayLeftInset() const
+	float XamlTitleBar::SystemOverlayLeftInset() const
 	{
 		return 0;
 	}
 
-	float TitleBar::SystemOverlayRightInset() const
+	float XamlTitleBar::SystemOverlayRightInset() const
 	{
 		return m_extend ? XHK_TITLEBAR_CAPTION_WIDTH : 0;
 	}
 
-	winrt::event_token TitleBar::IsVisibleChanged(TypedEventHandler<winrt::XamlHostingKit::TitleBar, IInspectable> const& handler)
+	winrt::event_token XamlTitleBar::IsVisibleChanged(TypedEventHandler<winrt::XamlHostingKit::XamlTitleBar, IInspectable> const& handler)
 	{
 		return m_isVisibleChanged.add(handler);
 	}
 
-	void TitleBar::IsVisibleChanged(winrt::event_token const& token) noexcept
+	void XamlTitleBar::IsVisibleChanged(winrt::event_token const& token) noexcept
 	{
 		m_isVisibleChanged.remove(token);
 	}
 
-	winrt::event_token TitleBar::LayoutMetricsChanged(TypedEventHandler<winrt::XamlHostingKit::TitleBar, IInspectable> const& handler)
+	winrt::event_token XamlTitleBar::LayoutMetricsChanged(TypedEventHandler<winrt::XamlHostingKit::XamlTitleBar, IInspectable> const& handler)
 	{
 		return m_layoutMetricsChanged.add(handler);
 	}
 
-	void TitleBar::LayoutMetricsChanged(winrt::event_token const& token) noexcept
+	void XamlTitleBar::LayoutMetricsChanged(winrt::event_token const& token) noexcept
 	{
 		m_layoutMetricsChanged.remove(token);
 	}
 
-	void TitleBar::UpdateCaptionColors()
+	void XamlTitleBar::UpdateCaptionColors()
 	{
 		auto dark = Helpers::ShouldAppsUseDarkMode();
 
@@ -213,7 +213,7 @@ namespace winrt::XamlHostingKit::implementation
 
 #ifndef TITLEBAR_USE_VISUALS
 
-	void TitleBar::CreateCompositionDevice()
+	void XamlTitleBar::CreateCompositionDevice()
 	{
 		winrt::com_ptr<ID3D11Device> device;
 
@@ -282,7 +282,7 @@ namespace winrt::XamlHostingKit::implementation
 		m_dcompDevice->Commit();
 	}
 
-	void TitleBar::CreateCaptionSurface(float scale)
+	void XamlTitleBar::CreateCaptionSurface(float scale)
 	{
 		if (!m_dcompDevice) [[unlikely]]
 			return;
@@ -297,7 +297,7 @@ namespace winrt::XamlHostingKit::implementation
 		winrt::check_hresult(m_caption->SetContent(m_captionSurface.get()));
 	}
 
-	void TitleBar::DrawCaption(float scale, winrt::XamlHostingKit::TitleBarCaptionButtonType const& buttonType, winrt::XamlHostingKit::TitleBarCaptionButtonState const& buttonState)
+	void XamlTitleBar::DrawCaption(float scale, winrt::XamlHostingKit::TitleBarCaptionButtonType const& buttonType, winrt::XamlHostingKit::TitleBarCaptionButtonState const& buttonState)
 	{
 		if (!m_dcompDevice) [[unlikely]]
 			return;
@@ -441,7 +441,7 @@ namespace winrt::XamlHostingKit::implementation
 		m_captionSurface->EndDraw();
 	}
 
-	void TitleBar::CaptionButtonColor(winrt::XamlHostingKit::TitleBarCaptionButtonType const& buttonType, winrt::XamlHostingKit::TitleBarCaptionButtonState const& buttonState, D2D1::ColorF* bgColor, D2D1::ColorF* stColor)
+	void XamlTitleBar::CaptionButtonColor(winrt::XamlHostingKit::TitleBarCaptionButtonType const& buttonType, winrt::XamlHostingKit::TitleBarCaptionButtonState const& buttonState, D2D1::ColorF* bgColor, D2D1::ColorF* stColor)
 	{
 		switch (buttonState)
 		{
@@ -456,13 +456,13 @@ namespace winrt::XamlHostingKit::implementation
 		}
 	}
 
-	void TitleBar::CommitComposition()
+	void XamlTitleBar::CommitComposition()
 	{
 		if (m_dcompDevice) [[unlikely]]
 			m_dcompDevice->Commit();
 	}
 
-	void TitleBar::ReleaseResources()
+	void XamlTitleBar::ReleaseResources()
 	{
 		m_captionSurface = nullptr;
 		m_caption = nullptr;
@@ -475,9 +475,9 @@ namespace winrt::XamlHostingKit::implementation
 	}
 #endif
 
-	LRESULT TitleBar::XamlWindowSubClassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR, DWORD_PTR)
+	LRESULT XamlTitleBar::XamlWindowSubClassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR, DWORD_PTR)
 	{
-		auto _this = reinterpret_cast<TitleBar*>(GetPropW(hwnd, XHK_TITLEBAR_OBJECT_PROP));
+		auto _this = reinterpret_cast<XamlTitleBar*>(GetPropW(hwnd, XHK_TITLEBAR_OBJECT_PROP));
 
 		if (msg == WM_DESTROY)
 		{
@@ -768,9 +768,9 @@ namespace winrt::XamlHostingKit::implementation
 		return DefSubclassProc(hwnd, msg, wParam, lParam);
 	}
 
-	LRESULT TitleBar::CoreWindowSubClassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR, DWORD_PTR)
+	LRESULT XamlTitleBar::CoreWindowSubClassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR, DWORD_PTR)
 	{
-		auto _this = reinterpret_cast<TitleBar*>(GetPropW(hwnd, XHK_TITLEBAR_OBJECT_PROP));
+		auto _this = reinterpret_cast<XamlTitleBar*>(GetPropW(hwnd, XHK_TITLEBAR_OBJECT_PROP));
 
 		if (msg == WM_DESTROY)
 		{
@@ -801,7 +801,7 @@ namespace winrt::XamlHostingKit::implementation
 	}
 
 #ifdef TITLEBAR_USE_VISUALS
-	winrt::XamlHostingKit::TitleBarCaptionButton TitleBar::CreateCaptionButton(Compositor const& compositor, std::vector<CompositionGeometry> const& geometry, std::vector<CompositionGeometry> const& geometry_ext, int index)
+	winrt::XamlHostingKit::TitleBarCaptionButton XamlTitleBar::CreateCaptionButton(Compositor const& compositor, std::vector<CompositionGeometry> const& geometry, std::vector<CompositionGeometry> const& geometry_ext, int index)
 	{
 		TitleBarCaptionButton button = { };
 
@@ -856,7 +856,7 @@ namespace winrt::XamlHostingKit::implementation
 		return button;
 	}
 #else
-	D2D1::ColorF TitleBar::ToColorF(Color const& color)
+	D2D1::ColorF XamlTitleBar::ToColorF(Color const& color)
 	{
 		return D2D1::ColorF((color.R << 16) | (color.G << 8) | color.B, color.A / 255.0f);
 	}

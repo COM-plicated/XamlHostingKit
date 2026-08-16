@@ -24,7 +24,7 @@
     </ClCompile>
     <ClCompile Include="FileProtocolHandler.cpp" />
     <ClCompile Include="version.cpp" />
-    <ClCompile Include="TitleBar.cpp" />
+    <ClCompile Include="XamlTitleBar.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -42,12 +42,12 @@
     </ClInclude>
     <ClInclude Include="FileProtocolHandler.h" />
     <ClInclude Include="version.h" />
-    <ClInclude Include="TitleBar.h" />
+    <ClInclude Include="XamlTitleBar.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="XamlApplication.idl" />
     <Midl Include="XamlWindow.idl" />
-    <Midl Include="TitleBar.idl" />
+    <Midl Include="XamlTitleBar.idl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="XamlHostingKit.def" />
