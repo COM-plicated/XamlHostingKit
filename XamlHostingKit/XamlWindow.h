@@ -24,6 +24,7 @@ namespace winrt::XamlHostingKit::implementation
 
         bool m_isMain { false };
         bool m_isSyncObjEnabled { false };
+        bool m_isDestroyed { false };
         HWND m_hwnd { nullptr };
         HWND m_coreWindowHwnd { nullptr };
         hstring m_title;

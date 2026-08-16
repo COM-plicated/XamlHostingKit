@@ -399,12 +399,30 @@ namespace winrt::XamlHostingKit::implementation
 
     void XamlWindow::RunMessageLoop()
     {
-        m_frameworkView.Run();
-        
-        if (!XamlConfig::s_disableEarlyXamlShutdown) [[likely]]
+        try
         {
-            m_frameworkView.Uninitialize();
+            m_frameworkView.Run();
+
+            if (!XamlConfig::s_disableEarlyXamlShutdown) [[likely]]
+            {
+                m_frameworkView.Uninitialize();
+            }
         }
+        catch (...)
+        {
+            // This is a workaround for a bug in build 16299 where FrameworkView::Run would return E_INVALIDARG
+            // on shutdown when trying to remove the internal RootScrollViewer.
+            // TODO: figure out the actual reason why that fails and fix it.
+            // NOTE: it seems like the CDependencyObject::Leave call (its CContentControl::LeaveImpl call)
+            // is failing with E_INVALIDARG (inside VisualTree::RemoveRootScrollViewer).
+
+            if (!m_isDestroyed) [[unlikely]]
+            {
+                throw;
+            }
+        }
+
+        XamlApplication::RemoveWindow(*this);
     }
 
     HRESULT XamlWindow::get_WindowHandle(HWND* hwnd)
@@ -464,19 +482,22 @@ namespace winrt::XamlHostingKit::implementation
         {
             RemovePropW(hwnd, XHK_WINDOW_OBJECT_PROP);
 
+            if (_this) [[likely]]
+            {
+                _this->m_isDestroyed = true;
+            }
+
             s_currentWindow = nullptr;
             PostQuitMessage(0);
 
-            if (_this) [[likely]]
+            /*if (_this) [[likely]]
             {
-                /*try
+                try
                 {
                     _this->m_dispatcher.StopProcessEvents();
                 }
-                catch (...) { }*/
-
-                XamlApplication::RemoveWindow(*_this);
-            }
+                catch (...) { }
+            }*/
         }
         else if (_this)
         {
