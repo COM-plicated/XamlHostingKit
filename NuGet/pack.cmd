@@ -1,0 +1,1 @@
+nuget pack -Symbols -SymbolPackageFormat symbols.nupkg

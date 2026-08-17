@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <XHKPlatform Condition="'$(Platform)' == 'Win32'">x86</XHKPlatform>
+    <XHKPlatform Condition="'$(Platform)' != 'Win32'">$(Platform)</XHKPlatform>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="$(MSBuildThisFileDirectory)..\..\lib\uap10.0\XamlHostingKit.winmd">
+      <Implementation>XamlHostingKit.dll</Implementation>
+    </Reference>
+    <ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)..\..\runtimes\win-$(XHKPlatform)\native\XamlHostingKit.dll" />
+  </ItemGroup>
+
+</Project>

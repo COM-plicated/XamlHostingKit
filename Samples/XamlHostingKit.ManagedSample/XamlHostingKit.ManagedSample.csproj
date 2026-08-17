@@ -62,4 +62,8 @@
     <ProjectReference Include="..\..\XamlHostingKit.Projection\XamlHostingKit.Projection.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Dispatching\" />
+  </ItemGroup>
+
 </Project>

@@ -61,6 +61,9 @@ namespace winrt::XamlHostingKit
     static const auto LCIEGetRedirectionPolicyForURL = reinterpret_cast<HRESULT(WINAPI*)(LPCWSTR, int, int, unsigned int, unsigned int*, int*)>(GetProcAddress(UrlMonModule.get(), MAKEINTRESOURCEA(494)));
     static const auto LCIEGetRedirectionPolicyForURL2 = reinterpret_cast<HRESULT(WINAPI*)(LPCWSTR, int, int, unsigned int, unsigned int*, int*, LPCWSTR*)>(GetProcAddress(UrlMonModule.get(), MAKEINTRESOURCEA(493)));
     static const auto IEConfiguration_SetBool = reinterpret_cast<HRESULT(WINAPI*)(int, bool)>(GetProcAddress(IERTUtilModule.get(), MAKEINTRESOURCEA(792)));
+    static auto IEConfiguration_GetBool = reinterpret_cast<bool(WINAPI*)(int)>(GetProcAddress(IERTUtilModule.get(), MAKEINTRESOURCEA(791)));
+    static auto IEConfiguration_GetDWORD = reinterpret_cast<uint32_t(WINAPI*)(int)>(GetProcAddress(IERTUtilModule.get(), MAKEINTRESOURCEA(793)));
+    static auto IEConfiguration_GetString = reinterpret_cast<const wchar_t*(WINAPI*)(int)>(GetProcAddress(IERTUtilModule.get(), MAKEINTRESOURCEA(795)));
 
     static wil::unique_hkey PersonalizeKey;
     static const auto PersonalizeKeyResult = wil::reg::open_unique_key_nothrow(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", PersonalizeKey);

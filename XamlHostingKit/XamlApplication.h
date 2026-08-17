@@ -37,6 +37,7 @@ namespace winrt::XamlHostingKit::implementation
         inline static std::once_flag s_appInitFlag { };
         inline static std::once_flag s_mrmHookFlag { };
         inline static std::mutex s_mainWindowMutex { };
+        inline static std::mutex s_windowsMutex    { };
 
         static HRESULT InitializeWebView();
         static void StartCommon(winrt::Windows::UI::Xaml::ApplicationInitializationCallback const& initCallback);
@@ -48,6 +49,9 @@ namespace winrt::XamlHostingKit::implementation
         static LONG WINAPI AppPolicyGetWindowingModelHook(HANDLE processToken, AppPolicyWindowingModel* policy);
         static HRESULT WINAPI CreateAppxSecurityManagerHook(void* unk, IWebPlatformSecurityManager** ppManager);
         static HRESULT WINAPI CreateAppxProtocolClassFactoryHook(void* unk1, void* unk2, void* unk3, void* unk4, IClassFactory** ppFactory);
+        static bool WINAPI IEConfiguration_GetBool_Hook(int config);
+        static uint32_t WINAPI IEConfiguration_GetDWORD_Hook(int config);
+        static const wchar_t* WINAPI IEConfiguration_GetString_Hook(int config);
         static HANDLE WINAPI CreateFileWHook(_In_ LPCWSTR lpFileName, _In_ DWORD dwDesiredAccess, _In_ DWORD dwShareMode, _In_opt_ LPSECURITY_ATTRIBUTES lpSecurityAttributes, _In_ DWORD dwCreationDisposition, _In_ DWORD dwFlagsAndAttributes, _In_opt_ HANDLE hTemplateFile);
         static BOOL WINAPI GetFileAttributesExWHook(_In_ LPCWSTR lpFileName, _In_ GET_FILEEX_INFO_LEVELS fInfoLevelId, _Out_writes_bytes_(sizeof(WIN32_FILE_ATTRIBUTE_DATA)) LPVOID lpFileInformation);
         static HRESULT WINAPI InitializeForCurrentApplicationHook(mrm::IMrtResourceManager* _this);
@@ -57,6 +61,7 @@ namespace winrt::XamlHostingKit::implementation
         static void CreateResourceManager(PCWSTR priPath);
         static HRESULT WINAPI get_ViewsHook(void* _this, void** pViews);
         static HRESULT WINAPI get_MainViewHook(void* _this, void** pView);
+        //static HRESULT WINAPI GetCurrentViewHook(void* _this, void** pView);
         static HRESULT InitializeCoreApplicationHooks();
         inline static void WINAPI SubmitThreadpoolWorkHook([[maybe_unused]] PTP_WORK work) { };
 

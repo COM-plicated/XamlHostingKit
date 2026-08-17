@@ -1,4 +1,5 @@
-﻿using Windows.UI.Xaml;
+﻿using Microsoft.System;
+using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.ApplicationModel.Activation;
 
@@ -14,6 +15,8 @@ namespace XamlHostingKit.ManagedSample
         protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
             var window = XamlWindow.Current;
+            SynchronizationContext.SetSynchronizationContext(new CoreDispatcherSynchronizationContext(window.Dispatcher));
+
             window.Title = "XamlHostingKit Managed Sample";
 
             Frame frame = new();

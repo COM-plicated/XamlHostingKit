@@ -303,6 +303,7 @@ MakeWindow:
 
     void XamlApplication::Close()
     {
+        std::lock_guard lock(s_windowsMutex);
         for (auto i = s_windows.Size(); i-- > 0;)
         {
             if (auto window = s_windows.GetAt(i)) [[likely]]
@@ -311,18 +312,20 @@ MakeWindow:
             }
         }
 
-        std::lock_guard lock(s_mainWindowMutex);
+        std::lock_guard main_lock(s_mainWindowMutex);
         s_mainWindow = nullptr;
     }
 
     void XamlApplication::RemoveWindow(winrt::XamlHostingKit::XamlWindow const& window)
     {
+        std::lock_guard lock(s_windowsMutex);
+
         uint32_t idx = 0;
         if (s_windows.IndexOf(window, idx)) [[likely]]
         {
             s_windows.RemoveAt(idx);
 
-            std::lock_guard lock(s_mainWindowMutex);
+            std::lock_guard main_lock(s_mainWindowMutex);
             if (s_mainWindow == window)
             {
                 if (s_windows.Size() > 0)
@@ -427,6 +430,36 @@ MakeWindow:
         return S_OK;
     }
 
+    bool WINAPI XamlApplication::IEConfiguration_GetBool_Hook(int config)
+    {
+        if (config == 0x1000002C)
+        {
+            return true;
+        }
+
+        return IEConfiguration_GetBool(config);
+    }
+
+    uint32_t WINAPI XamlApplication::IEConfiguration_GetDWORD_Hook(int config)
+    {
+        if (config == 0x1000002D)
+        {
+            return 2;
+        }
+
+        return IEConfiguration_GetDWORD(config);
+    }
+
+    const wchar_t* WINAPI XamlApplication::IEConfiguration_GetString_Hook(int config)
+    {
+        if (config == 0x1000002B)
+        {
+            return L"MicrosoftEdge";
+        }
+
+        return IEConfiguration_GetString(config);
+    }
+
     HRESULT XamlApplication::InitializeWebView()
     {
         if (AppCoreModule &&
@@ -455,7 +488,30 @@ MakeWindow:
             
             if (IEConfiguration_SetBrowserAppProfile) [[likely]]
             {
-                RETURN_IF_FAILED(IEConfiguration_SetBrowserAppProfile(L"MicrosoftEdge", 2, 0));
+                if (FAILED_LOG(IEConfiguration_SetBrowserAppProfile(L"MicrosoftEdge", 2, 0))) [[unlikely]]
+                {
+                    if (IEConfiguration_GetBool && IEConfiguration_GetDWORD && IEConfiguration_GetString) [[likely]]
+                    {
+                        auto pIEConfiguration_GetBool = IEConfiguration_GetBool;
+                        auto pIEConfiguration_GetDWORD = IEConfiguration_GetDWORD;
+                        auto pIEConfiguration_GetString = IEConfiguration_GetString;
+
+                        DetourTransactionBegin();
+                        DetourUpdateThread(GetCurrentThread());
+                        DetourAttach(&(PVOID&)pIEConfiguration_GetBool, IEConfiguration_GetBool_Hook);
+                        DetourAttach(&(PVOID&)pIEConfiguration_GetDWORD, IEConfiguration_GetDWORD_Hook);
+                        DetourAttach(&(PVOID&)pIEConfiguration_GetString, IEConfiguration_GetString_Hook);
+                        RETURN_IF_WIN32_ERROR(DetourTransactionCommit());
+
+                        IEConfiguration_GetBool = pIEConfiguration_GetBool;
+                        IEConfiguration_GetDWORD = pIEConfiguration_GetDWORD;
+                        IEConfiguration_GetString = pIEConfiguration_GetString;
+                    }
+                    else
+                    {
+                        RETURN_HR(E_FAIL);
+                    }
+                }
             }
 
             if (Helpers::OSBuild < 15063u && RegisterPermanentUrlRedirectionPolicyManager) [[unlikely]]
@@ -618,7 +674,7 @@ MakeWindow:
             DetourUpdateThread(GetCurrentThread());
             DetourAttach(&(PVOID&)s_originalInitializeForCurrentApplication, InitializeForCurrentApplicationHook);
             DetourAttach(&(PVOID&)s_originalTryInitializeForCurrentApplication, TryInitializeForCurrentApplicationHook);
-            RETURN_LAST_ERROR_IF(DetourTransactionCommit() != NO_ERROR);
+            RETURN_IF_WIN32_ERROR(DetourTransactionCommit());
             RETURN_IF_FAILED(Helpers::XWinePatchImport(MrmModule.get(), KernelBaseModule, "CreateFileW", &CreateFileWHook));
             RETURN_IF_FAILED(Helpers::XWinePatchImport(MrmModule.get(), KernelBaseModule, "GetFileAttributesExW", &GetFileAttributesExWHook));
             RETURN_IF_FAILED(Helpers::XWinePatchImport(XAMLModule.get(), COMBaseModule, "CoCreateInstance", &CoCreateInstanceHook));
@@ -746,6 +802,7 @@ MakeWindow:
             return E_POINTER;
         }
 
+        std::lock_guard lock(s_windowsMutex);
         if (s_windows.Size() > 0) [[likely]]
         {
             std::vector<CoreApplicationView> views;
@@ -788,6 +845,27 @@ MakeWindow:
         return S_OK;
     }
 
+    // disabled because it causes an AV, investigate later
+    /*HRESULT WINAPI XamlApplication::GetCurrentViewHook(void* _this, void** pView)
+    {
+        if (!pView) [[unlikely]]
+        {
+            return E_POINTER;
+        }
+
+        if (auto currentWindow = XamlWindow::Current()) [[likely]]
+        {
+            winrt::copy_to_abi(currentWindow.CoreApplicationView(), *pView);
+        }
+        else
+        {
+            *pView = nullptr;
+            return E_FAIL;
+        }
+
+        return S_OK;
+    }*/
+
     HRESULT XamlApplication::InitializeCoreApplicationHooks()
     {
         auto imrsv = winrt::get_activation_factory<CoreApplication, ICoreImmersiveApplication>();
@@ -796,11 +874,17 @@ MakeWindow:
         auto GetViews = vtbl[6];
         auto GetMainView = vtbl[8];
 
+        /*auto core = imrsv.as<ICoreApplication>();
+        auto coreVtbl = *reinterpret_cast<void***>(winrt::get_abi(core));
+
+        auto GetCurrentView = coreVtbl[12];*/
+
         DetourTransactionBegin();
         DetourUpdateThread(GetCurrentThread());
         DetourAttach(&(PVOID&)GetViews, get_ViewsHook);
         DetourAttach(&(PVOID&)GetMainView, get_MainViewHook);
-        RETURN_LAST_ERROR_IF(DetourTransactionCommit() != NO_ERROR);
+        //DetourAttach(&(PVOID&)GetCurrentView, GetCurrentViewHook);
+        RETURN_IF_WIN32_ERROR(DetourTransactionCommit());
 
         return S_OK;
     }
