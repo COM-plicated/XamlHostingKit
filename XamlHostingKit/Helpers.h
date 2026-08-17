@@ -223,7 +223,7 @@ namespace winrt::XamlHostingKit
         {
             if (IsDarkModeAllowedForWindow) [[likely]]
             {
-                bool isDarkMode = IsDarkModeAllowedForHwnd(hwnd) && ShouldAppsUseDarkMode();
+                BOOL isDarkMode = IsDarkModeAllowedForHwnd(hwnd) && ShouldAppsUseDarkMode();
 
                 if (SetWindowCompositionAttribute && OSBuild >= 18363u) [[likely]]
                 {

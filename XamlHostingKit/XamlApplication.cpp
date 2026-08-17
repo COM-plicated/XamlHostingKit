@@ -105,8 +105,11 @@ namespace winrt::XamlHostingKit::implementation
 
                 try
                 {
+                    // this is inside a try-catch because Application::Current() can throw.
                     if (Application::Current()) [[unlikely]]
                     {
+                        // if Application::Current() is not null this means that StartInCoreWindowHostingMode failed
+                        // but after initializing the Application class and DXamlCore, which is all we need from it anyways.
                         goto MakeWindow;
                     }
                 }
@@ -490,6 +493,10 @@ MakeWindow:
             {
                 if (FAILED_LOG(IEConfiguration_SetBrowserAppProfile(L"MicrosoftEdge", 2, 0))) [[unlikely]]
                 {
+                    // we can reach here if someone already set the browser app profile (MessageBoxW/A can do that for whatever reason),
+                    // in which case we have to hook IEConfiguration_* functions to return the correct values
+                    // for the browser profile overriding whatever profile was set, otherwise
+                    // we would failfast in iertutil.dll!CreateUriPriv.
                     if (IEConfiguration_GetBool && IEConfiguration_GetDWORD && IEConfiguration_GetString) [[likely]]
                     {
                         auto pIEConfiguration_GetBool = IEConfiguration_GetBool;
