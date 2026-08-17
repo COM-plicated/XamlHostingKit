@@ -195,7 +195,7 @@ namespace winrt::XamlHostingKit::implementation
 				ReleaseResources();
 				CreateCompositionDevice();
 			}
-			catch (...) { }
+			catch (...) {}
 		}
 #endif
 	}
@@ -534,13 +534,17 @@ namespace winrt::XamlHostingKit::implementation
 				_this->m_captionMinimize.m_container.Offset({ -scaledButtonSize * 3 , 0.0f, 0.0f });
 				_this->m_captionMinimize.m_container.Scale({ scaling, scaling, 1.0f });
 
-				_this->m_captionMaximize.m_shape.IsVisible(wParam != SIZE_MAXIMIZED);
-				_this->m_captionMaximize.m_shape_ext.IsVisible(wParam == SIZE_MAXIMIZED);
+				if (wParam != SIZE_MINIMIZED)
+				{
+					_this->m_captionMaximize.m_shape.IsVisible(wParam != SIZE_MAXIMIZED);
+					_this->m_captionMaximize.m_shape_ext.IsVisible(wParam == SIZE_MAXIMIZED);
+				}
 #else
 				auto width = LOWORD(lParam);
 				auto height = HIWORD(lParam);
 
-				_this->m_isMaximized = wParam == SIZE_MAXIMIZED;
+				if (wParam != SIZE_MINIMIZED)
+					_this->m_isMaximized = wParam == SIZE_MAXIMIZED;
 
 				_this->m_caption->SetOffsetX(width - scaledCaptionSize);
 				_this->m_caption->SetOffsetY(static_cast<float>(Helpers::GetTopBorderSize(hwnd)));
