@@ -563,38 +563,41 @@ namespace winrt::XamlHostingKit::implementation
 			{
 				auto x = GET_X_LPARAM(lParam);
 				auto y = GET_Y_LPARAM(lParam);
+				auto ret = DefSubclassProc(hwnd, msg, wParam, lParam);
 
-				RECT rc;
-				GetWindowRect(hwnd, &rc);
-				auto dpi = Helpers::GetDpiForWindow(hwnd);
-				auto border = Helpers::GetSystemMetricsForDpi(SM_CXFRAME, dpi) + Helpers::GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
-				auto caption = Helpers::GetTopBorderSize(hwnd) + Helpers::GetCaptionSize(hwnd);
-
-				if (y > rc.top && y < rc.top + caption)
+				if (ret == HTCLIENT)
 				{
-					auto buttonSize = XHK_TITLEBAR_CAPTION_BUTTON_WIDTH * Helpers::GetDpiScaleForWindow(hwnd);
-					auto relative = rc.right - border;
-					if (x < relative && x >= relative - buttonSize)
-						return HTCLOSE;
-					else if (x < relative - buttonSize && x >= relative - buttonSize * 2)
-						return HTMAXBUTTON;
-					else  if (x < relative - buttonSize * 2 && x >= relative - buttonSize * 3)
-						return HTMINBUTTON;
-				}
+					RECT rc;
+					GetWindowRect(hwnd, &rc);
+					auto dpi = Helpers::GetDpiForWindow(hwnd);
+					auto border = Helpers::GetSystemMetricsForDpi(SM_CXFRAME, dpi) + Helpers::GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
+					auto caption = Helpers::GetTopBorderSize(hwnd) + Helpers::GetCaptionSize(hwnd);
 
-				if (y < rc.top + border)
-				{
-					if (x < rc.left + border * 2)
-						return HTTOPLEFT;
-					else if (x > rc.right - border * 2)
-						return HTTOPRIGHT;
+					if (y > rc.top && y < rc.top + caption)
+					{
+						auto buttonSize = XHK_TITLEBAR_CAPTION_BUTTON_WIDTH * Helpers::GetDpiScaleForWindow(hwnd);
+						auto relative = rc.right - border;
+						if (x < relative && x >= relative - buttonSize)
+							return HTCLOSE;
+						else if (x < relative - buttonSize && x >= relative - buttonSize * 2)
+							return HTMAXBUTTON;
+						else  if (x < relative - buttonSize * 2 && x >= relative - buttonSize * 3)
+							return HTMINBUTTON;
+					}
+
+					if (y < rc.top + border)
+					{
+						if (x < rc.left + border * 2)
+							return HTTOPLEFT;
+						else if (x > rc.right - border * 2)
+							return HTTOPRIGHT;
+						else
+							return HTTOP;
+					}
 					else
-						return HTTOP;
+						return HTCAPTION;
 				}
-				else if (y < rc.top + border + caption)
-					return HTCAPTION;
-				else
-					DefSubclassProc(hwnd, msg, wParam, lParam);
+				return ret;
 			}
 			else if (msg == WM_NCCALCSIZE)
 			{
