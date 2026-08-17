@@ -10,6 +10,7 @@ namespace Features
     inline static const bool IsApiInformationAvailable = winrt::try_get_activation_factory<ApiInformation>() != nullptr;
     inline static const bool IsXamlRootAvailable = IsApiInformationAvailable && ApiInformation::IsTypePresent(L"Windows.UI.Xaml.XamlRoot");
     inline static const bool IsDispatcherQueueAvailable = IsApiInformationAvailable && ApiInformation::IsTypePresent(L"Windows.System.DispatcherQueue");
+    inline static const bool IsGetElementVisualAvailable = IsApiInformationAvailable && ApiInformation::IsMethodPresent(L"Windows.UI.Xaml.Hosting.ElementCompositionPreview", L"GetElementVisual");
 
     inline static const bool IsSetSynchronizationInfoAvailable =
         ([]() -> bool

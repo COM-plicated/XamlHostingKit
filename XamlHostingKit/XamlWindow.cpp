@@ -138,7 +138,7 @@ namespace winrt::XamlHostingKit::implementation
         m_frameworkView.SetWindow(m_coreWindow);
         m_systemWindow = Window::Current();
 
-        m_titleBar = winrt::make<winrt::XamlHostingKit::implementation::XamlTitleBar>(m_hwnd, m_coreWindowHwnd, Compositor(), m_coreWindow.Dispatcher());
+        m_titleBar = winrt::make_self<winrt::XamlHostingKit::implementation::XamlTitleBar>(m_hwnd, m_coreWindowHwnd, Compositor(), m_coreWindow.Dispatcher());
 
         if (auto wPriv = m_systemWindow.try_as<IWindowPrivate>()) [[likely]]
         {
@@ -281,7 +281,7 @@ namespace winrt::XamlHostingKit::implementation
 
     winrt::XamlHostingKit::XamlTitleBar XamlWindow::TitleBar()
     {
-        return m_titleBar;
+        return m_titleBar.as<winrt::XamlHostingKit::XamlTitleBar>();
     }
 
     winrt::Windows::UI::Core::CoreDispatcher XamlWindow::Dispatcher()
@@ -416,6 +416,8 @@ namespace winrt::XamlHostingKit::implementation
 
     void XamlWindow::RunMessageLoop()
     {
+        m_titleBar->TryReinitializeWithCompositor(Content());
+
         try
         {
             m_frameworkView.Run();
@@ -544,7 +546,7 @@ namespace winrt::XamlHostingKit::implementation
                 auto height = HIWORD(lParam);
                 auto y = 0;
 
-                if (_this->m_titleBar && _this->m_titleBar.ExtendViewIntoTitleBar())
+                if (_this->m_titleBar && _this->m_titleBar.get()->ExtendViewIntoTitleBar())
                 {
                     y = Helpers::GetTopBorderSize(hwnd);
                     height -= static_cast<WORD>(y);
@@ -578,5 +580,4 @@ namespace winrt::XamlHostingKit::implementation
 
         return DefWindowProcW(hwnd, msg, wParam, lParam);
     }
-
 }

@@ -45,6 +45,7 @@ namespace winrt::XamlHostingKit::implementation
 	using namespace winrt::Windows::Foundation;
 	using namespace winrt::Windows::UI;
 	using namespace winrt::Windows::UI::Core;
+	using namespace winrt::Windows::UI::Xaml;
 	using namespace winrt::Windows::UI::Composition;
 	using namespace winrt::Windows::UI::Composition::Desktop;
 
@@ -144,7 +145,7 @@ namespace winrt::XamlHostingKit::implementation
 		void CreateCaptionSurface(float scale);
 		void DrawCaption(float scale, winrt::XamlHostingKit::TitleBarCaptionButtonType const& buttonType, winrt::XamlHostingKit::TitleBarCaptionButtonState const& buttonState);
 		void CaptionButtonColor(winrt::XamlHostingKit::TitleBarCaptionButtonType const& buttonType, winrt::XamlHostingKit::TitleBarCaptionButtonState const& buttonState, D2D1::ColorF* bgColor, D2D1::ColorF* stColor);
-		void CommitComposition();
+		void CommitComposition(bool const& force = false);
 		void ReleaseResources();
 #endif
 
@@ -173,5 +174,6 @@ namespace winrt::XamlHostingKit::implementation
 		winrt::event_token LayoutMetricsChanged(TypedEventHandler<winrt::XamlHostingKit::XamlTitleBar, IInspectable> const& handler);
 		void LayoutMetricsChanged(winrt::event_token const& token) noexcept;
 
+		void TryReinitializeWithCompositor(UIElement const& content);
 	};
 }

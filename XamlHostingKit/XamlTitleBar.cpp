@@ -2,6 +2,9 @@
 #include "XamlTitleBar.h"
 #include "XamlTitleBar.g.cpp"
 #include "Helpers.h"
+#include "Features.h"
+#include <winrt/Windows.UI.Xaml.Controls.h>
+#include <winrt/Windows.UI.Xaml.Hosting.h>
 #include <windowsx.h>
 #include <dwmapi.h>
 #include <shellapi.h>
@@ -26,6 +29,8 @@ namespace winrt::XamlHostingKit
 
 namespace winrt::XamlHostingKit::implementation
 {
+
+	using namespace winrt::Windows::UI::Xaml::Hosting;
 
 	XamlTitleBar::XamlTitleBar(HWND const& xamlWindow, HWND const& coreWindow, Compositor const& compositor, CoreDispatcher const& dispatcher)
 		: m_xamlWindow(xamlWindow), m_coreWindow(coreWindow), m_dispatcher(dispatcher), m_compositor(compositor)
@@ -176,6 +181,23 @@ namespace winrt::XamlHostingKit::implementation
 	void XamlTitleBar::LayoutMetricsChanged(winrt::event_token const& token) noexcept
 	{
 		m_layoutMetricsChanged.remove(token);
+	}
+
+	void XamlTitleBar::TryReinitializeWithCompositor(UIElement const& content)
+	{
+#ifndef TITLEBAR_USE_VISUALS
+		if (!m_compositor && content && Features::IsGetElementVisualAvailable)
+		{
+			try
+			{
+				auto visual = ElementCompositionPreview::GetElementVisual(content);
+				m_compositor = visual.Compositor();
+				ReleaseResources();
+				CreateCompositionDevice();
+			}
+			catch (...) { }
+		}
+#endif
 	}
 
 	void XamlTitleBar::UpdateCaptionColors()
@@ -456,10 +478,15 @@ namespace winrt::XamlHostingKit::implementation
 		}
 	}
 
-	void XamlTitleBar::CommitComposition()
+	void XamlTitleBar::CommitComposition(bool const& force)
 	{
 		if (m_dcompDevice) [[unlikely]]
-			m_dcompDevice->Commit();
+		{
+			if (force || !m_surfaceFactory)
+			{
+				m_dcompDevice->Commit();
+			}
+		}
 	}
 
 	void XamlTitleBar::ReleaseResources()
@@ -518,11 +545,7 @@ namespace winrt::XamlHostingKit::implementation
 				_this->m_caption->SetOffsetX(width - scaledCaptionSize);
 				_this->m_caption->SetOffsetY(static_cast<float>(Helpers::GetTopBorderSize(hwnd)));
 
-				if (!_this->m_surfaceFactory)
-				{
-					// Not running on XAML's dcomp, manually commit this resize
-					_this->CommitComposition();
-				}
+				_this->CommitComposition();
 #endif
 
 			}
@@ -616,7 +639,7 @@ namespace winrt::XamlHostingKit::implementation
 				}
 #else
 				_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::ACTIVE);
-				_this->CommitComposition();
+				_this->CommitComposition(true);
 
 #endif
 				if (wParam == HTMINBUTTON ||
@@ -651,7 +674,7 @@ namespace winrt::XamlHostingKit::implementation
 				}
 #ifndef TITLEBAR_USE_VISUALS
 				_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::HOVER);
-				_this->CommitComposition();
+				_this->CommitComposition(true);
 #endif
 			}
 			else if (msg == WM_NCPOINTERUP)
@@ -682,7 +705,7 @@ namespace winrt::XamlHostingKit::implementation
 				}
 #ifndef TITLEBAR_USE_VISUALS
 				_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::HOVER);
-				_this->CommitComposition();
+				_this->CommitComposition(true);
 #endif
 			}
 			else if (msg == WM_NCMOUSEMOVE)
@@ -713,10 +736,10 @@ namespace winrt::XamlHostingKit::implementation
 				}
 #else
 				_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::HOVER);
-				_this->CommitComposition();
+				_this->CommitComposition(true);
 #endif
 			}
-			else if (msg == WM_NCMOUSELEAVE || msg == WM_MOUSELEAVE)
+			else if (msg == WM_NCMOUSELEAVE)
 			{
 #ifdef TITLEBAR_USE_VISUALS
 				_this->m_captionClose.Update(_this->m_isActive ? _this->m_captionForeground : _this->m_captionInactiveForeground, _this->m_captionCloseBackground);
@@ -724,7 +747,7 @@ namespace winrt::XamlHostingKit::implementation
 				_this->m_captionMinimize.Update(_this->m_isActive ? _this->m_captionForeground : _this->m_captionInactiveForeground, _this->m_captionOtherBackground);
 #else
 				_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::HOVER);
-				_this->CommitComposition();
+				_this->CommitComposition(true);
 #endif
 			}
 			else if (msg == WM_NCACTIVATE)
@@ -745,7 +768,7 @@ namespace winrt::XamlHostingKit::implementation
 #else
 				_this->m_isActive = wParam;
 				_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::NORMAL);
-				_this->CommitComposition();
+				_this->CommitComposition(true);
 #endif
 			}
 			else if (msg == WM_SETTINGCHANGE)

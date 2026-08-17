@@ -4,6 +4,7 @@
 #include <winrt/Windows.UI.Xaml.h>
 #include "IWindowNative.h"
 #include "Helpers.h"
+#include "XamlTitleBar.h"
 
 namespace winrt::XamlHostingKit::implementation
 {
@@ -36,7 +37,7 @@ namespace winrt::XamlHostingKit::implementation
         DispatcherQueue m_dispatcherQueue { nullptr };
         CoreWindow m_coreWindow { nullptr };
         FrameworkView m_frameworkView { nullptr };
-        winrt::XamlHostingKit::XamlTitleBar m_titleBar { nullptr };
+        winrt::com_ptr<winrt::XamlHostingKit::implementation::XamlTitleBar> m_titleBar { nullptr };
         winrt::com_ptr<IWindowPrivate> m_windowPrivate { nullptr };
         winrt::com_ptr<IFrameworkApplicationPrivate> m_applicationPrivate { nullptr };
         winrt::com_ptr<IFrameworkApplicationPrivateOld> m_applicationPrivateOld { nullptr };
