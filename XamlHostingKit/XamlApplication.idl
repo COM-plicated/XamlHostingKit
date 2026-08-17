@@ -13,6 +13,7 @@ namespace XamlHostingKit
             static Boolean EnableMsAppxWebProtocolSupport  { get; set; };
             static Boolean EnableArbitraryPathsInMsAppxWeb { get; set; };
             static Boolean EnableSmoothResize              { get; set; };
+            static Boolean EnsureSmoothResizeSyncObject    { get; set; };
         }
     }
 

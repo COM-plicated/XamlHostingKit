@@ -13,6 +13,7 @@ namespace winrt::XamlHostingKit::implementation
         static bool s_enableMsAppxWebProtocolSupport;
         static bool s_enableArbitraryPathsInMsAppxWeb;
         static bool s_enableSmoothResize;
+        static bool s_ensureSmoothResizeSyncObject;
 
         XamlConfig() = default;
 
@@ -36,6 +37,9 @@ namespace winrt::XamlHostingKit::implementation
 
         static bool EnableSmoothResize();
         static void EnableSmoothResize(bool value);
+
+        static bool EnsureSmoothResizeSyncObject();
+        static void EnsureSmoothResizeSyncObject(bool value);
     };
 }
 

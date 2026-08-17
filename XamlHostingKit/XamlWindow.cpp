@@ -136,31 +136,35 @@ namespace winrt::XamlHostingKit::implementation
         {
             LOG_IF_FAILED(wPriv->put_TransparentBackground(TRUE));
 
-            if (XamlConfig::s_enableSmoothResize && Features::IsSetSynchronizationInfoAvailable) [[likely]]
+            if (XamlConfig::s_enableSmoothResize) [[likely]]
             {
                 if (!LOG_LAST_ERROR_IF(!Helpers::EnableResizeSynchronization(m_hwnd, true))) [[likely]]
                 {
-                    Helpers::EnableResizeSynchronization(m_coreWindowHwnd, true);
+                    LOG_LAST_ERROR_IF(!Helpers::EnableResizeSynchronization(m_coreWindowHwnd, true));
 
-                    if (Helpers::OSBuild >= 19041u || Helpers::OSBuild <= 16299u) [[likely]]
+                    if (XamlConfig::s_ensureSmoothResizeSyncObject &&
+                        Features::IsSetSynchronizationInfoAvailable) [[unlikely]]
                     {
-                        m_windowPrivate.attach(wPriv.detach());
-                        m_isSyncObjEnabled = true;
-                    }
-                    else
-                    {
-                        if (Helpers::OSBuild >= 18362u) [[likely]]
+                        if (Helpers::OSBuild >= 19041u || Helpers::OSBuild <= 16299u) [[likely]]
                         {
-                            if (Application::Current().try_as(m_applicationPrivate)) [[likely]]
-                            {
-                                m_isSyncObjEnabled = true;
-                            }
+                            m_windowPrivate.attach(wPriv.detach());
+                            m_isSyncObjEnabled = true;
                         }
-                        else if (Helpers::OSBuild >= 17134u)
+                        else
                         {
-                            if (Application::Current().try_as(m_applicationPrivateOld)) [[likely]]
+                            if (Helpers::OSBuild >= 18362u) [[likely]]
                             {
-                                m_isSyncObjEnabled = true;
+                                if (Application::Current().try_as(m_applicationPrivate)) [[likely]]
+                                {
+                                    m_isSyncObjEnabled = true;
+                                }
+                            }
+                            else if (Helpers::OSBuild >= 17134u)
+                            {
+                                if (Application::Current().try_as(m_applicationPrivateOld)) [[likely]]
+                                {
+                                    m_isSyncObjEnabled = true;
+                                }
                             }
                         }
                     }
@@ -503,7 +507,7 @@ namespace winrt::XamlHostingKit::implementation
         {
             if (msg == WM_SIZE)
             {
-                if (_this->m_isSyncObjEnabled) [[likely]]
+                if (_this->m_isSyncObjEnabled) [[unlikely]]
                 {
                     if (_this->m_windowPrivate) [[likely]]
                     {

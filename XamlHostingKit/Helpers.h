@@ -511,7 +511,7 @@ namespace winrt::XamlHostingKit
 
         inline static bool EnableResizeSynchronization(HWND hwnd, bool enabled)
         {
-            if (NtUserEnableResizeLayoutSynchronization)
+            if (NtUserEnableResizeLayoutSynchronization) [[likely]]
                 return NtUserEnableResizeLayoutSynchronization(hwnd, enabled);
 
             return false;
@@ -519,11 +519,11 @@ namespace winrt::XamlHostingKit
 
         inline static HANDLE GetResizeSynchronizationObject(HWND hwnd)
         {
-            if (!NtUserGetResizeDCompositionSynchronizationObject)
+            if (!NtUserGetResizeDCompositionSynchronizationObject) [[unlikely]]
                 return nullptr;
 
             HANDLE handle;
-            if (!NtUserGetResizeDCompositionSynchronizationObject(hwnd, &handle))
+            if (!NtUserGetResizeDCompositionSynchronizationObject(hwnd, &handle)) [[unlikely]]
                 return nullptr;
 
             return handle;

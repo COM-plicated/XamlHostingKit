@@ -149,10 +149,15 @@ MakeWindow:
         XamlHostingKit::XamlWindow nextWindow { nullptr };
         while (s_windows.Size() > 0 && (nextWindow = s_windows.GetAt(0)))
         {
-            auto thread = GetWindowThreadProcessId((HWND)nextWindow.WindowHandle().Value, nullptr);
-            wil::unique_handle hThread(OpenThread(SYNCHRONIZE, FALSE, thread));
+            if (auto thread = GetWindowThreadProcessId((HWND)nextWindow.WindowHandle().Value, nullptr)) [[likely]]
+            {
+                wil::unique_handle hThread(OpenThread(SYNCHRONIZE, FALSE, thread));
 
-            WaitForSingleObject(hThread.get(), INFINITE);
+                if (hThread.is_valid()) [[likely]]
+                {
+                    WaitForSingleObject(hThread.get(), INFINITE);
+                }
+            }
         }
 
         HMODULE edgeModule;
