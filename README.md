@@ -4,7 +4,7 @@ XamlHostingKit is a System XAML (aka UWP XAML aka Windows XAML) hosting library 
 
 ## Installation
 
-A NuGet package is in the works.
+[![XamlHostingKit](https://img.shields.io/nuget/v/XamlHostingKit?style=for-the-badge&label=COMplicated.XamlHostingKit&color=blue&link=https%3A%2F%2Fwww.nuget.org%2Fpackages%2FXamlHostingKit%2F)](https://www.nuget.org/packages/XamlHostingKit/)
 
 ## Features
 
