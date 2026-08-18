@@ -19,6 +19,9 @@ namespace Features
             if (!IsApiInformationAvailable) [[unlikely]]
                 return false;
 
+            if (!NtUserGetResizeDCompositionSynchronizationObject) [[unlikely]]
+                return false;
+
             if (ApiInformation::IsTypePresent(L"Windows.UI.Composition.Core.CompositorController"))
                 return true;
 

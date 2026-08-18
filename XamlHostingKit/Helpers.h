@@ -49,6 +49,7 @@ namespace winrt::XamlHostingKit
     static const auto CoSetASTATestMode = reinterpret_cast<void(WINAPI*)(ASTA_TEST_MODE_FLAGS)>(GetProcAddress(COMBaseModule, MAKEINTRESOURCEA(100)));
     static const auto GetDpiForWindowMethod = reinterpret_cast<decltype(&GetDpiForWindow)>(GetProcAddress(User32Module.get(), "GetDpiForWindow"));
     static const auto NtUserRegisterTouchPadCapable = reinterpret_cast<BOOL(WINAPI*)(BOOL)>(GetProcAddress(Win32UModule, "NtUserRegisterTouchPadCapable"));
+    static const auto RegisterTouchPadCapable = reinterpret_cast<BOOL(WINAPI*)(BOOL)>(GetProcAddress(User32Module.get(), MAKEINTRESOURCEA(2546)));
     static const auto RegisterTouchpadCapableWindowMethod = reinterpret_cast<BOOL(WINAPI*)(HWND, BOOL)>(GetProcAddress(User32Module.get(), MAKEINTRESOURCEA(2689)));
     static const auto RegisterTouchpadCapableThreadMethod = reinterpret_cast<BOOL(WINAPI*)(BOOL)>(GetProcAddress(User32Module.get(), MAKEINTRESOURCEA(2688)));
     static const auto NtUserGetResizeDCompositionSynchronizationObject = reinterpret_cast<BOOL(WINAPI*)(HWND, HANDLE*)>(GetProcAddress(Win32UModule, "NtUserGetResizeDCompositionSynchronizationObject"));

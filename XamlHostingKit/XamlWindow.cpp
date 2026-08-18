@@ -41,6 +41,10 @@ namespace winrt::XamlHostingKit::implementation
             {
                 LOG_LAST_ERROR_IF(!NtUserRegisterTouchPadCapable(TRUE));
             }
+            else if (RegisterTouchPadCapable)
+            {
+                LOG_LAST_ERROR_IF(!RegisterTouchPadCapable(TRUE));
+            }
             else [[unlikely]]
             {
                 LOG_HR_MSG(E_FAIL, "Touchpad awareness cannot be enabled due to neither RegisterTouchpadCapableThread function nor NtUserRegisterTouchPadCapable function being found on the current OS environment.");
