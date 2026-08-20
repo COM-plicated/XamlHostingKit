@@ -67,7 +67,7 @@ namespace winrt::XamlHostingKit::implementation
             GetModuleHandleW(nullptr),
             nullptr));
 
-        if (Helpers::OSBuild >= 10240u) [[likely]]
+        if (Helpers::OSBuild >= 10041u) [[likely]]
         {
             winrt::check_hresult(PrivateCreateCoreWindow(
                 IMMERSIVE_HOSTED,
