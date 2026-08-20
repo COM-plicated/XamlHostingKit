@@ -51,5 +51,7 @@ We will be adding more samples in the future.
 
 ## Notes
 
+- Requires [Update for Universal C Runtime](https://support.microsoft.com/en-us/servicing/os/windows/2020/04/update-for-universal-c-runtime-in-windows) on **Windows 8.1** and **Windows RT 8.1**.
+
 > [!WARNING]
 > The `Windows.UI.Composition` API is currently not usable on **Build 14393 (Windows 10 Anniversary Update: 1607)** and older unless the process is running under **AppContainer**, we are working on a solution.
