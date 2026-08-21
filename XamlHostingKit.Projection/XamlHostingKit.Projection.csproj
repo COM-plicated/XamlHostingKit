@@ -19,6 +19,7 @@
   
   <ItemGroup>
     <ProjectReference Include="..\XamlHostingKit\XamlHostingKit.vcxproj" />
+    <ProjectReference Include="..\XamlHostingKit.Static\XamlHostingKit.Static.vcxproj" PrivateAssets="all" />
   </ItemGroup>
   
 </Project>

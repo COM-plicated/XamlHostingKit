@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resources">
+      <UniqueIdentifier>accd3aa8-1ba0-4223-9bbe-0c431709210b</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tga;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Generated Files">
+      <UniqueIdentifier>{926ab91d-31b4-48c3-b9a4-e681349f27f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="simdutf">
+      <UniqueIdentifier>{139e42b2-6a09-4dc3-9909-5730a7e2190f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="XamlConfig.cpp" />
+    <ClCompile Include="XamlWindow.cpp" />
+    <ClCompile Include="WindowCreationOptions.cpp" />
+    <ClCompile Include="LegacyNonImmersiveView.cpp" />
+    <ClCompile Include="simdutf\simdutf.cpp">
+      <Filter>simdutf</Filter>
+    </ClCompile>
+    <ClCompile Include="FileProtocolHandler.cpp" />
+    <ClCompile Include="version.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="WindowCreationOptions.h" />
+    <ClInclude Include="XamlConfig.h" />
+    <ClInclude Include="XamlWindow.h" />
+    <ClInclude Include="Helpers.h" />
+    <ClInclude Include="IWindowNative.h" />
+    <ClInclude Include="Privates.h" />
+    <ClInclude Include="Features.h" />
+    <ClInclude Include="LegacyNonImmersiveView.h" />
+    <ClInclude Include="mrm_private.h" />
+    <ClInclude Include="simdutf\simdutf.h">
+      <Filter>simdutf</Filter>
+    </ClInclude>
+    <ClInclude Include="FileProtocolHandler.h" />
+    <ClInclude Include="version.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="XamlApplication.idl" />
+    <Midl Include="XamlWindow.idl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="XamlHostingKit.def" />
+    <None Include="packages.config" />
+    <None Include="vcpkg.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="PropertySheet.props" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="$(MSBuildThisFileDirectory)..\..\natvis\wil.natvis" />
+    <Natvis Include="$(MSBuildThisFileDirectory)..\..\natvis\wil.natstepfilter" />
+  </ItemGroup>
+</Project>
