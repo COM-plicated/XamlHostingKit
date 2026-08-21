@@ -71,6 +71,10 @@ namespace winrt::XamlHostingKit
 
     #define NtCurrentPeb() (NtCurrentTeb()->ProcessEnvironmentBlock)
 
+    #define _MAKE_VERSION(major, minor, build, revision) ((uint64_t)((((uint64_t)major) << 48) | (((uint64_t)minor) << 24) | (((uint64_t)build) << 16) | ((uint64_t)revision)))
+    #define MAKE_VERSION(major, minor, build, revision) _MAKE_VERSION(major, minor, build, revision)
+    #define MAKE_VERSION(major, minor, build) _MAKE_VERSION(major, minor, build, 0)
+
     EXTERN_C NTSTATUS WINAPI RtlGetVersion(_Out_ PRTL_OSVERSIONINFOW lpVersionInformation);
 
     namespace wss = winrt::Windows::Storage::Streams;

@@ -86,7 +86,7 @@ namespace winrt::XamlHostingKit::implementation
 
             if (auto data = Helpers::GetSwitchContextData()) [[likely]]
             {
-                data->OsMaxVersionTested = 0x000a00004a610000; // Windows 10 2004, build 19041
+                data->OsMaxVersionTested = MAKE_VERSION(10, 0, 19041);
             }
             else
             {

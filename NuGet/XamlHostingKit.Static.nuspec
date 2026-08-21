@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package>
+  <metadata>
+    <id>XamlHostingKit.Static</id>
+    <version>0.1.0</version>
+    <title>COMplicated.XamlHostingKit.Static</title>
+    <authors>COMplicated,Ahmed605,Dongle</authors>
+    <owners>COMplicated,Ahmed605,Ahmed Walid,Dongle</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <!--<icon>icon.png</icon>-->
+    <projectUrl>https://github.com/COM-plicated/XamlHostingKit</projectUrl>
+    <repository type="git" url="https://github.com/COM-plicated/XamlHostingKit.git"/>
+    <description>System XAML hosting library for Desktop apps with smooth resizing, backwards compatibility down to Windows 8.1, and more!</description>
+    <releaseNotes>Initial release.</releaseNotes>
+    <tags>XAML UWP WinRT Universal Windows Platform UAP</tags>
+    <readme>docs\README.md</readme>
+    <dependencies>
+      <group targetFramework="net9.0-windows10.0.26100.0" />
+      <group targetFramework="native" />
+    </dependencies>
+  </metadata>
+  
+  <files>
+      <file src="..\README.md" target="docs\" />
+      
+      <file target="build\native\XamlHostingKit.Static.targets"                          src="XamlHostingKit.Static.Native.targets" />
+      <file target="build\net9.0-windows10.0.26100.0\XamlHostingKit.Static.targets"      src="XamlHostingKit.Static.ModernNET.targets" />
+
+      <file target="lib\native\XamlHostingKit.winmd"                                     src="..\x64\Release\XamlHostingKit\XamlHostingKit.winmd" />
+      <file target="lib\net9.0-windows10.0.26100.0\XamlHostingKit.Static.Projection.dll" src="..\XamlHostingKit.Static.Projection\bin\Release\net9.0-windows10.0.26100.0\XamlHostingKit.Static.Projection.dll" />
+      <file target="lib\net9.0-windows10.0.26100.0\XamlHostingKit.Static.Projection.pdb" src="..\XamlHostingKit.Static.Projection\bin\Release\net9.0-windows10.0.26100.0\XamlHostingKit.Static.Projection.pdb" />
+
+      <file target="runtimes\win-x86\native\XamlHostingKit.dll"                          src="..\Release\XamlHostingKit\XamlHostingKit.dll" />
+      <file target="runtimes\win-x86\native\XamlHostingKit.pdb"                          src="..\Release\XamlHostingKit\XamlHostingKit.pdb" />
+      <file target="runtimes\win-x64\native\XamlHostingKit.dll"                          src="..\x64\Release\XamlHostingKit\XamlHostingKit.dll" />
+      <file target="runtimes\win-x64\native\XamlHostingKit.pdb"                          src="..\x64\Release\XamlHostingKit\XamlHostingKit.pdb" />
+      <file target="runtimes\win-arm\native\XamlHostingKit.dll"                          src="..\ARM\Release\XamlHostingKit\XamlHostingKit.dll" />
+      <file target="runtimes\win-arm\native\XamlHostingKit.pdb"                          src="..\ARM\Release\XamlHostingKit\XamlHostingKit.pdb" />
+      <file target="runtimes\win-arm64\native\XamlHostingKit.dll"                        src="..\ARM64\Release\XamlHostingKit\XamlHostingKit.dll" />
+      <file target="runtimes\win-arm64\native\XamlHostingKit.pdb"                        src="..\ARM64\Release\XamlHostingKit\XamlHostingKit.pdb" />
+
+      <file target="runtimes\win-x86\native\XamlHostingKit.Static.lib"                   src="..\Release\XamlHostingKit.Static\XamlHostingKit.Static.lib" />
+      <file target="runtimes\win-x86\native\XamlHostingKit.Static.pdb"                   src="..\Release\XamlHostingKit.Static\XamlHostingKit.Static.pdb" />
+      <file target="runtimes\win-x64\native\XamlHostingKit.Static.lib"                   src="..\x64\Release\XamlHostingKit.Static\XamlHostingKit.Static.lib" />
+      <file target="runtimes\win-x64\native\XamlHostingKit.Static.pdb"                   src="..\x64\Release\XamlHostingKit.Static\XamlHostingKit.Static.pdb" />
+      <file target="runtimes\win-arm\native\XamlHostingKit.Static.lib"                   src="..\ARM\Release\XamlHostingKit.Static\XamlHostingKit.Static.lib" />
+      <file target="runtimes\win-arm\native\XamlHostingKit.Static.pdb"                   src="..\ARM\Release\XamlHostingKit.Static\XamlHostingKit.Static.pdb" />
+      <file target="runtimes\win-arm64\native\XamlHostingKit.Static.lib"                 src="..\ARM64\Release\XamlHostingKit.Static\XamlHostingKit.Static.lib" />
+      <file target="runtimes\win-arm64\native\XamlHostingKit.Static.pdb"                 src="..\ARM64\Release\XamlHostingKit.Static\XamlHostingKit.Static.pdb" />
+  </files>
+</package>

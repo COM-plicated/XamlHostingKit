@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <XHKEnableMsixWinMDReference Condition="'$(XHKEnableMsixWinMDReference)' == ''">false</XHKEnableMsixWinMDReference>
+    <XHKWinMDPath>$(MSBuildThisFileDirectory)..\..\lib\native\XamlHostingKit.winmd</XHKWinMDPath>
+    <XHKWinMDImplementationDllName>XamlHostingKit.dll</XHKWinMDImplementationDllName>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <XHKPlatform Condition="$(RuntimeIdentifier.EndsWith('-x64'))">x64</XHKPlatform>
+    <XHKPlatform Condition="$(RuntimeIdentifier.EndsWith('-x86'))">x86</XHKPlatform>
+    <XHKPlatform Condition="$(RuntimeIdentifier.EndsWith('-arm64'))">arm64</XHKPlatform>
+    <XHKPlatform Condition="$(RuntimeIdentifier.EndsWith('-arm'))">arm</XHKPlatform>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(XHKPlatform)' == ''">
+    <XHKPlatform Condition="'$(Platform)' == 'Win32'">x86</XHKPlatform>
+    <XHKPlatform Condition="'$(Platform)' != 'Win32'">$(Platform)</XHKPlatform>
+    <XHKPlatform Condition="'$(Platform)' == 'AnyCPU'"></XHKPlatform>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <XHKWarnNoPlatform Condition="'$(XHKWarnNoPlatform)' == ''">true</XHKWarnNoPlatform>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <WindowsMetadataReference Include="$(XHKWinMDPath)" Implementation="$(XHKWinMDImplementationDllName)" Condition="'$(XHKEnableMsixWinMDReference)' == 'true'" />
+    <NativeLibrary Include="$(MSBuildThisFileDirectory)..\..\runtimes\win-$(XHKPlatform)\native\XamlHostingKit.Static.lib" />
+  </ItemGroup>
+
+  <Target Name="XHKWarnNoPlatform" BeforeTargets="BeforeBuild" Condition="'$(XHKPlatform)' == '' and '$(XHKWarnNoPlatform)' == 'true'">
+    <Warning
+        Code="XHK0001"
+        Text="'XamlHostingKit.dll' and 'XamlHostingKit.Static.lib' cannot be referenced correctly, because the project is being built as 'AnyCPU'. Please specify a specific platform (eg. 'x64'), publish with a RID (runtime identifier, eg. 'win-x64'), or set 'XHKWarnNoPlatform' to suppress this error (note: you'll need to manually handle referencing 'XamlHostingKit.dll' and 'XamlHostingKit.Static.lib' in that case)." />
+  </Target>
+
+  <Target Name="XHKRemoveDllForAOT" AfterTargets="ComputeResolvedFilesToPublishList" Condition="'$(PublishAot)' == 'true'">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
+                             Condition="'$(PublishAot)' == 'true' and '%(Filename)%(Extension)' == 'XamlHostingKit.dll'" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="XHKRemoveWinMDForAOT" AfterTargets="CoreCompile" BeforeTargets="GenerateAppxPackageFileMap;ResolvePublishFiles;MakeAppx" Condition="'$(PublishAot)' == 'true' and '$(XHKEnableMsixWinMDReference)' == 'true'">
+    <ItemGroup>
+      <WindowsMetadataReference Remove="@(WindowsMetadataReference)"
+                                Condition="'$(PublishAot)' == 'true' and '$(_IsPublishing)' == 'true' and '%(WindowsMetadataReference.Filename)' == 'XamlHostingKit'" />
+    </ItemGroup>
+  </Target>
+</Project>
