@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>XamlHostingKit.Static</id>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <title>COMplicated.XamlHostingKit.Static</title>
     <authors>COMplicated,Ahmed605,Dongle</authors>
     <owners>COMplicated,Ahmed605,Ahmed Walid,Dongle</owners>
@@ -40,13 +40,13 @@
       <file target="runtimes\win-arm64\native\XamlHostingKit.dll"                        src="..\ARM64\Release\XamlHostingKit\XamlHostingKit.dll" />
       <file target="runtimes\win-arm64\native\XamlHostingKit.pdb"                        src="..\ARM64\Release\XamlHostingKit\XamlHostingKit.pdb" />
 
-      <file target="runtimes\win-x86\native\XamlHostingKit.Static.lib"                   src="..\Release\XamlHostingKit.Static\XamlHostingKit.Static.lib" />
-      <file target="runtimes\win-x86\native\XamlHostingKit.Static.pdb"                   src="..\Release\XamlHostingKit.Static\XamlHostingKit.Static.pdb" />
-      <file target="runtimes\win-x64\native\XamlHostingKit.Static.lib"                   src="..\x64\Release\XamlHostingKit.Static\XamlHostingKit.Static.lib" />
-      <file target="runtimes\win-x64\native\XamlHostingKit.Static.pdb"                   src="..\x64\Release\XamlHostingKit.Static\XamlHostingKit.Static.pdb" />
-      <file target="runtimes\win-arm\native\XamlHostingKit.Static.lib"                   src="..\ARM\Release\XamlHostingKit.Static\XamlHostingKit.Static.lib" />
-      <file target="runtimes\win-arm\native\XamlHostingKit.Static.pdb"                   src="..\ARM\Release\XamlHostingKit.Static\XamlHostingKit.Static.pdb" />
-      <file target="runtimes\win-arm64\native\XamlHostingKit.Static.lib"                 src="..\ARM64\Release\XamlHostingKit.Static\XamlHostingKit.Static.lib" />
-      <file target="runtimes\win-arm64\native\XamlHostingKit.Static.pdb"                 src="..\ARM64\Release\XamlHostingKit.Static\XamlHostingKit.Static.pdb" />
+      <file target="lib\native\x86\XamlHostingKit.Static.lib"                            src="..\Release\XamlHostingKit.Static\XamlHostingKit.Static.lib" />
+      <file target="lib\native\x86\XamlHostingKit.Static.pdb"                            src="..\Release\XamlHostingKit.Static\XamlHostingKit.Static.pdb" />
+      <file target="lib\native\x64\XamlHostingKit.Static.lib"                            src="..\x64\Release\XamlHostingKit.Static\XamlHostingKit.Static.lib" />
+      <file target="lib\native\x64\XamlHostingKit.Static.pdb"                            src="..\x64\Release\XamlHostingKit.Static\XamlHostingKit.Static.pdb" />
+      <file target="lib\native\arm\XamlHostingKit.Static.lib"                            src="..\ARM\Release\XamlHostingKit.Static\XamlHostingKit.Static.lib" />
+      <file target="lib\native\arm\XamlHostingKit.Static.pdb"                            src="..\ARM\Release\XamlHostingKit.Static\XamlHostingKit.Static.pdb" />
+      <file target="lib\native\arm64\XamlHostingKit.Static.lib"                          src="..\ARM64\Release\XamlHostingKit.Static\XamlHostingKit.Static.lib" />
+      <file target="lib\native\arm64\XamlHostingKit.Static.pdb"                          src="..\ARM64\Release\XamlHostingKit.Static\XamlHostingKit.Static.pdb" />
   </files>
 </package>

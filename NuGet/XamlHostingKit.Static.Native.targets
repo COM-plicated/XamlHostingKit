@@ -15,7 +15,7 @@
       <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile-->
     <Link>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(MSBuildThisFileDirectory)..\..\runtimes\win-$(XHKPlatform)\native</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(MSBuildThisFileDirectory)..\..\lib\native\$(XHKPlatform)</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies);XamlHostingKit.Static.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

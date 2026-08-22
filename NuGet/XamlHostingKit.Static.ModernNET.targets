@@ -26,7 +26,8 @@
 
   <ItemGroup>
     <WindowsMetadataReference Include="$(XHKWinMDPath)" Implementation="$(XHKWinMDImplementationDllName)" Condition="'$(XHKEnableMsixWinMDReference)' == 'true'" />
-    <NativeLibrary Include="$(MSBuildThisFileDirectory)..\..\runtimes\win-$(XHKPlatform)\native\XamlHostingKit.Static.lib" />
+    <NativeLibrary Include="$(MSBuildThisFileDirectory)..\..\lib\native\$(XHKPlatform)\XamlHostingKit.Static.lib" />
+    <DirectPInvoke Include="XamlHostingKit.Static" />
   </ItemGroup>
 
   <Target Name="XHKWarnNoPlatform" BeforeTargets="BeforeBuild" Condition="'$(XHKPlatform)' == '' and '$(XHKWarnNoPlatform)' == 'true'">
@@ -45,7 +46,7 @@
   <Target Name="XHKRemoveWinMDForAOT" AfterTargets="CoreCompile" BeforeTargets="GenerateAppxPackageFileMap;ResolvePublishFiles;MakeAppx" Condition="'$(PublishAot)' == 'true' and '$(XHKEnableMsixWinMDReference)' == 'true'">
     <ItemGroup>
       <WindowsMetadataReference Remove="@(WindowsMetadataReference)"
-                                Condition="'$(PublishAot)' == 'true' and '$(_IsPublishing)' == 'true' and '%(WindowsMetadataReference.Filename)' == 'XamlHostingKit'" />
+                                Condition="'$(PublishAot)' == 'true' and '$(_IsPublishing)' != '' and '%(WindowsMetadataReference.Filename)' == 'XamlHostingKit'" />
     </ItemGroup>
   </Target>
 </Project>

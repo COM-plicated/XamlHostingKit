@@ -1,2 +1,2 @@
-nuget pack XamlHostingKit.nuspec
+nuget pack XamlHostingKit.nuspec -Symbols -SymbolPackageFormat symbols.nupkg
 nuget pack XamlHostingKit.Static.nuspec -Symbols -SymbolPackageFormat symbols.nupkg

@@ -69,11 +69,21 @@ namespace winrt::XamlHostingKit
     static wil::unique_hkey PersonalizeKey;
     static const auto PersonalizeKeyResult = wil::reg::open_unique_key_nothrow(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", PersonalizeKey);
 
+#ifndef NtCurrentPeb
     #define NtCurrentPeb() (NtCurrentTeb()->ProcessEnvironmentBlock)
+#endif
 
+#ifndef EXPAND
+    #define EXPAND(x) x
+#endif
+
+#ifndef MAKE_VERSION
     #define _MAKE_VERSION(major, minor, build, revision) ((uint64_t)((((uint64_t)major) << 48) | (((uint64_t)minor) << 24) | (((uint64_t)build) << 16) | ((uint64_t)revision)))
-    #define MAKE_VERSION(major, minor, build, revision) _MAKE_VERSION(major, minor, build, revision)
-    #define MAKE_VERSION(major, minor, build) _MAKE_VERSION(major, minor, build, 0)
+    #define GET_MAKE_VERSION_MACRO(_1, _2, _3, _4, NAME, ...) NAME
+    #define MAKE_VERSION_WITH_REVISION(major, minor, build, revision) _MAKE_VERSION(major, minor, build, revision)
+    #define MAKE_VERSION_WITHOUT_REVISION(major, minor, build) _MAKE_VERSION(major, minor, build, 0)
+    #define MAKE_VERSION(...) EXPAND(GET_MAKE_VERSION_MACRO(__VA_ARGS__, MAKE_VERSION_WITH_REVISION, MAKE_VERSION_WITHOUT_REVISION)(__VA_ARGS__))
+#endif
 
     EXTERN_C NTSTATUS WINAPI RtlGetVersion(_Out_ PRTL_OSVERSIONINFOW lpVersionInformation);
 
