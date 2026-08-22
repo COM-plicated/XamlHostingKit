@@ -30,6 +30,8 @@ namespace XamlHostingKit.ManagedSample
 
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            XamlWindow.Current.TitleBar.SetTitleBar(TitleBar);
+
             WebView wv = IsWebViewExecutionModeAvailable ? new(WebViewExecutionMode.SeparateThread) : new();
             //wv.Source = new("ms-appx-web:///test.html"),
             wv.Source = new("https://gist.github.com/user-attachments/assets/3e03fe73-4af4-48d7-ade6-a2af4403dbb7");

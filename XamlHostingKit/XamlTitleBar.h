@@ -84,10 +84,15 @@ namespace winrt::XamlHostingKit::implementation
 		bool m_isVisible{ false };
 		bool m_isActive{ false };
 		bool m_isMaximized{ false };
+		HWND m_sinkWindow{ nullptr };
+		//HWND m_titleBarWindow{ nullptr };
 		HWND m_xamlWindow{ nullptr };
 		HWND m_coreWindow{ nullptr };
 		CoreDispatcher m_dispatcher{ nullptr };
 		Compositor m_compositor{ nullptr };
+		UIElement m_titleBar{ nullptr };
+		LONG m_lastClickTime{ 0 };
+		POINTS m_lastClickPos{ 0, 0 };
 
 #ifdef TITLEBAR_USE_VISUALS
 		DesktopWindowTarget m_target{ nullptr };
@@ -145,12 +150,17 @@ namespace winrt::XamlHostingKit::implementation
 		void CreateCaptionSurface(float scale);
 		void DrawCaption(float scale, winrt::XamlHostingKit::TitleBarCaptionButtonType const& buttonType, winrt::XamlHostingKit::TitleBarCaptionButtonState const& buttonState);
 		void CaptionButtonColor(winrt::XamlHostingKit::TitleBarCaptionButtonType const& buttonType, winrt::XamlHostingKit::TitleBarCaptionButtonState const& buttonState, D2D1::ColorF* bgColor, D2D1::ColorF* stColor);
-		void CommitComposition(bool const& force = false);
+		void CommitComposition(bool const& force = false, bool const& wait = false);
 		void ReleaseResources();
 #endif
 
+		static LRESULT CALLBACK SinkWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+		//static LRESULT CALLBACK TitleBarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 		static LRESULT CALLBACK XamlWindowSubClassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR idSubclass, DWORD_PTR dwRefData);
 		static LRESULT CALLBACK CoreWindowSubClassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR idSubclass, DWORD_PTR dwRefData);
+		static LPCWSTR const RegisterSinkWindowClass(WNDPROC wndProc);
+		//static LPCWSTR const RegisterTitleBarWindowClass(WNDPROC wndProc);
+
 #ifdef TITLEBAR_USE_VISUALS
 		static winrt::XamlHostingKit::TitleBarCaptionButton CreateCaptionButton(Compositor const& compositor, std::vector<CompositionGeometry> const& geometry, std::vector<CompositionGeometry> const& geometry_ext, int index);
 #else
@@ -168,6 +178,8 @@ namespace winrt::XamlHostingKit::implementation
 		bool IsVisible() const;
 		float SystemOverlayLeftInset() const;
 		float SystemOverlayRightInset() const;
+
+		void SetTitleBar(UIElement element);
 
 		winrt::event_token IsVisibleChanged(TypedEventHandler<winrt::XamlHostingKit::XamlTitleBar, IInspectable> const& handler);
 		void IsVisibleChanged(winrt::event_token const& token) noexcept;

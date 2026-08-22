@@ -18,6 +18,7 @@ namespace XamlHostingKit.ManagedSample
             SynchronizationContext.SetSynchronizationContext(new CoreDispatcherSynchronizationContext(window.Dispatcher));
 
             window.Title = "XamlHostingKit Managed Sample";
+            window.TitleBar.ExtendViewIntoTitleBar = true;
 
             Frame frame = new();
             frame.Navigate(typeof(MainPage));

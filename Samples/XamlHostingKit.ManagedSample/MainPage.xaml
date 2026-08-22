@@ -9,9 +9,16 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
     Loaded="Page_Loaded">
 
-    <StackPanel x:Name="panel" Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center">
-        <TextBlock Text="Hello from XamlHostingKit!" FontSize="36" VerticalAlignment="Center" HorizontalAlignment="Center" />
-        <Button Content="Create secondary view" HorizontalAlignment="Stretch" Margin="0,20,0,0" Click="Button_Click" />
-        <!--Image Source="ms-appx://Microsoft.UI.Xaml.2.8/Microsoft.UI.Xaml/Assets/NoiseAsset_256x256_PNG.png" Stretch="Uniform" Width="50" Height="50" Margin="0,20,0,0" /-->
-    </StackPanel>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid x:Name="TitleBar" Height="48" Background="Transparent" />
+        <StackPanel x:Name="panel" Grid.Row="1" Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center">
+            <TextBlock Text="Hello from XamlHostingKit!" FontSize="36" VerticalAlignment="Center" HorizontalAlignment="Center" />
+            <Button Content="Create secondary view" HorizontalAlignment="Stretch" Margin="0,20,0,0" Click="Button_Click" />
+            <!--Image Source="ms-appx://Microsoft.UI.Xaml.2.8/Microsoft.UI.Xaml/Assets/NoiseAsset_256x256_PNG.png" Stretch="Uniform" Width="50" Height="50" Margin="0,20,0,0" /-->
+        </StackPanel>
+    </Grid>
 </Page>

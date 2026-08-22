@@ -37,6 +37,42 @@ namespace winrt::XamlHostingKit::implementation
 	{
 		m_isVisible = true;
 
+		{
+			static const auto className = RegisterSinkWindowClass(SinkWndProc);
+
+			winrt::check_pointer(m_sinkWindow = CreateWindowExW(
+				WS_EX_NOREDIRECTIONBITMAP | WS_EX_LAYERED,
+				className,
+				L"",
+				WS_CHILD | WS_VISIBLE,
+				0,
+				0,
+				0,
+				0,
+				m_xamlWindow,
+				NULL,
+				GetModuleHandleW(nullptr),
+				nullptr));
+		}
+
+		/*{
+			static const auto className = RegisterTitleBarWindowClass(TitleBarWndProc);
+
+			winrt::check_pointer(m_titleBarWindow = CreateWindowExW(
+				WS_EX_NOREDIRECTIONBITMAP | WS_EX_LAYERED,
+				className,
+				L"",
+				WS_CHILD | WS_VISIBLE,
+				0,
+				0,
+				0,
+				0,
+				m_xamlWindow,
+				NULL,
+				GetModuleHandleW(nullptr),
+				nullptr));
+		}*/
+
 #ifdef TITLEBAR_USE_VISUALS
 		namespace abi = ABI::Windows::UI::Composition::Desktop;
 
@@ -112,6 +148,8 @@ namespace winrt::XamlHostingKit::implementation
 #endif
 
 		SetPropW(m_xamlWindow, XHK_TITLEBAR_OBJECT_PROP, this);
+		SetPropW(m_sinkWindow, XHK_TITLEBAR_OBJECT_PROP, this);
+		//SetPropW(m_titleBarWindow, XHK_TITLEBAR_OBJECT_PROP, this);
 		SetPropW(m_coreWindow, XHK_TITLEBAR_OBJECT_PROP, this);
 
 		SetWindowSubclass(m_xamlWindow, XamlWindowSubClassProc, 1, NULL);
@@ -128,9 +166,9 @@ namespace winrt::XamlHostingKit::implementation
 		m_caption.IsVisible(value);
 #else
 		if (value)
-			m_rootVisual->AddVisual(m_caption.get(), TRUE, nullptr);
+			winrt::check_hresult(m_rootVisual->AddVisual(m_caption.get(), TRUE, nullptr));
 		else
-			m_rootVisual->RemoveVisual(m_caption.get());
+			winrt::check_hresult(m_rootVisual->RemoveVisual(m_caption.get()));
 #endif
 
 		SetWindowPos(m_xamlWindow, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
@@ -161,6 +199,28 @@ namespace winrt::XamlHostingKit::implementation
 	float XamlTitleBar::SystemOverlayRightInset() const
 	{
 		return m_extend ? XHK_TITLEBAR_CAPTION_WIDTH : 0;
+	}
+
+	void XamlTitleBar::SetTitleBar(UIElement element)
+	{
+		if (!Features::IsGetElementVisualAvailable || Helpers::OSBuild < 15063u)
+			return;
+
+		if (m_titleBar) {
+			auto old = ElementCompositionPreview::GetElementVisual(m_titleBar);
+
+			winrt::check_hresult(Helpers::DCompositionAttachMouseDragToHwnd(old.as<IDCompositionVisual2>().get(), m_sinkWindow, FALSE));
+			winrt::check_hresult(Helpers::DCompositionAttachMouseWheelToHwnd(old.as<IDCompositionVisual2>().get(), m_sinkWindow, FALSE));
+		}
+
+		m_titleBar = element;
+
+		if (element) {
+			auto visual = ElementCompositionPreview::GetElementVisual(element);
+
+			winrt::check_hresult(Helpers::DCompositionAttachMouseDragToHwnd(visual.as<IDCompositionVisual2>().get(), m_sinkWindow, TRUE));
+			winrt::check_hresult(Helpers::DCompositionAttachMouseWheelToHwnd(visual.as<IDCompositionVisual2>().get(), m_sinkWindow, TRUE));
+		}
 	}
 
 	winrt::event_token XamlTitleBar::IsVisibleChanged(TypedEventHandler<winrt::XamlHostingKit::XamlTitleBar, IInspectable> const& handler)
@@ -308,13 +368,17 @@ namespace winrt::XamlHostingKit::implementation
 	{
 		if (!m_dcompDevice) [[unlikely]]
 			return;
+
+		auto width = static_cast<UINT>(XHK_TITLEBAR_CAPTION_WIDTH * scale);
+		auto height = static_cast<UINT>(Helpers::GetCaptionSize(m_xamlWindow));
+
 		if (m_surfaceFactory) [[likely]]
 		{
-			winrt::check_hresult(m_surfaceFactory->CreateSurface(static_cast<UINT>(XHK_TITLEBAR_CAPTION_WIDTH * scale), static_cast<UINT>(Helpers::GetCaptionSize(m_xamlWindow)), DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_ALPHA_MODE_PREMULTIPLIED, m_captionSurface.put()));
+			winrt::check_hresult(m_surfaceFactory->CreateSurface(width, height, DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_ALPHA_MODE_PREMULTIPLIED, m_captionSurface.put()));
 		}
 		else
 		{
-			winrt::check_hresult(m_dcompDevice->CreateSurface(static_cast<UINT>(XHK_TITLEBAR_CAPTION_WIDTH * scale), static_cast<UINT>(Helpers::GetCaptionSize(m_xamlWindow)), DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_ALPHA_MODE_PREMULTIPLIED, m_captionSurface.put()));
+			winrt::check_hresult(m_dcompDevice->CreateSurface(width, height, DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_ALPHA_MODE_PREMULTIPLIED, m_captionSurface.put()));
 		}
 		winrt::check_hresult(m_caption->SetContent(m_captionSurface.get()));
 	}
@@ -478,13 +542,15 @@ namespace winrt::XamlHostingKit::implementation
 		}
 	}
 
-	void XamlTitleBar::CommitComposition(bool const& force)
+	void XamlTitleBar::CommitComposition(bool const& force, bool const& wait)
 	{
 		if (m_dcompDevice) [[unlikely]]
 		{
 			if (force || !m_surfaceFactory)
 			{
 				m_dcompDevice->Commit();
+				if (wait)
+					m_dcompDevice->WaitForCommitCompletion();
 			}
 		}
 	}
@@ -500,7 +566,73 @@ namespace winrt::XamlHostingKit::implementation
 		m_d2d1Device = nullptr;
 		m_d3d11Device = nullptr;
 	}
+
 #endif
+
+	LRESULT XamlTitleBar::SinkWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+	{
+		auto _this = reinterpret_cast<XamlTitleBar*>(GetPropW(hwnd, XHK_TITLEBAR_OBJECT_PROP));
+
+		if (msg == WM_DESTROY)
+		{
+			RemovePropW(hwnd, XHK_TITLEBAR_OBJECT_PROP);
+		}
+		else if (_this)
+		{
+			if (msg == WM_LBUTTONDOWN)
+			{
+				// DComp input sink does not send DBLCLK so we need to do it ourselves
+				auto currentClickTime = GetMessageTime();
+				auto currentClickPos = MAKEPOINTS(lParam);
+
+				auto dpi = Helpers::GetDpiForWindow(hwnd);
+				auto dbkTimeLimit = GetDoubleClickTime();
+				auto dbkWidthLimit = Helpers::GetSystemMetricsForDpi(SM_CXDOUBLECLK, dpi);
+				auto dbkHeightLimit = Helpers::GetSystemMetricsForDpi(SM_CYDOUBLECLK, dpi);
+
+				auto timePassed = static_cast<LONG>(currentClickTime) - _this->m_lastClickTime;
+				auto deltaX = abs(currentClickPos.x - _this->m_lastClickPos.x);
+				auto deltaY = abs(currentClickPos.y - _this->m_lastClickPos.y);
+
+				if (timePassed <= dbkTimeLimit &&
+					deltaX <= (dbkWidthLimit / 2) &&
+					deltaY <= (dbkHeightLimit / 2))
+				{
+					SendMessageW(_this->m_xamlWindow, WM_SYSCOMMAND, IsZoomed(_this->m_xamlWindow) ? SC_RESTORE : SC_MAXIMIZE, 0);
+
+					_this->m_lastClickTime = 0;
+				}
+				else
+				{
+					ReleaseCapture();
+					SendMessageW(_this->m_xamlWindow, WM_SYSCOMMAND, SC_MOVE | HTCAPTION, 0);
+
+					_this->m_lastClickTime = currentClickTime;
+					_this->m_lastClickPos = currentClickPos;
+				}
+				return 0;
+			}
+		}
+		return DefWindowProc(hwnd, msg, wParam, lParam);
+	}
+
+	/*LRESULT XamlTitleBar::TitleBarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+	{
+		auto _this = reinterpret_cast<XamlTitleBar*>(GetPropW(hwnd, XHK_TITLEBAR_OBJECT_PROP));
+
+		if (msg == WM_DESTROY)
+		{
+			RemovePropW(hwnd, XHK_TITLEBAR_OBJECT_PROP);
+		}
+		else if (_this)
+		{
+			if (msg == WM_NCHITTEST)
+			{
+				return HTTRANSPARENT;
+			}
+		}
+		return DefWindowProc(hwnd, msg, wParam, lParam);
+	}*/
 
 	LRESULT XamlTitleBar::XamlWindowSubClassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR, DWORD_PTR)
 	{
@@ -543,13 +675,19 @@ namespace winrt::XamlHostingKit::implementation
 				auto width = LOWORD(lParam);
 				auto height = HIWORD(lParam);
 
+				auto dpi = Helpers::GetDpiForWindow(hwnd);
+				auto border = Helpers::GetSystemMetricsForDpi(SM_CXFRAME, dpi) + Helpers::GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
+
+				SetWindowPos(_this->m_sinkWindow, HWND_TOP, 0, 0, width, border, SWP_SHOWWINDOW | SWP_NOACTIVATE);
+				//SetWindowPos(_this->m_titleBarWindow, HWND_TOP, static_cast<int>(width - scaledCaptionSize), static_cast<int>(Helpers::GetTopBorderSize(hwnd)), static_cast<int>(scaledCaptionSize), static_cast<int>(Helpers::GetCaptionSize(hwnd)), SWP_SHOWWINDOW | SWP_NOACTIVATE);
+
 				if (wParam != SIZE_MINIMIZED)
 					_this->m_isMaximized = wParam == SIZE_MAXIMIZED;
 
 				_this->m_caption->SetOffsetX(width - scaledCaptionSize);
 				_this->m_caption->SetOffsetY(static_cast<float>(Helpers::GetTopBorderSize(hwnd)));
 
-				_this->CommitComposition();
+				 _this->CommitComposition(false, true);
 #endif
 
 			}
@@ -644,15 +782,15 @@ namespace winrt::XamlHostingKit::implementation
 					_this->m_captionMinimize.Update(_this->m_captionActiveForeground, _this->m_captionOtherActiveBackground);
 					break;
 				}
-#else
-				_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::ACTIVE);
-				_this->CommitComposition(true);
-
 #endif
 				if (wParam == HTMINBUTTON ||
 					wParam == HTMAXBUTTON ||
 					wParam == HTCLOSE)
 				{
+#ifndef TITLEBAR_USE_VISUALS
+					_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::ACTIVE);
+					_this->CommitComposition(true);
+#endif
 					return 0;
 				}
 			}
@@ -680,15 +818,21 @@ namespace winrt::XamlHostingKit::implementation
 					break;
 				}
 #ifndef TITLEBAR_USE_VISUALS
-				_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::HOVER);
-				_this->CommitComposition(true);
+				if (wParam == HTMINBUTTON ||
+					wParam == HTMAXBUTTON ||
+					wParam == HTCLOSE)
+				{
+					_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::HOVER);
+					_this->CommitComposition(true);
+				}
 #endif
 			}
 			else if (msg == WM_NCPOINTERUP)
 			{
 				if (IS_POINTER_FIRSTBUTTON_WPARAM(wParam))
 				{
-					switch (HIWORD(wParam))
+					auto ht = HIWORD(wParam);
+					switch (ht)
 					{
 					case HTCLOSE:
 #ifdef TITLEBAR_USE_VISUALS
@@ -709,11 +853,16 @@ namespace winrt::XamlHostingKit::implementation
 						SendMessageW(hwnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
 						break;
 					}
-				}
 #ifndef TITLEBAR_USE_VISUALS
-				_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::HOVER);
-				_this->CommitComposition(true);
+					if (ht == HTMINBUTTON ||
+						ht == HTMAXBUTTON ||
+						ht == HTCLOSE)
+					{
+						_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::HOVER);
+						_this->CommitComposition(true);
+					}
 #endif
+				}
 			}
 			else if (msg == WM_NCMOUSEMOVE)
 			{
@@ -742,7 +891,7 @@ namespace winrt::XamlHostingKit::implementation
 					break;
 				}
 #else
-				_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), TitleBarCaptionButtonState::HOVER);
+				_this->DrawCaption(Helpers::GetDpiScaleForWindow(hwnd), static_cast<TitleBarCaptionButtonType>(wParam), GetKeyState(VK_LBUTTON) < 0 ?  TitleBarCaptionButtonState::ACTIVE : TitleBarCaptionButtonState::HOVER);
 				_this->CommitComposition(true);
 #endif
 			}
@@ -812,23 +961,72 @@ namespace winrt::XamlHostingKit::implementation
 			{
 				auto x = GET_X_LPARAM(lParam);
 				auto y = GET_Y_LPARAM(lParam);
-				auto ret = DefSubclassProc(hwnd, msg, wParam, lParam);
 
-				if (ret == HTCLIENT)
+				RECT rc;
+				GetWindowRect(hwnd, &rc);
+				auto scaling = Helpers::GetDpiScaleForWindow(hwnd);
+				auto fakeborder = std::ceil(1 * scaling);
+				auto caption = Helpers::GetTopBorderSize(hwnd) + Helpers::GetCaptionSize(hwnd) - fakeborder;
+
+				if (_this->m_titleBar)
 				{
-					RECT rc;
-					GetWindowRect(hwnd, &rc);
-					auto fakeborder = std::ceil(1 * Helpers::GetDpiScaleForWindow(hwnd));
-					if (y < rc.top + Helpers::GetCaptionSize(hwnd) + Helpers::GetTopBorderSize(hwnd) - fakeborder)
+					auto dpi = Helpers::GetDpiForWindow(hwnd);
+					auto border = Helpers::GetSystemMetricsForDpi(SM_CXFRAME, dpi) + Helpers::GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
+					auto scaledCaptionSize = XHK_TITLEBAR_CAPTION_WIDTH * scaling;
+
+					if (y < rc.top + border - fakeborder || (y < rc.top + caption && x >= rc.right - scaledCaptionSize))
+					{
 						return HTTRANSPARENT;
-					else
-						return ret;
+					}
 				}
+				else
+				{
+					if (y < rc.top + caption)
+						return HTTRANSPARENT;
+				}
+
+				return HTCLIENT;
 			}
 		}
 
 		return DefSubclassProc(hwnd, msg, wParam, lParam);
 	}
+
+	LPCWSTR const XamlTitleBar::RegisterSinkWindowClass(WNDPROC wndProc)
+	{
+		const auto constexpr className = L"COMplicated.XamlHostingKit.TitleBar.Sink";
+
+		WNDCLASSEXW wcex = { };
+		wcex.cbSize = sizeof(WNDCLASSEXW);
+		wcex.lpfnWndProc = wndProc;
+		wcex.hInstance = GetModuleHandleW(nullptr);
+		wcex.lpszClassName = className;
+
+		if (!RegisterClassExW(&wcex)) [[unlikely]]
+		{
+			throw winrt::hresult_error(HRESULT_FROM_WIN32(GetLastError()), L"Failed to register window class");
+		}
+
+		return className;
+	}
+
+	/*LPCWSTR const XamlTitleBar::RegisterTitleBarWindowClass(WNDPROC wndProc)
+	{
+		const auto constexpr className = L"COMplicated.XamlHostingKit.TitleBar";
+
+		WNDCLASSEXW wcex = { };
+		wcex.cbSize = sizeof(WNDCLASSEXW);
+		wcex.lpfnWndProc = wndProc;
+		wcex.hInstance = GetModuleHandleW(nullptr);
+		wcex.lpszClassName = className;
+
+		if (!RegisterClassExW(&wcex)) [[unlikely]]
+		{
+			throw winrt::hresult_error(HRESULT_FROM_WIN32(GetLastError()), L"Failed to register window class");
+		}
+
+		return className;
+	}*/
 
 #ifdef TITLEBAR_USE_VISUALS
 	winrt::XamlHostingKit::TitleBarCaptionButton XamlTitleBar::CreateCaptionButton(Compositor const& compositor, std::vector<CompositionGeometry> const& geometry, std::vector<CompositionGeometry> const& geometry_ext, int index)

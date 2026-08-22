@@ -11,6 +11,8 @@ namespace XamlHostingKit
             Single SystemOverlayLeftInset { get; };
             Single SystemOverlayRightInset { get; };
 
+            void SetTitleBar(Windows.UI.Xaml.UIElement element);
+
             event Windows.Foundation.TypedEventHandler<XamlTitleBar, Object> IsVisibleChanged;
             event Windows.Foundation.TypedEventHandler<XamlTitleBar, Object> LayoutMetricsChanged;
         }

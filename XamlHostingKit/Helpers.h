@@ -8,6 +8,7 @@
 #include <wil/resource.h>
 #include <ShellScalingApi.h>
 #include <winrt/Windows.Storage.Streams.h>
+#include <dcomp.h>
 
 #if USE_PATH_HASH_FOR_TEMP_PRI // defined in the vcxproj file
 #include <bcrypt.h>
@@ -37,6 +38,7 @@ namespace winrt::XamlHostingKit
     static const auto KernelBaseModule = GetModuleHandleW(L"kernelbase.dll");
     static const auto Kernel32Module = GetModuleHandleW(L"kernel32.dll");
     static const auto Win32UModule = GetModuleHandleW(L"win32u.dll");
+    static const auto DCompModule = GetModuleHandleW(L"Dcomp.dll");
 
     static const auto IsDarkModeAllowedForWindow = reinterpret_cast<bool(WINAPI*)(HWND)>(GetProcAddress(UXThemeModule.get(), MAKEINTRESOURCEA(137)));
     static const auto SetWindowCompositionAttribute = reinterpret_cast<BOOL(WINAPI*)(HWND, WINDOWCOMPOSITIONATTRIBDATA*)>(GetProcAddress(User32Module.get(), "SetWindowCompositionAttribute"));
@@ -53,6 +55,8 @@ namespace winrt::XamlHostingKit
     static const auto RegisterTouchPadCapable = reinterpret_cast<BOOL(WINAPI*)(BOOL)>(GetProcAddress(User32Module.get(), MAKEINTRESOURCEA(2546)));
     static const auto RegisterTouchpadCapableWindowMethod = reinterpret_cast<BOOL(WINAPI*)(HWND, BOOL)>(GetProcAddress(User32Module.get(), MAKEINTRESOURCEA(2689)));
     static const auto RegisterTouchpadCapableThreadMethod = reinterpret_cast<BOOL(WINAPI*)(BOOL)>(GetProcAddress(User32Module.get(), MAKEINTRESOURCEA(2688)));
+    static const auto DCompositionAttachMouseDragToHwndMethod = reinterpret_cast<decltype(&DCompositionAttachMouseDragToHwnd)>(GetProcAddress(DCompModule, "DCompositionAttachMouseDragToHwnd"));
+    static const auto DCompositionAttachMouseWheelToHwndMethod = reinterpret_cast<decltype(&DCompositionAttachMouseWheelToHwnd)>(GetProcAddress(DCompModule, "DCompositionAttachMouseWheelToHwnd"));
     static const auto NtUserGetResizeDCompositionSynchronizationObject = reinterpret_cast<BOOL(WINAPI*)(HWND, HANDLE*)>(GetProcAddress(Win32UModule, "NtUserGetResizeDCompositionSynchronizationObject"));
     static const auto NtUserEnableResizeLayoutSynchronization = reinterpret_cast<BOOL(WINAPI*)(HWND, BOOL)>(GetProcAddress(Win32UModule, "NtUserEnableResizeLayoutSynchronization"));
     static const auto UrlmonCreateInstance = reinterpret_cast<HRESULT(WINAPI*)(REFCLSID, IUnknown*, REFIID, void**)>(GetProcAddress(UrlMonModule.get(), MAKEINTRESOURCEA(441)));
@@ -557,6 +561,22 @@ namespace winrt::XamlHostingKit
                 auto border = std::ceil(1 * Helpers::GetDpiScaleForWindow(hwnd));
                 return static_cast<int>(border);
             }
+        }
+
+        inline static HRESULT DCompositionAttachMouseDragToHwnd(IDCompositionVisual* visual, HWND hwnd, BOOL enable)
+        {
+            if (DCompositionAttachMouseDragToHwndMethod) [[likely]]
+                return DCompositionAttachMouseDragToHwndMethod(visual, hwnd, enable);
+
+            return S_OK; // Lie for now
+        }
+
+        inline static HRESULT DCompositionAttachMouseWheelToHwnd(IDCompositionVisual* visual, HWND hwnd, BOOL enable)
+        {
+            if (DCompositionAttachMouseWheelToHwndMethod) [[likely]]
+                return DCompositionAttachMouseWheelToHwndMethod(visual, hwnd, enable);
+
+            return S_OK; // Lie for now
         }
 
         inline static bool ShouldAppsUseDarkMode()
