@@ -2,6 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
+    <XHKLinkDetours Condition="'$(XHKLinkDetours)' == ''">true</XHKLinkDetours>
     <XHKPlatform Condition="'$(Platform)' == 'Win32'">x86</XHKPlatform>
     <XHKPlatform Condition="'$(Platform)' != 'Win32'">$(Platform)</XHKPlatform>
   </PropertyGroup>
@@ -16,7 +17,9 @@
     </ClCompile-->
     <Link>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(MSBuildThisFileDirectory)..\..\lib\native\$(XHKPlatform)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies);XamlHostingKit.Static.lib</AdditionalDependencies>
+      <AdditionalDependencies>%(AdditionalDependencies);XamlHostingKit.Static.lib;Urlmon.lib;Shcore.lib;dwmapi.lib;shlwapi.lib;ntdll.lib;user32.lib;shell32.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(XHKLinkDetours)' == 'true'">%(AdditionalDependencies);$(MSBuildThisFileDirectory)..\..\lib\native\$(XHKPlatform)\external\Detours.lib</AdditionalDependencies>
+      <AdditionalOptions>%(AdditionalOptions) /LTCG</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
 

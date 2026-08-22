@@ -2,6 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
+    <XHKLinkDetours Condition="'$(XHKLinkDetours)' == ''">true</XHKLinkDetours>
     <XHKEnableMsixWinMDReference Condition="'$(XHKEnableMsixWinMDReference)' == ''">false</XHKEnableMsixWinMDReference>
     <XHKWinMDPath>$(MSBuildThisFileDirectory)..\..\lib\native\XamlHostingKit.winmd</XHKWinMDPath>
     <XHKWinMDImplementationDllName>XamlHostingKit.dll</XHKWinMDImplementationDllName>
@@ -26,8 +27,18 @@
 
   <ItemGroup>
     <WindowsMetadataReference Include="$(XHKWinMDPath)" Implementation="$(XHKWinMDImplementationDllName)" Condition="'$(XHKEnableMsixWinMDReference)' == 'true'" />
-    <NativeLibrary Include="$(MSBuildThisFileDirectory)..\..\lib\native\$(XHKPlatform)\XamlHostingKit.Static.lib" />
+    <LinkerArg Include="/LTCG" />
+    <NativeLibrary Include="RuntimeObject.lib" />
+    <NativeLibrary Include="Urlmon.lib" />
+    <NativeLibrary Include="Shcore.lib" />
+    <NativeLibrary Include="dwmapi.lib" />
+    <NativeLibrary Include="shlwapi.lib" />
+    <NativeLibrary Include="ntdll.lib" />
+    <NativeLibrary Include="user32.lib" />
+    <NativeLibrary Include="shell32.lib" />
     <DirectPInvoke Include="XamlHostingKit.Static" />
+    <NativeLibrary Include="$(MSBuildThisFileDirectory)..\..\lib\native\$(XHKPlatform)\XamlHostingKit.Static.lib" />
+    <NativeLibrary Include="$(MSBuildThisFileDirectory)..\..\lib\native\$(XHKPlatform)\external\Detours.lib" Condition="'$(XHKLinkDetours)' == 'true'" />
   </ItemGroup>
 
   <Target Name="XHKWarnNoPlatform" BeforeTargets="BeforeBuild" Condition="'$(XHKPlatform)' == '' and '$(XHKWarnNoPlatform)' == 'true'">
