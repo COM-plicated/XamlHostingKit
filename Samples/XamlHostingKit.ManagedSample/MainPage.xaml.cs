@@ -60,7 +60,7 @@ namespace XamlHostingKit.ManagedSample
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            XamlApplication.CreateWindow(new() { Title = "XamlHostingKit Secondary Window" }, (p) =>
+            XamlApplication.CreateNewWindow(new() { Title = "XamlHostingKit Secondary Window" }, (p) =>
             {
                 var window = XamlWindow.Current;
 

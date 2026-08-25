@@ -53,5 +53,8 @@
       <file target="lib\native\x64\external\Detours.lib"                                 src="..\XamlHostingKit\vcpkg_installed\x64-windows-static\x64-windows-static\lib\detours.lib" />
       <file target="lib\native\arm\external\Detours.lib"                                 src="..\XamlHostingKit\vcpkg_installed\arm-windows22621-static\arm-windows22621-static\lib\detours.lib" />
       <file target="lib\native\arm64\external\Detours.lib"                               src="..\XamlHostingKit\vcpkg_installed\arm64-windows-static\arm64-windows-static\lib\detours.lib" />
+    
+      <file target="include\xhk\xhk.h"                                                   src="include\xhk.h" />
+      <file target="include\xhk\xhk_version.h"                                           src="..\XamlHostingKit.Static\version.h" />
   </files>
 </package>

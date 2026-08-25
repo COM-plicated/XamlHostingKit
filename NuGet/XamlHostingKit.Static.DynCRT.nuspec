@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package>
+  <metadata>
+    <id>XamlHostingKit.Static.DynCRT</id>
+    <version>0.2.0</version>
+    <title>XamlHostingKit.Static.DynCRT</title>
+    <authors>COMplicated,Ahmed605,Dongle</authors>
+    <owners>COMplicated,Ahmed605,Ahmed Walid,Dongle</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <!--<icon>icon.png</icon>-->
+    <projectUrl>https://github.com/COM-plicated/XamlHostingKit</projectUrl>
+    <repository type="git" url="https://github.com/COM-plicated/XamlHostingKit.git"/>
+    <description>System XAML hosting library for Desktop apps with smooth resizing, backwards compatibility down to Windows 8.1, and more!</description>
+    <releaseNotes>Initial release.</releaseNotes>
+    <tags>XAML UWP WinRT Universal Windows Platform UAP</tags>
+    <readme>docs\README.md</readme>
+    <dependencies>
+      <group targetFramework="net9.0-windows10.0.26100.0" />
+      <group targetFramework="native" />
+    </dependencies>
+  </metadata>
+  
+  <files>
+      <file src="..\README.md" target="docs\" />
+      
+      <file target="build\native\XamlHostingKit.Static.DynCRT.targets"                     src="XamlHostingKit.Static.Native.targets" />
+      <file target="build\net9.0-windows10.0.26100.0\XamlHostingKit.Static.DynCRT.targets" src="XamlHostingKit.Static.ModernNET.targets" />
+
+      <file target="lib\native\XamlHostingKit.winmd"                                       src="..\x64\Release\XamlHostingKit\XamlHostingKit.winmd" />
+      <file target="lib\net9.0-windows10.0.26100.0\XamlHostingKit.Static.Projection.dll"   src="..\XamlHostingKit.Static.Projection\bin\Release\net9.0-windows10.0.26100.0\XamlHostingKit.Static.Projection.dll" />
+      <file target="lib\net9.0-windows10.0.26100.0\XamlHostingKit.Static.Projection.pdb"   src="..\XamlHostingKit.Static.Projection\bin\Release\net9.0-windows10.0.26100.0\XamlHostingKit.Static.Projection.pdb" />
+
+      <file target="runtimes\win-x86\native\XamlHostingKit.dll"                            src="..\Release DynCRT\XamlHostingKit\XamlHostingKit.dll" />
+      <file target="runtimes\win-x86\native\XamlHostingKit.pdb"                            src="..\Release DynCRT\XamlHostingKit\XamlHostingKit.pdb" />
+      <file target="runtimes\win-x64\native\XamlHostingKit.dll"                            src="..\x64\Release DynCRT\XamlHostingKit\XamlHostingKit.dll" />
+      <file target="runtimes\win-x64\native\XamlHostingKit.pdb"                            src="..\x64\Release DynCRT\XamlHostingKit\XamlHostingKit.pdb" />
+      <file target="runtimes\win-arm\native\XamlHostingKit.dll"                            src="..\ARM\Release DynCRT\XamlHostingKit\XamlHostingKit.dll" />
+      <file target="runtimes\win-arm\native\XamlHostingKit.pdb"                            src="..\ARM\Release DynCRT\XamlHostingKit\XamlHostingKit.pdb" />
+      <file target="runtimes\win-arm64\native\XamlHostingKit.dll"                          src="..\ARM64\Release DynCRT\XamlHostingKit\XamlHostingKit.dll" />
+      <file target="runtimes\win-arm64\native\XamlHostingKit.pdb"                          src="..\ARM64\Release DynCRT\XamlHostingKit\XamlHostingKit.pdb" />
+
+      <file target="lib\native\x86\XamlHostingKit.Static.lib"                              src="..\Release DynCRT\XamlHostingKit.Static\XamlHostingKit.Static.lib" />
+      <file target="lib\native\x86\XamlHostingKit.Static.pdb"                              src="..\Release DynCRT\XamlHostingKit.Static\XamlHostingKit.Static.pdb" />
+      <file target="lib\native\x64\XamlHostingKit.Static.lib"                              src="..\x64\Release DynCRT\XamlHostingKit.Static\XamlHostingKit.Static.lib" />
+      <file target="lib\native\x64\XamlHostingKit.Static.pdb"                              src="..\x64\Release DynCRT\XamlHostingKit.Static\XamlHostingKit.Static.pdb" />
+      <file target="lib\native\arm\XamlHostingKit.Static.lib"                              src="..\ARM\Release DynCRT\XamlHostingKit.Static\XamlHostingKit.Static.lib" />
+      <file target="lib\native\arm\XamlHostingKit.Static.pdb"                              src="..\ARM\Release DynCRT\XamlHostingKit.Static\XamlHostingKit.Static.pdb" />
+      <file target="lib\native\arm64\XamlHostingKit.Static.lib"                            src="..\ARM64\Release DynCRT\XamlHostingKit.Static\XamlHostingKit.Static.lib" />
+      <file target="lib\native\arm64\XamlHostingKit.Static.pdb"                            src="..\ARM64\Release DynCRT\XamlHostingKit.Static\XamlHostingKit.Static.pdb" />
+
+      <file target="lib\native\x86\external\Detours.lib"                                   src="..\XamlHostingKit\vcpkg_installed\x86-windows-static\x86-windows-static\lib\detours.lib" />
+      <file target="lib\native\x64\external\Detours.lib"                                   src="..\XamlHostingKit\vcpkg_installed\x64-windows-static\x64-windows-static\lib\detours.lib" />
+      <file target="lib\native\arm\external\Detours.lib"                                   src="..\XamlHostingKit\vcpkg_installed\arm-windows22621-static\arm-windows22621-static\lib\detours.lib" />
+      <file target="lib\native\arm64\external\Detours.lib"                                 src="..\XamlHostingKit\vcpkg_installed\arm64-windows-static\arm64-windows-static\lib\detours.lib" />
+    
+      <file target="include\xhk\xhk.h"                                                     src="include\xhk.h" />
+      <file target="include\xhk\xhk_version.h"                                             src="..\XamlHostingKit.Static\version.h" />
+  </files>
+</package>

@@ -9,6 +9,7 @@
 
 namespace ABI::Windows::ApplicationModel::Resources::Core
 {
+    #define MrtResourceManager xhk_MrtResourceManager
     class DECLSPEC_UUID("DBCE7E40-7345-439D-B12C-114A11819A09") MrtResourceManager;
 
     MIDL_INTERFACE("130A2F65-2BE7-4309-9A58-A9052FF2B61C")

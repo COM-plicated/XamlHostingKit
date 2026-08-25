@@ -237,7 +237,7 @@ MakeWindow:
         Start(initCallback, winrt::hstring { (Helpers::GetExecutableFolderPath() / L"resources.pri").wstring() }, false);
     }
 
-    winrt::XamlHostingKit::XamlWindow XamlApplication::CreateWindow(winrt::XamlHostingKit::WindowCreationOptions const& options)
+    winrt::XamlHostingKit::XamlWindow XamlApplication::CreateNewWindow(winrt::XamlHostingKit::WindowCreationOptions const& options)
     {
         if (!s_hasStarted) [[unlikely]]
         {
@@ -293,14 +293,14 @@ MakeWindow:
         return *window.get();
     }
 
-    winrt::XamlHostingKit::XamlWindow XamlApplication::CreateWindow()
+    winrt::XamlHostingKit::XamlWindow XamlApplication::CreateNewWindow()
     {
-        return CreateWindow({ });
+        return CreateNewWindow({ });
     }
 
-    winrt::XamlHostingKit::XamlWindow XamlApplication::CreateWindow(winrt::XamlHostingKit::WindowCreationOptions const& options, winrt::Windows::UI::Xaml::ApplicationInitializationCallback const& windowCallback)
+    winrt::XamlHostingKit::XamlWindow XamlApplication::CreateNewWindow(winrt::XamlHostingKit::WindowCreationOptions const& options, winrt::Windows::UI::Xaml::ApplicationInitializationCallback const& windowCallback)
     {
-        auto window = CreateWindow(options);
+        auto window = CreateNewWindow(options);
         window.Dispatcher().RunAsync(CoreDispatcherPriority::Normal, [windowCallback]()
         {
             windowCallback(nullptr);

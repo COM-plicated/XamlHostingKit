@@ -12,9 +12,9 @@
   </ItemGroup>
 
   <ItemDefinitionGroup>
-    <!--ClCompile>
-      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile-->
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)..\..\include</AdditionalIncludeDirectories>
+    </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(MSBuildThisFileDirectory)..\..\lib\native\$(XHKPlatform)</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies);XamlHostingKit.Static.lib;Urlmon.lib;Shcore.lib;dwmapi.lib;shlwapi.lib;ntdll.lib;user32.lib;shell32.lib</AdditionalDependencies>

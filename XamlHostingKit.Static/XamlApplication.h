@@ -78,9 +78,9 @@ namespace winrt::XamlHostingKit::implementation
         static void Start(winrt::Windows::UI::Xaml::ApplicationInitializationCallback const& initCallback, hstring const& priPath, bool shouldThrowOnHookFailure = true);
         static void Start(winrt::Windows::UI::Xaml::ApplicationInitializationCallback const& initCallback, winrt::Windows::Storage::Streams::IBuffer const& priBuffer);
         
-        static winrt::XamlHostingKit::XamlWindow CreateWindow();
-        static winrt::XamlHostingKit::XamlWindow CreateWindow(winrt::XamlHostingKit::WindowCreationOptions const& options);
-        static winrt::XamlHostingKit::XamlWindow CreateWindow(winrt::XamlHostingKit::WindowCreationOptions const& options, winrt::Windows::UI::Xaml::ApplicationInitializationCallback const& windowCallback);
+        static winrt::XamlHostingKit::XamlWindow CreateNewWindow();
+        static winrt::XamlHostingKit::XamlWindow CreateNewWindow(winrt::XamlHostingKit::WindowCreationOptions const& options);
+        static winrt::XamlHostingKit::XamlWindow CreateNewWindow(winrt::XamlHostingKit::WindowCreationOptions const& options, winrt::Windows::UI::Xaml::ApplicationInitializationCallback const& windowCallback);
         
         static void Close();
 

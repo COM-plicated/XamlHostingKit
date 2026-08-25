@@ -1,6 +1,10 @@
 ﻿#pragma once
 
 #define NOMINMAX
+#define WINRT_CONTAINED_STATIC_LIB
+
+#define winrt xhk_winrt
+#define wil   xhk_wil
 
 #include <Windows.h>
 #include <Unknwn.h>

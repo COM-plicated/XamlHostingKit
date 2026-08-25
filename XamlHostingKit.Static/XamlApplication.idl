@@ -33,9 +33,9 @@ namespace XamlHostingKit
             [method_name("StartWithPriBuffer")]
             static void Start(Windows.UI.Xaml.ApplicationInitializationCallback initCallback, Windows.Storage.Streams.IBuffer priBuffer);
 
-            static XamlWindow CreateWindow();
-            static XamlWindow CreateWindow(WindowCreationOptions options);
-            static XamlWindow CreateWindow(WindowCreationOptions options, Windows.UI.Xaml.ApplicationInitializationCallback windowCallback);
+            static XamlWindow CreateNewWindow();
+            static XamlWindow CreateNewWindow(WindowCreationOptions options);
+            static XamlWindow CreateNewWindow(WindowCreationOptions options, Windows.UI.Xaml.ApplicationInitializationCallback windowCallback);
 
             static void Close();
         }

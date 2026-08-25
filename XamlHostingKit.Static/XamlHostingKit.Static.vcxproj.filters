@@ -24,6 +24,7 @@
     </ClCompile>
     <ClCompile Include="FileProtocolHandler.cpp" />
     <ClCompile Include="version.cpp" />
+    <ClCompile Include="module.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -47,7 +48,6 @@
     <Midl Include="XamlWindow.idl" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="XamlHostingKit.def" />
     <None Include="packages.config" />
     <None Include="vcpkg.json" />
   </ItemGroup>

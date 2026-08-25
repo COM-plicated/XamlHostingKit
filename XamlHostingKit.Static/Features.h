@@ -3,6 +3,7 @@
 #include <winrt/Windows.Foundation.Metadata.h>
 #include "Helpers.h"
 
+#define Features xhk_Features
 namespace Features
 {
     using namespace winrt::Windows::Foundation::Metadata;
