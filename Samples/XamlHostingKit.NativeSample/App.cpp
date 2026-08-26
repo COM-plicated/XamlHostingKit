@@ -1,16 +1,17 @@
 ﻿#include "pch.h"
-#include <xhk/xhk.h>
+//#include <xhk/xhk.h> // uncomment when using XamlHostingKit.Static[.DynCRT]
 
 #include "App.h"
 #include "MainPage.h"
 
 using namespace winrt;
-using namespace Windows::ApplicationModel;
-using namespace Windows::ApplicationModel::Activation;
-using namespace Windows::Foundation;
+using namespace XamlHostingKit;
 using namespace Windows::UI::Xaml;
+using namespace Windows::Foundation;
+using namespace Windows::ApplicationModel;
 using namespace Windows::UI::Xaml::Controls;
 using namespace Windows::UI::Xaml::Navigation;
+using namespace Windows::ApplicationModel::Activation;
 
 namespace winrt::XamlHostingKit::NativeSample::implementation
 {
@@ -57,12 +58,12 @@ int WINAPI wWinMain(
     [[maybe_unused]] _In_ int nShowCmd
 )
 {
-    winrt::init_apartment(winrt::apartment_type::single_threaded);
+    winrt::init_apartment(apartment_type::single_threaded);
 
-    winrt::XamlHostingKit::XamlApplication::Start(
+    XamlApplication::Start(
     [](auto&&)
     {
-        winrt::make<winrt::XamlHostingKit::NativeSample::implementation::App>();
+        winrt::make<NativeSample::implementation::App>();
     });
 
     return 0;

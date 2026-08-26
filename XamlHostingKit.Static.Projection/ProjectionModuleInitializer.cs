@@ -1,14 +1,13 @@
 ﻿using WinRT;
 using System;
 using WinRT.Interop;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 using System.Diagnostics.CodeAnalysis;
 
 namespace XamlHostingKit.Static.Projection
 {
-    internal static unsafe class ProjectionModuleInitializer
+    internal static unsafe partial class ProjectionModuleInitializer
     {
         private static bool _isCoreCLR = RuntimeFeature.IsDynamicCodeCompiled;
 
@@ -55,7 +54,7 @@ namespace XamlHostingKit.Static.Projection
                     catch (DllNotFoundException)
                     {
                         _isCoreCLR = true;
-                        ThrowNotSupportedException("[XamlHostingKit] WARNING: Cannot import XHK_GetActivationFactory, you can safely ignore this warning on non-NativeAOT and/or non-Publish builds.");
+                        OutputDebugStringW("[XamlHostingKit] WARNING: Cannot import XHK_GetActivationFactory, you can safely ignore this warning on non-NativeAOT and/or non-Publish builds.\r\n");
                     }
                     catch
                     {
@@ -80,17 +79,8 @@ namespace XamlHostingKit.Static.Projection
             };
         }
 
-        [StackTraceHidden]
-        [DebuggerNonUserCode]
-        [DebuggerStepThrough]
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void ThrowNotSupportedException(string message)
-        {
-            try
-            {
-                throw new PlatformNotSupportedException(message);
-            }
-            catch { }
-        }
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16)]
+        private static partial void OutputDebugStringW(string message);
     }
 }

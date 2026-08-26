@@ -8,7 +8,7 @@
     <XHKWinMDImplementationDllName>XamlHostingKit.dll</XHKWinMDImplementationDllName>
   </PropertyGroup>
 
-  <PropertyGroup>
+  <PropertyGroup Condition="'$(XHKPlatform)' == ''">
     <XHKPlatform Condition="$(RuntimeIdentifier.EndsWith('-x64'))">x64</XHKPlatform>
     <XHKPlatform Condition="$(RuntimeIdentifier.EndsWith('-x86'))">x86</XHKPlatform>
     <XHKPlatform Condition="$(RuntimeIdentifier.EndsWith('-arm64'))">arm64</XHKPlatform>

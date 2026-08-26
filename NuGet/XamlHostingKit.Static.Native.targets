@@ -3,8 +3,8 @@
 
   <PropertyGroup>
     <XHKLinkDetours Condition="'$(XHKLinkDetours)' == ''">true</XHKLinkDetours>
-    <XHKPlatform Condition="'$(Platform)' == 'Win32'">x86</XHKPlatform>
-    <XHKPlatform Condition="'$(Platform)' != 'Win32'">$(Platform)</XHKPlatform>
+    <XHKPlatform Condition="'$(Platform)' == 'Win32' and '$(XHKPlatform)' == ''">x86</XHKPlatform>
+    <XHKPlatform Condition="'$(Platform)' != 'Win32' and '$(XHKPlatform)' == ''">$(Platform)</XHKPlatform>
   </PropertyGroup>
 
   <ItemGroup>

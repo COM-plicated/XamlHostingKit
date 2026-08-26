@@ -2,8 +2,8 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
-    <XHKPlatform Condition="'$(Platform)' == 'Win32'">x86</XHKPlatform>
-    <XHKPlatform Condition="'$(Platform)' != 'Win32'">$(Platform)</XHKPlatform>
+    <XHKPlatform Condition="'$(Platform)' == 'Win32' and '$(XHKPlatform)' == ''">x86</XHKPlatform>
+    <XHKPlatform Condition="'$(Platform)' != 'Win32' and '$(XHKPlatform)' == ''">$(Platform)</XHKPlatform>
   </PropertyGroup>
 
   <ItemGroup>
