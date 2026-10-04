@@ -30,6 +30,10 @@ namespace winrt::XamlHostingKit::implementation
         hstring m_title;
         WindowStyles m_styles { 0 };
         WindowExtendedStyles m_extendedStyles { 0 };
+        float m_minWidth{ 500.0f };
+        float m_minHeight{ 320.0f };
+        float m_maxWidth{ 0.0f };
+        float m_maxHeight{ 0.0f };
         Window m_systemWindow { nullptr };
         CoreApplicationView m_view { nullptr };
         CoreDispatcher m_dispatcher { nullptr };
@@ -62,6 +66,18 @@ namespace winrt::XamlHostingKit::implementation
 
         WindowExtendedStyles ExtendedStyles();
         void ExtendedStyles(WindowExtendedStyles value);
+
+        float MinWidth() const;
+        void MinWidth(float value);
+
+        float MinHeight() const;
+        void MinHeight(float value);
+
+        float MaxWidth() const;
+        void MaxWidth(float value);
+
+        float MaxHeight() const;
+        void MaxHeight(float value);
 
         bool IsVisible();
         winrt::Windows::UI::WindowId WindowHandle();

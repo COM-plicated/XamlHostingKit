@@ -51,17 +51,51 @@ namespace winrt::XamlHostingKit::implementation
             }
         }
 
+        auto left = CW_USEDEFAULT;
+        auto top = CW_USEDEFAULT;
+        auto width = CW_USEDEFAULT;
+        auto height = CW_USEDEFAULT;
+
+        if (auto value = options.Left())
+            left = static_cast<int>(value.Value());
+
+        if (auto value = options.Top())
+            top = static_cast<int>(value.Value());
+
+        auto monitor = MonitorFromPoint({ left == CW_USEDEFAULT ? 0 : left, top == CW_USEDEFAULT ? 0 : top }, MONITOR_DEFAULTTOPRIMARY);
+
+        uint32_t dpi;
+
+        GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi, &dpi);
+
+        auto scale = dpi / 96.0f;
+
+        if (auto value = options.Width())
+            width = static_cast<int>(value.Value() * scale);
+
+        if (auto value = options.Height())
+            height = static_cast<int>(value.Value() * scale);
+
+        RECT rc = { 0 };
+        auto styles = static_cast<uint32_t>(m_styles) & ~WS_VISIBLE;
+        auto extendedStyles = dwmFrameEnabled ? static_cast<uint32_t>(m_extendedStyles) : (static_cast<uint32_t>(m_extendedStyles) & ~(WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME));
+
+        Helpers::AdjustWindowRectExForDpi(&rc, styles, false, extendedStyles, dpi);
+
+        if (width != CW_USEDEFAULT)
+            width += rc.right - rc.left;
+        if (height != CW_USEDEFAULT)
+            height += rc.bottom - rc.top;
+
         winrt::check_pointer(m_hwnd = CreateWindowExW(
-            dwmFrameEnabled ?
-                static_cast<uint32_t>(m_extendedStyles) :
-                (static_cast<uint32_t>(m_extendedStyles) &~ (WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME)),
+            extendedStyles,
             className,
             m_title.c_str(),
-            static_cast<uint32_t>(m_styles) &~ WS_VISIBLE,
-            options.Left(),
-            options.Top(),
-            options.Width(),
-            options.Height(),
+            styles,
+            left,
+            top,
+            width,
+            height,
             NULL,
             NULL,
             GetModuleHandleW(nullptr),
@@ -255,6 +289,50 @@ namespace winrt::XamlHostingKit::implementation
         m_extendedStyles = static_cast<WindowExtendedStyles>(GetWindowLongPtrW(m_hwnd, GWL_EXSTYLE));
     }
 
+    float winrt::XamlHostingKit::implementation::XamlWindow::MinWidth() const
+    {
+        return m_minWidth;
+    }
+
+    void winrt::XamlHostingKit::implementation::XamlWindow::MinWidth(float value)
+    {
+        Helpers::ThrowIfValueIsNotZeroOrPositive(value);
+        m_minWidth = value;
+    }
+
+    float winrt::XamlHostingKit::implementation::XamlWindow::MinHeight() const
+    {
+        return m_minHeight;
+    }
+
+    void winrt::XamlHostingKit::implementation::XamlWindow::MinHeight(float value)
+    {
+        Helpers::ThrowIfValueIsNotZeroOrPositive(value);
+        m_minHeight = value;
+    }
+
+    float winrt::XamlHostingKit::implementation::XamlWindow::MaxWidth() const
+    {
+        return m_maxWidth;
+    }
+
+    void winrt::XamlHostingKit::implementation::XamlWindow::MaxWidth(float value)
+    {
+        Helpers::ThrowIfValueIsNotZeroOrPositive(value);
+        m_maxWidth = value;
+    }
+
+    float winrt::XamlHostingKit::implementation::XamlWindow::MaxHeight() const
+    {
+        return m_maxHeight;
+    }
+
+    void winrt::XamlHostingKit::implementation::XamlWindow::MaxHeight(float value)
+    {
+        Helpers::ThrowIfValueIsNotZeroOrPositive(value);
+        m_maxHeight = value;
+    }
+
     bool XamlWindow::IsVisible()
     {
         return IsWindowVisible(m_hwnd) != FALSE;
@@ -376,12 +454,24 @@ namespace winrt::XamlHostingKit::implementation
     {
         auto dpi = Helpers::GetDpiScaleForWindow(m_hwnd);
 
+        RECT rc = { 0 };
+        Helpers::AdjustWindowRectExForDpi(&rc, GetWindowLongW(m_hwnd, GWL_STYLE), false, GetWindowLongW(m_hwnd, GWL_EXSTYLE), Helpers::GetDpiForWindow(m_hwnd));
+
+        auto scaledWidth = static_cast<int>(width * dpi) + rc.right - rc.left;
+        auto scaledHeight = static_cast<int>(height * dpi) + rc.bottom;
+
+        //if (_this->m_titleBar.get()->ExtendViewIntoTitleBar())
+        //{
+        //    scaledHeight += static_cast<int>(std::ceil(1 * scale));
+        //}
+        //else
+        {
+            scaledHeight += -rc.top;
+        }
+
         if (!IsZoomed(m_hwnd) && !IsIconic(m_hwnd)) [[likely]]
         {
-            SetWindowPos(m_hwnd, NULL, 0, 0,
-                         static_cast<int>(width * dpi),
-                         static_cast<int>(height * dpi),
-                         SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+            SetWindowPos(m_hwnd, NULL, 0, 0, scaledWidth, scaledHeight, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
         }
         else
         {
@@ -389,8 +479,8 @@ namespace winrt::XamlHostingKit::implementation
             wp.length = sizeof(WINDOWPLACEMENT);
             GetWindowPlacement(m_hwnd, &wp);
 
-            wp.rcNormalPosition.right = static_cast<int>(wp.rcNormalPosition.left + width * dpi);
-            wp.rcNormalPosition.bottom = static_cast<int>(wp.rcNormalPosition.top + height * dpi);
+            wp.rcNormalPosition.right = static_cast<LONG>(wp.rcNormalPosition.left + scaledWidth);
+            wp.rcNormalPosition.bottom = static_cast<LONG>(wp.rcNormalPosition.top + scaledHeight);
             SetWindowPlacement(m_hwnd, &wp);
         }
     }
@@ -554,6 +644,42 @@ namespace winrt::XamlHostingKit::implementation
                 SetWindowLongW(hwnd, GWL_EXSTYLE, (BOOL)wParam ?
                     static_cast<uint32_t>(_this->ExtendedStyles()) :
                     static_cast<uint32_t>(_this->ExtendedStyles()) &~ (WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME));
+            }
+            else if (msg == WM_GETMINMAXINFO)
+            {
+                auto mmi = reinterpret_cast<MINMAXINFO*>(lParam);
+                auto dpi = Helpers::GetDpiForWindow(hwnd);
+                auto scale = Helpers::GetDpiScaleForWindow(hwnd);
+                auto minWidth = static_cast<LONG>(_this->m_minWidth * scale);
+                auto minHeight = static_cast<LONG>(_this->m_minHeight * scale);
+                auto maxWidth = static_cast<LONG>(_this->m_maxWidth * scale);
+                auto maxHeight = static_cast<LONG>(_this->m_maxHeight * scale);
+
+                RECT rc = { 0 };
+                Helpers::AdjustWindowRectExForDpi(&rc, GetWindowLongW(hwnd, GWL_STYLE), false, GetWindowLongW(hwnd, GWL_EXSTYLE), dpi);
+
+                if (minWidth > 0)
+                    mmi->ptMinTrackSize.x = minWidth + rc.right - rc.left;
+
+                if (minHeight > 0)
+                {
+                    //if (_this->m_titleBar.get()->ExtendViewIntoTitleBar())
+                    //{
+                    //    mmi->ptMinTrackSize.y = minHeight + rc.bottom + static_cast<LONG>(std::ceil(1 * scale));
+                    //}
+                    //else
+                    {
+                        mmi->ptMinTrackSize.y = minHeight + rc.bottom - rc.top;
+                    }
+                }
+
+                if (maxWidth > 0)
+                    mmi->ptMaxTrackSize.x = maxWidth + rc.right - rc.left;
+
+                if (maxHeight > 0)
+                    mmi->ptMaxTrackSize.y = maxHeight + rc.bottom - rc.top;
+
+                return 0;
             }
         }
 

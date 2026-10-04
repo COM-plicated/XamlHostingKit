@@ -10,13 +10,13 @@ namespace winrt::XamlHostingKit::implementation
     struct WindowCreationOptions : WindowCreationOptionsT<WindowCreationOptions>
     {
     private:
-        hstring       m_title          { Helpers::GetExecutableName() };
-        std::int32_t  m_left           { CW_USEDEFAULT };
-        std::int32_t  m_top            { CW_USEDEFAULT };
-        std::int32_t  m_width          { CW_USEDEFAULT };
-        std::int32_t  m_height         { CW_USEDEFAULT };
-        WindowStyles  m_styles         { WindowStyles::OverlappedWindow };
-        WindowExtendedStyles m_extendedStyles
+        hstring                                m_title          { Helpers::GetExecutableName() };
+        Windows::Foundation::IReference<float> m_left           { nullptr };
+        Windows::Foundation::IReference<float> m_top            { nullptr };
+        Windows::Foundation::IReference<float> m_width          { nullptr };
+        Windows::Foundation::IReference<float> m_height         { nullptr };
+        WindowStyles                           m_styles         { WindowStyles::OverlappedWindow };
+        WindowExtendedStyles                   m_extendedStyles
         { 
             XamlConfig::s_disableRedirectionLayer ?
                 WindowExtendedStyles::NoRedirectionBitmap | WindowExtendedStyles::DialogModalFrame :
@@ -29,17 +29,17 @@ namespace winrt::XamlHostingKit::implementation
         hstring Title();
         void Title(hstring const& value);
 
-        std::int32_t Left() const;
-        void Left(std::int32_t value);
+        Windows::Foundation::IReference<float> Left() const;
+        void Left(Windows::Foundation::IReference<float> value);
 
-        std::int32_t Top() const;
-        void Top(std::int32_t value);
+        Windows::Foundation::IReference<float> Top() const;
+        void Top(Windows::Foundation::IReference<float> value);
 
-        std::int32_t Width() const;
-        void Width(std::int32_t value);
+        Windows::Foundation::IReference<float> Width() const;
+        void Width(Windows::Foundation::IReference<float> value);
 
-        std::int32_t Height() const;
-        void Height(std::int32_t value);
+        Windows::Foundation::IReference<float> Height() const;
+        void Height(Windows::Foundation::IReference<float> value);
 
         WindowStyles Styles() const;
         void Styles(WindowStyles value);

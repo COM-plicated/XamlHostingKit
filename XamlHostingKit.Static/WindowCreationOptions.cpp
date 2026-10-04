@@ -14,42 +14,42 @@ namespace winrt::XamlHostingKit::implementation
         m_title = value;
     }
 
-    std::int32_t WindowCreationOptions::Left() const
+    Windows::Foundation::IReference<float> WindowCreationOptions::Left() const
     {
         return m_left;
     }
 
-    void WindowCreationOptions::Left(std::int32_t value)
+    void WindowCreationOptions::Left(Windows::Foundation::IReference<float> value)
     {
         m_left = value;
     }
 
-    std::int32_t WindowCreationOptions::Top() const
+    Windows::Foundation::IReference<float> WindowCreationOptions::Top() const
     {
         return m_top;
     }
 
-    void WindowCreationOptions::Top(std::int32_t value)
+    void WindowCreationOptions::Top(Windows::Foundation::IReference<float> value)
     {
         m_top = value;
     }
 
-    std::int32_t WindowCreationOptions::Width() const
+    Windows::Foundation::IReference<float> WindowCreationOptions::Width() const
     {
         return m_width;
     }
 
-    void WindowCreationOptions::Width(std::int32_t value)
+    void WindowCreationOptions::Width(Windows::Foundation::IReference<float> value)
     {
         m_width = value;
     }
 
-    std::int32_t WindowCreationOptions::Height() const
+    Windows::Foundation::IReference<float> WindowCreationOptions::Height() const
     {
         return m_height;
     }
 
-    void WindowCreationOptions::Height(std::int32_t value)
+    void WindowCreationOptions::Height(Windows::Foundation::IReference<float> value)
     {
         m_height = value;
     }

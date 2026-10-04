@@ -6,13 +6,13 @@ namespace XamlHostingKit
 
         [interface_name("IWindowCreationOptions", 4D4A4925-D702-C0DE-9689-16CA3D201BA1)]
         {
-            String Title                        { get; set; };
-            Int32  Left                         { get; set; };
-            Int32  Top                          { get; set; };
-            Int32  Width                        { get; set; };
-            Int32  Height                       { get; set; };
-            WindowStyles Styles                 { get; set; };
-            WindowExtendedStyles ExtendedStyles { get; set; };
+            String Title                                 { get; set; };
+            Windows.Foundation.IReference<Single> Left   { get; set; };
+            Windows.Foundation.IReference<Single> Top    { get; set; };
+            Windows.Foundation.IReference<Single> Width  { get; set; };
+            Windows.Foundation.IReference<Single> Height { get; set; };
+            WindowStyles Styles                          { get; set; };
+            WindowExtendedStyles ExtendedStyles          { get; set; };
         }
     };
 
@@ -23,6 +23,10 @@ namespace XamlHostingKit
             String                  Title          { get; set; };
             WindowStyles            Styles         { get; set; };
             WindowExtendedStyles    ExtendedStyles { get; set; };
+            Single                  MinWidth       { get; set; };
+            Single                  MinHeight      { get; set; };
+            Single                  MaxWidth       { get; set; };
+            Single                  MaxHeight      { get; set; };
 
             Boolean                                           IsVisible           { get; };
             Windows.UI.WindowId                               WindowHandle        { get; };
