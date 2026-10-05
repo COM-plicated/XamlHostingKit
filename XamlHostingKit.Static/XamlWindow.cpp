@@ -56,16 +56,28 @@ namespace winrt::XamlHostingKit::implementation
         auto width = CW_USEDEFAULT;
         auto height = CW_USEDEFAULT;
 
-        if (auto value = options.Left())
-            left = static_cast<int>(value.Value());
+        auto monitor = MonitorFromPoint({ 0 }, MONITOR_DEFAULTTOPRIMARY);
 
-        if (auto value = options.Top())
-            top = static_cast<int>(value.Value());
+        STARTUPINFOW si;
+        si.cb = sizeof(STARTUPINFOW);
 
-        auto monitor = MonitorFromPoint({ left == CW_USEDEFAULT ? 0 : left, top == CW_USEDEFAULT ? 0 : top }, MONITOR_DEFAULTTOPRIMARY);
+        GetStartupInfoW(&si);
+
+        if (si.dwFlags & STARTF_USEPOSITION)
+        {
+            left = si.dwX;
+            top = si.dwY;
+            monitor = MonitorFromPoint({ left, top }, MONITOR_DEFAULTTONEAREST);
+        }
+
+        if (options.Left() && options.Top())
+        {
+            left = static_cast<int>(options.Left().Value());
+            top = static_cast<int>(options.Top().Value());
+            monitor = MonitorFromPoint({ left, top }, MONITOR_DEFAULTTONEAREST);
+        }
 
         uint32_t dpi;
-
         GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi, &dpi);
 
         auto scale = dpi / 96.0f;
@@ -460,7 +472,7 @@ namespace winrt::XamlHostingKit::implementation
         auto scaledWidth = static_cast<int>(width * dpi) + rc.right - rc.left;
         auto scaledHeight = static_cast<int>(height * dpi) + rc.bottom;
 
-        //if (_this->m_titleBar.get()->ExtendViewIntoTitleBar())
+        //if (m_titleBar->ExtendViewIntoTitleBar())
         //{
         //    scaledHeight += static_cast<int>(std::ceil(1 * scale));
         //}
@@ -663,7 +675,7 @@ namespace winrt::XamlHostingKit::implementation
 
                 if (minHeight > 0)
                 {
-                    //if (_this->m_titleBar.get()->ExtendViewIntoTitleBar())
+                    //if (_this->m_titleBar->ExtendViewIntoTitleBar())
                     //{
                     //    mmi->ptMinTrackSize.y = minHeight + rc.bottom + static_cast<LONG>(std::ceil(1 * scale));
                     //}
