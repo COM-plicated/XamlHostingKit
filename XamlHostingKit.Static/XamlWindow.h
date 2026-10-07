@@ -2,6 +2,7 @@
 #include "XamlWindow.g.h"
 #include <winrt/Windows.UI.Core.h>
 #include <winrt/Windows.UI.Xaml.h>
+#include <winrt/Windows.UI.WindowManagement.h>
 #include "IWindowNative.h"
 #include "Helpers.h"
 
@@ -44,6 +45,8 @@ namespace winrt::XamlHostingKit::implementation
         winrt::com_ptr<IFrameworkApplicationPrivate> m_applicationPrivate { nullptr };
         winrt::com_ptr<IFrameworkApplicationPrivateOld> m_applicationPrivateOld { nullptr };
         winrt::event<winrt::Windows::Foundation::TypedEventHandler<winrt::XamlHostingKit::XamlWindow, bool>> m_visibilityChanged;
+
+        void MoveImpl(int left, int top);
 
         static LPCWSTR const RegisterWindowClass(WNDPROC wndProc);
         static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -98,7 +101,11 @@ namespace winrt::XamlHostingKit::implementation
         void Close();
 
         void Move(winrt::Windows::Foundation::Point topleft);
+        void Move(winrt::Windows::Foundation::Point topleft, MonitorId monitorHandle);
+        void Move(winrt::Windows::Foundation::Point topleft, winrt::Windows::UI::WindowManagement::DisplayRegion displayRegion);
         void Move(float left, float top);
+        void Move(float left, float top, MonitorId monitorHandle);
+        void Move(float left, float top, winrt::Windows::UI::WindowManagement::DisplayRegion displayRegion);
         void Resize(winrt::Windows::Foundation::Size size);
         void Resize(float width, float height);
 

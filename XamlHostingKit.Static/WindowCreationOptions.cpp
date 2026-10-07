@@ -73,4 +73,24 @@ namespace winrt::XamlHostingKit::implementation
     {
         m_extendedStyles = value;
     }
+
+    Windows::Foundation::IReference<winrt::XamlHostingKit::MonitorId> WindowCreationOptions::MonitorHandle() const
+    {
+        return m_monitorHandle;
+    }
+
+    void WindowCreationOptions::MonitorHandle(Windows::Foundation::IReference<winrt::XamlHostingKit::MonitorId> value)
+    {
+        m_monitorHandle = value;
+    }
+
+    Windows::UI::WindowManagement::DisplayRegion WindowCreationOptions::DisplayRegion() const
+    {
+        return m_displayRegion;
+    }
+
+    void WindowCreationOptions::DisplayRegion(Windows::UI::WindowManagement::DisplayRegion value)
+    {
+        m_displayRegion = value;
+    }
 }

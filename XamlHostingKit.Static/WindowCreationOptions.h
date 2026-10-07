@@ -1,5 +1,7 @@
 #pragma once
 
+#include <winrt/Windows.UI.WindowManagement.h>
+
 #include "WindowCreationOptions.g.h"
 #include "Helpers.h"
 
@@ -22,6 +24,8 @@ namespace winrt::XamlHostingKit::implementation
                 WindowExtendedStyles::NoRedirectionBitmap | WindowExtendedStyles::DialogModalFrame :
                 WindowExtendedStyles::DialogModalFrame
         };
+        Windows::Foundation::IReference<winrt::XamlHostingKit::MonitorId> m_monitorHandle { nullptr };
+        Windows::UI::WindowManagement::DisplayRegion m_displayRegion { nullptr };
 
     public:
         WindowCreationOptions() = default;
@@ -46,6 +50,12 @@ namespace winrt::XamlHostingKit::implementation
 
         WindowExtendedStyles ExtendedStyles() const;
         void ExtendedStyles(WindowExtendedStyles value);
+
+        Windows::Foundation::IReference<winrt::XamlHostingKit::MonitorId> MonitorHandle() const;
+        void MonitorHandle(Windows::Foundation::IReference<winrt::XamlHostingKit::MonitorId> value);
+
+        Windows::UI::WindowManagement::DisplayRegion DisplayRegion() const;
+        void DisplayRegion(Windows::UI::WindowManagement::DisplayRegion value);
     };
 }
 

@@ -70,17 +70,25 @@ namespace winrt::XamlHostingKit::implementation
             monitor = MonitorFromPoint({ left, top }, MONITOR_DEFAULTTONEAREST);
         }
 
-        if (options.Left() && options.Top())
+        if (auto value = options.MonitorHandle())
+            monitor = reinterpret_cast<HMONITOR>(value.Value().Value);
+
+        if (auto value = options.DisplayRegion())
         {
-            left = static_cast<int>(options.Left().Value());
-            top = static_cast<int>(options.Top().Value());
-            monitor = MonitorFromPoint({ left, top }, MONITOR_DEFAULTTONEAREST);
+            auto offset = value.WorkAreaOffset();
+            monitor = MonitorFromPoint({ static_cast<LONG>(offset.X), static_cast<LONG>(offset.Y) }, MONITOR_DEFAULTTONEAREST);
         }
 
         uint32_t dpi;
         GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi, &dpi);
 
         auto scale = dpi / 96.0f;
+
+        if (auto value = options.Left())
+            left = static_cast<int>(value.Value() * scale);
+
+        if (auto value = options.Top())
+            top = static_cast<int>(value.Value() * scale);
 
         if (auto value = options.Width())
             width = static_cast<int>(value.Value() * scale);
@@ -94,8 +102,19 @@ namespace winrt::XamlHostingKit::implementation
 
         Helpers::AdjustWindowRectExForDpi(&rc, styles, false, extendedStyles, dpi);
 
+        MONITORINFO mi;
+        mi.cbSize = sizeof(MONITORINFO);
+        GetMonitorInfoW(monitor, &mi);
+
+        if (left != CW_USEDEFAULT)
+            left += mi.rcWork.left;
+
+        if (top != CW_USEDEFAULT)
+            top += mi.rcWork.top;
+
         if (width != CW_USEDEFAULT)
             width += rc.right - rc.left;
+
         if (height != CW_USEDEFAULT)
             height += rc.bottom - rc.top;
 
@@ -429,32 +448,57 @@ namespace winrt::XamlHostingKit::implementation
         Move(topleft.X, topleft.Y);
     }
 
+    void XamlWindow::Move(winrt::Windows::Foundation::Point topleft, MonitorId monitorHandle)
+    {
+        Move(topleft.X, topleft.Y, monitorHandle);
+    }
+
+    void XamlWindow::Move(winrt::Windows::Foundation::Point topleft, winrt::Windows::UI::WindowManagement::DisplayRegion displayRegion)
+    {
+        Move(topleft.X, topleft.Y, displayRegion);
+    }
+
     void XamlWindow::Move(float left, float top)
     {
-        auto dpi = Helpers::GetDpiScaleForWindow(m_hwnd);
+        auto scale = Helpers::GetDpiScaleForWindow(m_hwnd);
+        auto targetLeft = static_cast<int>(left * scale);
+        auto targetTop = static_cast<int>(top * scale);
 
-        if (!IsZoomed(m_hwnd) && !IsIconic(m_hwnd)) [[likely]]
-        {
-            SetWindowPos(m_hwnd, NULL,
-                         static_cast<int>(left * dpi),
-                         static_cast<int>(top * dpi),
-                         0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-        }
-        else
-        {
-            WINDOWPLACEMENT wp;
-            wp.length = sizeof(WINDOWPLACEMENT);
-            GetWindowPlacement(m_hwnd, &wp);
+        MoveImpl(targetLeft, targetTop);
+    }
 
-            LONG width = wp.rcNormalPosition.right - wp.rcNormalPosition.left;
-            LONG height = wp.rcNormalPosition.bottom - wp.rcNormalPosition.top;
+    void XamlWindow::Move(float left, float top, MonitorId monitorHandle)
+    {
+        auto monitor = reinterpret_cast<HMONITOR>(monitorHandle.Value);
 
-            wp.rcNormalPosition.left = static_cast<int>(left * dpi);
-            wp.rcNormalPosition.top = static_cast<int>(top * dpi);
-            wp.rcNormalPosition.right = static_cast<int>(left * dpi + width);
-            wp.rcNormalPosition.bottom = static_cast<int>(top * dpi + height);
-            SetWindowPlacement(m_hwnd, &wp);
-        }
+        MONITORINFO mi;
+        mi.cbSize = sizeof(MONITORINFO);
+        GetMonitorInfoW(monitor, &mi);
+
+        uint32_t dpi;
+        GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi, &dpi);
+
+        auto scale = dpi / 96.0f;
+        auto targetLeft = static_cast<int>(left * scale + mi.rcWork.left);
+        auto targetTop = static_cast<int>(top * scale + mi.rcWork.top);
+
+        MoveImpl(targetLeft, targetTop);
+    }
+
+    void XamlWindow::Move(float left, float top, winrt::Windows::UI::WindowManagement::DisplayRegion displayRegion)
+    {
+        auto offset = displayRegion.WorkAreaOffset();
+
+        auto monitor = MonitorFromPoint({ static_cast<LONG>(offset.X), static_cast<LONG>(offset.Y) }, MONITOR_DEFAULTTONEAREST);
+
+        uint32_t dpi;
+        GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi, &dpi);
+
+        auto scale = dpi / 96.0f;
+        auto targetLeft = static_cast<int>(left * scale + offset.X);
+        auto targetTop = static_cast<int>(top * scale + offset.Y);
+
+        MoveImpl(targetLeft, targetTop);
     }
 
     void XamlWindow::Resize(winrt::Windows::Foundation::Size size)
@@ -544,6 +588,29 @@ namespace winrt::XamlHostingKit::implementation
 
         *hwnd = m_hwnd;
         return S_OK;
+    }
+
+    void XamlWindow::MoveImpl(int left, int top)
+    {
+        if (!IsZoomed(m_hwnd) && !IsIconic(m_hwnd)) [[likely]]
+        {
+            SetWindowPos(m_hwnd, NULL, left, top, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+        }
+        else
+        {
+            WINDOWPLACEMENT wp;
+            wp.length = sizeof(WINDOWPLACEMENT);
+            GetWindowPlacement(m_hwnd, &wp);
+
+            LONG width = wp.rcNormalPosition.right - wp.rcNormalPosition.left;
+            LONG height = wp.rcNormalPosition.bottom - wp.rcNormalPosition.top;
+
+            wp.rcNormalPosition.left = left;
+            wp.rcNormalPosition.top = top;
+            wp.rcNormalPosition.right = left + width;
+            wp.rcNormalPosition.bottom = top + height;
+            SetWindowPlacement(m_hwnd, &wp);
+        }
     }
 
     LPCWSTR const XamlWindow::RegisterWindowClass(WNDPROC wndProc)
