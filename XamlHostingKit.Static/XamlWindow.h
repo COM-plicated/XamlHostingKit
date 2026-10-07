@@ -101,10 +101,10 @@ namespace winrt::XamlHostingKit::implementation
         void Close();
 
         void Move(winrt::Windows::Foundation::Point topleft);
-        void Move(winrt::Windows::Foundation::Point topleft, MonitorId monitorHandle);
+        void Move(winrt::Windows::Foundation::Point topleft, winrt::Windows::Graphics::DisplayId monitorHandle);
         void Move(winrt::Windows::Foundation::Point topleft, winrt::Windows::UI::WindowManagement::DisplayRegion displayRegion);
         void Move(float left, float top);
-        void Move(float left, float top, MonitorId monitorHandle);
+        void Move(float left, float top, winrt::Windows::Graphics::DisplayId monitorHandle);
         void Move(float left, float top, winrt::Windows::UI::WindowManagement::DisplayRegion displayRegion);
         void Resize(winrt::Windows::Foundation::Size size);
         void Resize(float width, float height);

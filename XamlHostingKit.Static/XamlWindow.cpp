@@ -448,7 +448,7 @@ namespace winrt::XamlHostingKit::implementation
         Move(topleft.X, topleft.Y);
     }
 
-    void XamlWindow::Move(winrt::Windows::Foundation::Point topleft, MonitorId monitorHandle)
+    void XamlWindow::Move(winrt::Windows::Foundation::Point topleft, winrt::Windows::Graphics::DisplayId monitorHandle)
     {
         Move(topleft.X, topleft.Y, monitorHandle);
     }
@@ -467,7 +467,7 @@ namespace winrt::XamlHostingKit::implementation
         MoveImpl(targetLeft, targetTop);
     }
 
-    void XamlWindow::Move(float left, float top, MonitorId monitorHandle)
+    void XamlWindow::Move(float left, float top, winrt::Windows::Graphics::DisplayId monitorHandle)
     {
         auto monitor = reinterpret_cast<HMONITOR>(monitorHandle.Value);
 

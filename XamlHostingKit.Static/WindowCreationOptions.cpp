@@ -74,12 +74,12 @@ namespace winrt::XamlHostingKit::implementation
         m_extendedStyles = value;
     }
 
-    Windows::Foundation::IReference<winrt::XamlHostingKit::MonitorId> WindowCreationOptions::MonitorHandle() const
+    Windows::Foundation::IReference<winrt::Windows::Graphics::DisplayId> WindowCreationOptions::MonitorHandle() const
     {
         return m_monitorHandle;
     }
 
-    void WindowCreationOptions::MonitorHandle(Windows::Foundation::IReference<winrt::XamlHostingKit::MonitorId> value)
+    void WindowCreationOptions::MonitorHandle(Windows::Foundation::IReference<winrt::Windows::Graphics::DisplayId> value)
     {
         m_monitorHandle = value;
     }

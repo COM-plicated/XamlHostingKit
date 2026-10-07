@@ -1,25 +1,20 @@
 namespace XamlHostingKit
 {
-    struct MonitorId
-    {
-        UInt64 Value;
-    };
-
     runtimeclass WindowCreationOptions
     {
         WindowCreationOptions();
 
         [interface_name("IWindowCreationOptions", 4D4A4925-D702-C0DE-9689-16CA3D201BA1)]
         {
-            String                                      Title           { get; set; };
-            Windows.Foundation.IReference<Single>       Left            { get; set; };
-            Windows.Foundation.IReference<Single>       Top             { get; set; };
-            Windows.Foundation.IReference<Single>       Width           { get; set; };
-            Windows.Foundation.IReference<Single>       Height          { get; set; };
-            WindowStyles                                Styles          { get; set; };
-            WindowExtendedStyles                        ExtendedStyles  { get; set; };
-            Windows.Foundation.IReference<MonitorId>    MonitorHandle   { get; set; };
-            Windows.UI.WindowManagement.DisplayRegion   DisplayRegion   { get; set; };
+            String                                                      Title           { get; set; };
+            Windows.Foundation.IReference<Single>                       Left            { get; set; };
+            Windows.Foundation.IReference<Single>                       Top             { get; set; };
+            Windows.Foundation.IReference<Single>                       Width           { get; set; };
+            Windows.Foundation.IReference<Single>                       Height          { get; set; };
+            WindowStyles                                                Styles          { get; set; };
+            WindowExtendedStyles                                        ExtendedStyles  { get; set; };
+            Windows.Foundation.IReference<Windows.Graphics.DisplayId>   MonitorHandle   { get; set; };
+            Windows.UI.WindowManagement.DisplayRegion                   DisplayRegion   { get; set; };
         }
     };
 
@@ -54,11 +49,11 @@ namespace XamlHostingKit
 
             [default_overload]
             void Move(Windows.Foundation.Point position);
-            void Move(Windows.Foundation.Point position, MonitorId monitorHandle);
+            void Move(Windows.Foundation.Point position, Windows.Graphics.DisplayId monitorHandle);
             [default_overload]
             void Move(Windows.Foundation.Point position, Windows.UI.WindowManagement.DisplayRegion displayRegion);
             void Move(Single x, Single y);
-            void Move(Single x, Single y, MonitorId monitorHandle);
+            void Move(Single x, Single y, Windows.Graphics.DisplayId monitorHandle);
             [default_overload]
             void Move(Single x, Single y, Windows.UI.WindowManagement.DisplayRegion displayRegion);
 
@@ -140,5 +135,4 @@ namespace XamlHostingKit
         OverlappedWindow = WindowEdge | ClientEdge,
         PaletteWindow = WindowEdge | ToolWindow | Topmost
     };
-
 }
