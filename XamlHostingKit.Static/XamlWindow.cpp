@@ -73,16 +73,25 @@ namespace winrt::XamlHostingKit::implementation
         if (auto value = options.MonitorHandle())
             monitor = reinterpret_cast<HMONITOR>(value.Value().Value);
 
+        uint32_t dpi;
+        float scale;
+        POINT offset;
+
         if (auto value = options.DisplayRegion())
         {
-            auto offset = value.WorkAreaOffset();
-            monitor = MonitorFromPoint({ static_cast<LONG>(offset.X), static_cast<LONG>(offset.Y) }, MONITOR_DEFAULTTONEAREST);
+            Helpers::GetDisplayRegionInfo(value, &offset, &dpi);
+            scale = dpi / 96.0f;
         }
+        else
+        {
+            GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi, &dpi);
+            scale = dpi / 96.0f;
 
-        uint32_t dpi;
-        GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi, &dpi);
-
-        auto scale = dpi / 96.0f;
+            MONITORINFO mi;
+            mi.cbSize = sizeof(MONITORINFO);
+            GetMonitorInfoW(monitor, &mi);
+            offset = { mi.rcWork.left, mi.rcWork.top };
+        }
 
         if (auto value = options.Left())
             left = static_cast<int>(value.Value() * scale);
@@ -102,15 +111,11 @@ namespace winrt::XamlHostingKit::implementation
 
         Helpers::AdjustWindowRectExForDpi(&rc, styles, false, extendedStyles, dpi);
 
-        MONITORINFO mi;
-        mi.cbSize = sizeof(MONITORINFO);
-        GetMonitorInfoW(monitor, &mi);
-
         if (left != CW_USEDEFAULT)
-            left += mi.rcWork.left;
+            left += offset.x;
 
         if (top != CW_USEDEFAULT)
-            top += mi.rcWork.top;
+            top += offset.y;
 
         if (width != CW_USEDEFAULT)
             width += rc.right - rc.left;
@@ -487,16 +492,13 @@ namespace winrt::XamlHostingKit::implementation
 
     void XamlWindow::Move(float left, float top, winrt::Windows::UI::WindowManagement::DisplayRegion displayRegion)
     {
-        auto offset = displayRegion.WorkAreaOffset();
-
-        auto monitor = MonitorFromPoint({ static_cast<LONG>(offset.X), static_cast<LONG>(offset.Y) }, MONITOR_DEFAULTTONEAREST);
-
+        POINT offset;
         uint32_t dpi;
-        GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi, &dpi);
-
+        Helpers::GetDisplayRegionInfo(displayRegion, &offset, &dpi);
         auto scale = dpi / 96.0f;
-        auto targetLeft = static_cast<int>(left * scale + offset.X);
-        auto targetTop = static_cast<int>(top * scale + offset.Y);
+
+        auto targetLeft = static_cast<int>(left * scale + offset.x);
+        auto targetTop = static_cast<int>(top * scale + offset.y);
 
         MoveImpl(targetLeft, targetTop);
     }

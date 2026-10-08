@@ -8,6 +8,7 @@
 #include <wil/resource.h>
 #include <ShellScalingApi.h>
 #include <winrt/Windows.Storage.Streams.h>
+#include <winrt/Windows.UI.WindowManagement.h>
 
 #if USE_PATH_HASH_FOR_TEMP_PRI // defined in the vcxproj file
 #include <bcrypt.h>
@@ -300,6 +301,35 @@ namespace winrt::XamlHostingKit
             GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi, &dpi);
 
             return dpi;
+        }
+
+        inline static void GetDisplayRegionInfo(winrt::Windows::UI::WindowManagement::DisplayRegion const& displayRegion, POINT* offset, uint32_t* dpi)
+        {
+            winrt::check_pointer(offset);
+            winrt::check_pointer(dpi);
+
+            auto drOffset = displayRegion.WorkAreaOffset();
+            *offset = { static_cast<LONG>(drOffset.X), static_cast<LONG>(drOffset.Y) };
+
+            HMONITOR monitor;
+            if (auto displayRegion2 = displayRegion.try_as<IDisplayRegion2>()) [[likely]]
+            {
+                winrt::Windows::Graphics::DisplayId display;
+                winrt::check_hresult(displayRegion2->get_DisplayId(&display));
+                monitor = reinterpret_cast<HMONITOR>(display.Value);
+            }
+            else if (auto displayRegionPartner = displayRegion.try_as<IDisplayRegionPartner>())
+            {
+                uint64_t hmon;
+                winrt::check_hresult(displayRegionPartner->get_HMonitor(&hmon));
+                monitor = reinterpret_cast<HMONITOR>(hmon);
+            }
+            else
+            {
+                monitor = MonitorFromPoint(*offset, MONITOR_DEFAULTTONEAREST);
+            }
+
+            GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, dpi, dpi);
         }
 
         inline static SWITCH_CONTEXT* GetSwitchContext(APPCOMPAT_EXE_DATA* pShim)
