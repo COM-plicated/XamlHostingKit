@@ -49,12 +49,12 @@ namespace XamlHostingKit
 
             [default_overload]
             void Move(Windows.Foundation.Point position);
-            void Move(Windows.Foundation.Point position, Windows.Graphics.DisplayId monitorHandle);
             [default_overload]
+            void Move(Windows.Foundation.Point position, Windows.Graphics.DisplayId monitorHandle);
             void Move(Windows.Foundation.Point position, Windows.UI.WindowManagement.DisplayRegion displayRegion);
             void Move(Single x, Single y);
-            void Move(Single x, Single y, Windows.Graphics.DisplayId monitorHandle);
             [default_overload]
+            void Move(Single x, Single y, Windows.Graphics.DisplayId monitorHandle);
             void Move(Single x, Single y, Windows.UI.WindowManagement.DisplayRegion displayRegion);
 
             [default_overload]

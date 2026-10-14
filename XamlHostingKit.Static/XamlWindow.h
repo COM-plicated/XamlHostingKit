@@ -31,10 +31,10 @@ namespace winrt::XamlHostingKit::implementation
         hstring m_title;
         WindowStyles m_styles { 0 };
         WindowExtendedStyles m_extendedStyles { 0 };
-        float m_minWidth{ 500.0f };
-        float m_minHeight{ 320.0f };
-        float m_maxWidth{ 0.0f };
-        float m_maxHeight{ 0.0f };
+        float m_minWidth { 500.0f };
+        float m_minHeight { 320.0f };
+        float m_maxWidth { 0.0f };
+        float m_maxHeight { 0.0f };
         Window m_systemWindow { nullptr };
         CoreApplicationView m_view { nullptr };
         CoreDispatcher m_dispatcher { nullptr };
@@ -65,10 +65,10 @@ namespace winrt::XamlHostingKit::implementation
         winrt::Windows::Foundation::Rect Bounds();
 
         WindowStyles Styles();
-        void Styles(WindowStyles value);
+        void Styles(WindowStyles const& value);
 
         WindowExtendedStyles ExtendedStyles();
-        void ExtendedStyles(WindowExtendedStyles value);
+        void ExtendedStyles(WindowExtendedStyles const& value);
 
         float MinWidth() const;
         void MinWidth(float value);
@@ -100,13 +100,13 @@ namespace winrt::XamlHostingKit::implementation
         void Hide();
         void Close();
 
-        void Move(winrt::Windows::Foundation::Point topleft);
-        void Move(winrt::Windows::Foundation::Point topleft, winrt::Windows::Graphics::DisplayId monitorHandle);
-        void Move(winrt::Windows::Foundation::Point topleft, winrt::Windows::UI::WindowManagement::DisplayRegion displayRegion);
+        void Move(winrt::Windows::Foundation::Point const& topleft);
+        void Move(winrt::Windows::Foundation::Point const& topleft, winrt::Windows::Graphics::DisplayId const& monitorHandle);
+        void Move(winrt::Windows::Foundation::Point const& topleft, winrt::Windows::UI::WindowManagement::DisplayRegion const& displayRegion);
         void Move(float left, float top);
-        void Move(float left, float top, winrt::Windows::Graphics::DisplayId monitorHandle);
-        void Move(float left, float top, winrt::Windows::UI::WindowManagement::DisplayRegion displayRegion);
-        void Resize(winrt::Windows::Foundation::Size size);
+        void Move(float left, float top, winrt::Windows::Graphics::DisplayId const& monitorHandle);
+        void Move(float left, float top, winrt::Windows::UI::WindowManagement::DisplayRegion const& displayRegion);
+        void Resize(winrt::Windows::Foundation::Size const& size);
         void Resize(float width, float height);
 
         winrt::event_token VisibilityChanged(winrt::Windows::Foundation::TypedEventHandler<winrt::XamlHostingKit::XamlWindow, bool> const& handler);

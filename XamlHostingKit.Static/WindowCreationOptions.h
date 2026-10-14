@@ -34,28 +34,28 @@ namespace winrt::XamlHostingKit::implementation
         void Title(hstring const& value);
 
         Windows::Foundation::IReference<float> Left() const;
-        void Left(Windows::Foundation::IReference<float> value);
+        void Left(Windows::Foundation::IReference<float> const& value);
 
         Windows::Foundation::IReference<float> Top() const;
-        void Top(Windows::Foundation::IReference<float> value);
+        void Top(Windows::Foundation::IReference<float> const& value);
 
         Windows::Foundation::IReference<float> Width() const;
-        void Width(Windows::Foundation::IReference<float> value);
+        void Width(Windows::Foundation::IReference<float> const& value);
 
         Windows::Foundation::IReference<float> Height() const;
-        void Height(Windows::Foundation::IReference<float> value);
+        void Height(Windows::Foundation::IReference<float> const& value);
 
         WindowStyles Styles() const;
-        void Styles(WindowStyles value);
+        void Styles(WindowStyles const& value);
 
         WindowExtendedStyles ExtendedStyles() const;
-        void ExtendedStyles(WindowExtendedStyles value);
+        void ExtendedStyles(WindowExtendedStyles const& value);
 
         Windows::Foundation::IReference<winrt::Windows::Graphics::DisplayId> MonitorHandle() const;
-        void MonitorHandle(Windows::Foundation::IReference<winrt::Windows::Graphics::DisplayId> value);
+        void MonitorHandle(Windows::Foundation::IReference<winrt::Windows::Graphics::DisplayId> const& value);
 
         Windows::UI::WindowManagement::DisplayRegion DisplayRegion() const;
-        void DisplayRegion(Windows::UI::WindowManagement::DisplayRegion value);
+        void DisplayRegion(Windows::UI::WindowManagement::DisplayRegion const& value);
     };
 }
 

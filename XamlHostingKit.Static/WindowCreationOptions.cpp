@@ -19,7 +19,7 @@ namespace winrt::XamlHostingKit::implementation
         return m_left;
     }
 
-    void WindowCreationOptions::Left(Windows::Foundation::IReference<float> value)
+    void WindowCreationOptions::Left(Windows::Foundation::IReference<float> const& value)
     {
         m_left = value;
     }
@@ -29,7 +29,7 @@ namespace winrt::XamlHostingKit::implementation
         return m_top;
     }
 
-    void WindowCreationOptions::Top(Windows::Foundation::IReference<float> value)
+    void WindowCreationOptions::Top(Windows::Foundation::IReference<float> const& value)
     {
         m_top = value;
     }
@@ -39,7 +39,7 @@ namespace winrt::XamlHostingKit::implementation
         return m_width;
     }
 
-    void WindowCreationOptions::Width(Windows::Foundation::IReference<float> value)
+    void WindowCreationOptions::Width(Windows::Foundation::IReference<float> const& value)
     {
         m_width = value;
     }
@@ -49,7 +49,7 @@ namespace winrt::XamlHostingKit::implementation
         return m_height;
     }
 
-    void WindowCreationOptions::Height(Windows::Foundation::IReference<float> value)
+    void WindowCreationOptions::Height(Windows::Foundation::IReference<float> const& value)
     {
         m_height = value;
     }
@@ -59,7 +59,7 @@ namespace winrt::XamlHostingKit::implementation
         return m_styles;
     }
 
-    void WindowCreationOptions::Styles(WindowStyles value)
+    void WindowCreationOptions::Styles(WindowStyles const& value)
     {
         m_styles = value;
     }
@@ -69,7 +69,7 @@ namespace winrt::XamlHostingKit::implementation
         return m_extendedStyles;
     }
 
-    void WindowCreationOptions::ExtendedStyles(WindowExtendedStyles value)
+    void WindowCreationOptions::ExtendedStyles(WindowExtendedStyles const& value)
     {
         m_extendedStyles = value;
     }
@@ -79,7 +79,7 @@ namespace winrt::XamlHostingKit::implementation
         return m_monitorHandle;
     }
 
-    void WindowCreationOptions::MonitorHandle(Windows::Foundation::IReference<winrt::Windows::Graphics::DisplayId> value)
+    void WindowCreationOptions::MonitorHandle(Windows::Foundation::IReference<winrt::Windows::Graphics::DisplayId> const& value)
     {
         m_monitorHandle = value;
     }
@@ -89,7 +89,7 @@ namespace winrt::XamlHostingKit::implementation
         return m_displayRegion;
     }
 
-    void WindowCreationOptions::DisplayRegion(Windows::UI::WindowManagement::DisplayRegion value)
+    void WindowCreationOptions::DisplayRegion(Windows::UI::WindowManagement::DisplayRegion const& value)
     {
         m_displayRegion = value;
     }

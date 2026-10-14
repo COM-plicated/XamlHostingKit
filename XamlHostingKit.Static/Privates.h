@@ -336,7 +336,7 @@ namespace
     MIDL_INTERFACE("09A694F3-844E-5D8E-9BE5-1C7142A30AB8")
     IDisplayRegionPartner : public ::IInspectable
     {
-        STDMETHOD(get_HMonitor)(uint64_t * pValue) PURE;
+        STDMETHOD(get_HMonitor)(uint64_t* pValue) PURE;
     };
 
     struct DefaultUrlRedirectionPolicyManager : winrt::implements<DefaultUrlRedirectionPolicyManager, IUrlRedirectionPolicyManager>

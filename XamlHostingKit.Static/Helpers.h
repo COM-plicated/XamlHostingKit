@@ -305,9 +305,6 @@ namespace winrt::XamlHostingKit
 
         inline static void GetDisplayRegionInfo(winrt::Windows::UI::WindowManagement::DisplayRegion const& displayRegion, POINT* offset, uint32_t* dpi)
         {
-            winrt::check_pointer(offset);
-            winrt::check_pointer(dpi);
-
             auto drOffset = displayRegion.WorkAreaOffset();
             *offset = { static_cast<LONG>(drOffset.X), static_cast<LONG>(drOffset.Y) };
 
@@ -596,7 +593,8 @@ namespace winrt::XamlHostingKit
             return res;
         }
 
-        inline static const void ThrowIfValueIsNotZeroOrPositive(float value) {
+        inline static const void ThrowIfValueIsNotZeroOrPositive(float value)
+        {
             if (std::isinf(value)) [[unlikely]]
                 throw winrt::hresult_invalid_argument(L"Value cannot be infinity.");
             if (std::isnan(value)) [[unlikely]]

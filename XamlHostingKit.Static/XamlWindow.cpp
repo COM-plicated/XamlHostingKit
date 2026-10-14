@@ -26,7 +26,7 @@ namespace winrt::XamlHostingKit::implementation
         BOOL dwmFrameEnabled = TRUE;
         if (FAILED(DwmIsCompositionEnabled(&dwmFrameEnabled))) [[unlikely]]
         {
-            dwmFrameEnabled = TRUE;
+            dwmFrameEnabled = FALSE;
         }
 
         //EnableMouseInPointer(TRUE);
@@ -56,72 +56,82 @@ namespace winrt::XamlHostingKit::implementation
         auto width = CW_USEDEFAULT;
         auto height = CW_USEDEFAULT;
 
-        auto monitor = MonitorFromPoint({ 0 }, MONITOR_DEFAULTTOPRIMARY);
+        auto optLeft = options.Left();
+        auto optTop = options.Top();
+        auto optWidth = options.Width();
+        auto optHeight = options.Height();
+        auto hasLeft = optLeft != nullptr;
+        auto hasTop = optTop != nullptr;
+        auto hasWidth = optWidth != nullptr;
+        auto hasHeight = optHeight != nullptr;
 
-        STARTUPINFOW si;
-        si.cb = sizeof(STARTUPINFOW);
-
-        GetStartupInfoW(&si);
-
-        if (si.dwFlags & STARTF_USEPOSITION)
-        {
-            left = si.dwX;
-            top = si.dwY;
-            monitor = MonitorFromPoint({ left, top }, MONITOR_DEFAULTTONEAREST);
-        }
-
-        if (auto value = options.MonitorHandle())
-            monitor = reinterpret_cast<HMONITOR>(value.Value().Value);
-
-        uint32_t dpi;
-        float scale;
-        POINT offset;
-
-        if (auto value = options.DisplayRegion())
-        {
-            Helpers::GetDisplayRegionInfo(value, &offset, &dpi);
-            scale = dpi / 96.0f;
-        }
-        else
-        {
-            GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi, &dpi);
-            scale = dpi / 96.0f;
-
-            MONITORINFO mi;
-            mi.cbSize = sizeof(MONITORINFO);
-            GetMonitorInfoW(monitor, &mi);
-            offset = { mi.rcWork.left, mi.rcWork.top };
-        }
-
-        if (auto value = options.Left())
-            left = static_cast<int>(value.Value() * scale);
-
-        if (auto value = options.Top())
-            top = static_cast<int>(value.Value() * scale);
-
-        if (auto value = options.Width())
-            width = static_cast<int>(value.Value() * scale);
-
-        if (auto value = options.Height())
-            height = static_cast<int>(value.Value() * scale);
-
-        RECT rc = { 0 };
         auto styles = static_cast<uint32_t>(m_styles) & ~WS_VISIBLE;
-        auto extendedStyles = dwmFrameEnabled ? static_cast<uint32_t>(m_extendedStyles) : (static_cast<uint32_t>(m_extendedStyles) & ~(WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME));
+        auto extendedStyles = dwmFrameEnabled ?
+            static_cast<uint32_t>(m_extendedStyles) :
+            (static_cast<uint32_t>(m_extendedStyles) & ~(WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME));
 
-        Helpers::AdjustWindowRectExForDpi(&rc, styles, false, extendedStyles, dpi);
+        if (hasLeft || hasTop || hasWidth || hasHeight) [[unlikely]]
+        {
+            uint32_t dpi = 96;
+            float scale = 1.0f;
+            POINT offset = { 0 };
 
-        if (left != CW_USEDEFAULT)
-            left += offset.x;
+            if (auto region = options.DisplayRegion())
+            {
+                Helpers::GetDisplayRegionInfo(region, &offset, &dpi);
+                scale = dpi / 96.0f;
+            }
+            else
+            {
+                HMONITOR monitor;
+                if (auto value = options.MonitorHandle())
+                {
+                    monitor = reinterpret_cast<HMONITOR>(value.Value().Value);
+                }
+                else
+                {
+                    STARTUPINFOW si { sizeof(STARTUPINFOW) };
+                    GetStartupInfoW(&si);
 
-        if (top != CW_USEDEFAULT)
-            top += offset.y;
+                    if (si.dwFlags & STARTF_USEPOSITION)
+                    {
+                        monitor = MonitorFromPoint(
+                            {
+                                static_cast<long>(si.dwX),
+                                static_cast<long>(si.dwY)
+                            },
+                            MONITOR_DEFAULTTONEAREST);
+                    }
+                    else
+                    {
+                        monitor = MonitorFromPoint({ 0 }, MONITOR_DEFAULTTOPRIMARY);
+                    }
+                }
 
-        if (width != CW_USEDEFAULT)
-            width += rc.right - rc.left;
+                GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi, &dpi);
+                scale = dpi / 96.0f;
 
-        if (height != CW_USEDEFAULT)
-            height += rc.bottom - rc.top;
+                MONITORINFO mi { sizeof(MONITORINFO) };
+                GetMonitorInfoW(monitor, &mi);
+
+                offset = { mi.rcWork.left, mi.rcWork.top };
+            }
+
+            RECT rc = { 0 };
+            Helpers::AdjustWindowRectExForDpi(&rc, styles, false, extendedStyles, dpi);
+
+            if (hasLeft)
+                left = static_cast<int>(optLeft.Value() * scale) + offset.x;
+
+            if (hasTop)
+                top = static_cast<int>(optTop.Value() * scale) + offset.y;
+
+            if (hasWidth)
+                width = static_cast<int>(optWidth.Value() * scale) + (rc.right - rc.left);
+
+            if (hasHeight)
+                height = static_cast<int>(optHeight.Value() * scale) + (rc.bottom - rc.top);
+        }
 
         winrt::check_pointer(m_hwnd = CreateWindowExW(
             extendedStyles,
@@ -308,7 +318,7 @@ namespace winrt::XamlHostingKit::implementation
         return m_styles;
     }
 
-    void XamlWindow::Styles(WindowStyles value)
+    void XamlWindow::Styles(WindowStyles const& value)
     {
         SetWindowLongPtrW(m_hwnd, GWL_STYLE, static_cast<uint32_t>(value));
         m_styles = static_cast<WindowStyles>(GetWindowLongPtrW(m_hwnd, GWL_STYLE));
@@ -319,7 +329,7 @@ namespace winrt::XamlHostingKit::implementation
         return m_extendedStyles;
     }
 
-    void XamlWindow::ExtendedStyles(WindowExtendedStyles value)
+    void XamlWindow::ExtendedStyles(WindowExtendedStyles const& value)
     {
         SetWindowLongPtrW(m_hwnd, GWL_EXSTYLE, static_cast<uint32_t>(value));
         m_extendedStyles = static_cast<WindowExtendedStyles>(GetWindowLongPtrW(m_hwnd, GWL_EXSTYLE));
@@ -448,17 +458,17 @@ namespace winrt::XamlHostingKit::implementation
         CloseWindow(m_hwnd);
     }
 
-    void XamlWindow::Move(winrt::Windows::Foundation::Point topleft)
+    void XamlWindow::Move(winrt::Windows::Foundation::Point const& topleft)
     {
         Move(topleft.X, topleft.Y);
     }
 
-    void XamlWindow::Move(winrt::Windows::Foundation::Point topleft, winrt::Windows::Graphics::DisplayId monitorHandle)
+    void XamlWindow::Move(winrt::Windows::Foundation::Point const& topleft, winrt::Windows::Graphics::DisplayId const& monitorHandle)
     {
         Move(topleft.X, topleft.Y, monitorHandle);
     }
 
-    void XamlWindow::Move(winrt::Windows::Foundation::Point topleft, winrt::Windows::UI::WindowManagement::DisplayRegion displayRegion)
+    void XamlWindow::Move(winrt::Windows::Foundation::Point const& topleft, winrt::Windows::UI::WindowManagement::DisplayRegion const& displayRegion)
     {
         Move(topleft.X, topleft.Y, displayRegion);
     }
@@ -472,15 +482,14 @@ namespace winrt::XamlHostingKit::implementation
         MoveImpl(targetLeft, targetTop);
     }
 
-    void XamlWindow::Move(float left, float top, winrt::Windows::Graphics::DisplayId monitorHandle)
+    void XamlWindow::Move(float left, float top, winrt::Windows::Graphics::DisplayId const& monitorHandle)
     {
         auto monitor = reinterpret_cast<HMONITOR>(monitorHandle.Value);
 
-        MONITORINFO mi;
-        mi.cbSize = sizeof(MONITORINFO);
+        MONITORINFO mi { sizeof(MONITORINFO) };
         GetMonitorInfoW(monitor, &mi);
 
-        uint32_t dpi;
+        uint32_t dpi = 96;
         GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi, &dpi);
 
         auto scale = dpi / 96.0f;
@@ -490,10 +499,10 @@ namespace winrt::XamlHostingKit::implementation
         MoveImpl(targetLeft, targetTop);
     }
 
-    void XamlWindow::Move(float left, float top, winrt::Windows::UI::WindowManagement::DisplayRegion displayRegion)
+    void XamlWindow::Move(float left, float top, winrt::Windows::UI::WindowManagement::DisplayRegion const& displayRegion)
     {
-        POINT offset;
-        uint32_t dpi;
+        uint32_t dpi = 96;
+        POINT offset = { 0 };
         Helpers::GetDisplayRegionInfo(displayRegion, &offset, &dpi);
         auto scale = dpi / 96.0f;
 
@@ -503,20 +512,25 @@ namespace winrt::XamlHostingKit::implementation
         MoveImpl(targetLeft, targetTop);
     }
 
-    void XamlWindow::Resize(winrt::Windows::Foundation::Size size)
+    void XamlWindow::Resize(winrt::Windows::Foundation::Size const& size)
     {
         Resize(size.Width, size.Height);
     }
 
     void XamlWindow::Resize(float width, float height)
     {
-        auto dpi = Helpers::GetDpiScaleForWindow(m_hwnd);
+        auto dpi = Helpers::GetDpiForWindow(m_hwnd);
+        auto scale = dpi / 96.0f;
 
         RECT rc = { 0 };
-        Helpers::AdjustWindowRectExForDpi(&rc, GetWindowLongW(m_hwnd, GWL_STYLE), false, GetWindowLongW(m_hwnd, GWL_EXSTYLE), Helpers::GetDpiForWindow(m_hwnd));
+        Helpers::AdjustWindowRectExForDpi(&rc,
+                                          GetWindowLongW(m_hwnd, GWL_STYLE),
+                                          false,
+                                          GetWindowLongW(m_hwnd, GWL_EXSTYLE),
+                                          dpi);
 
-        auto scaledWidth = static_cast<int>(width * dpi) + rc.right - rc.left;
-        auto scaledHeight = static_cast<int>(height * dpi) + rc.bottom;
+        auto scaledWidth = static_cast<int>(width * scale) + rc.right - rc.left;
+        auto scaledHeight = static_cast<int>(height * scale) + rc.bottom;
 
         //if (m_titleBar->ExtendViewIntoTitleBar())
         //{
@@ -533,8 +547,7 @@ namespace winrt::XamlHostingKit::implementation
         }
         else
         {
-            WINDOWPLACEMENT wp;
-            wp.length = sizeof(WINDOWPLACEMENT);
+            WINDOWPLACEMENT wp { sizeof(WINDOWPLACEMENT) };
             GetWindowPlacement(m_hwnd, &wp);
 
             wp.rcNormalPosition.right = static_cast<LONG>(wp.rcNormalPosition.left + scaledWidth);
@@ -730,7 +743,7 @@ namespace winrt::XamlHostingKit::implementation
             {
                 auto mmi = reinterpret_cast<MINMAXINFO*>(lParam);
                 auto dpi = Helpers::GetDpiForWindow(hwnd);
-                auto scale = Helpers::GetDpiScaleForWindow(hwnd);
+                auto scale = dpi / 96.0f;
                 auto minWidth = static_cast<LONG>(_this->m_minWidth * scale);
                 auto minHeight = static_cast<LONG>(_this->m_minHeight * scale);
                 auto maxWidth = static_cast<LONG>(_this->m_maxWidth * scale);
