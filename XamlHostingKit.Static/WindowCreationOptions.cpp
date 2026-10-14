@@ -14,42 +14,42 @@ namespace winrt::XamlHostingKit::implementation
         m_title = value;
     }
 
-    std::int32_t WindowCreationOptions::Left() const
+    Windows::Foundation::IReference<float> WindowCreationOptions::Left() const
     {
         return m_left;
     }
 
-    void WindowCreationOptions::Left(std::int32_t value)
+    void WindowCreationOptions::Left(Windows::Foundation::IReference<float> const& value)
     {
         m_left = value;
     }
 
-    std::int32_t WindowCreationOptions::Top() const
+    Windows::Foundation::IReference<float> WindowCreationOptions::Top() const
     {
         return m_top;
     }
 
-    void WindowCreationOptions::Top(std::int32_t value)
+    void WindowCreationOptions::Top(Windows::Foundation::IReference<float> const& value)
     {
         m_top = value;
     }
 
-    std::int32_t WindowCreationOptions::Width() const
+    Windows::Foundation::IReference<float> WindowCreationOptions::Width() const
     {
         return m_width;
     }
 
-    void WindowCreationOptions::Width(std::int32_t value)
+    void WindowCreationOptions::Width(Windows::Foundation::IReference<float> const& value)
     {
         m_width = value;
     }
 
-    std::int32_t WindowCreationOptions::Height() const
+    Windows::Foundation::IReference<float> WindowCreationOptions::Height() const
     {
         return m_height;
     }
 
-    void WindowCreationOptions::Height(std::int32_t value)
+    void WindowCreationOptions::Height(Windows::Foundation::IReference<float> const& value)
     {
         m_height = value;
     }
@@ -59,7 +59,7 @@ namespace winrt::XamlHostingKit::implementation
         return m_styles;
     }
 
-    void WindowCreationOptions::Styles(WindowStyles value)
+    void WindowCreationOptions::Styles(WindowStyles const& value)
     {
         m_styles = value;
     }
@@ -69,8 +69,28 @@ namespace winrt::XamlHostingKit::implementation
         return m_extendedStyles;
     }
 
-    void WindowCreationOptions::ExtendedStyles(WindowExtendedStyles value)
+    void WindowCreationOptions::ExtendedStyles(WindowExtendedStyles const& value)
     {
         m_extendedStyles = value;
+    }
+
+    Windows::Foundation::IReference<winrt::Windows::Graphics::DisplayId> WindowCreationOptions::MonitorHandle() const
+    {
+        return m_monitorHandle;
+    }
+
+    void WindowCreationOptions::MonitorHandle(Windows::Foundation::IReference<winrt::Windows::Graphics::DisplayId> const& value)
+    {
+        m_monitorHandle = value;
+    }
+
+    Windows::UI::WindowManagement::DisplayRegion WindowCreationOptions::DisplayRegion() const
+    {
+        return m_displayRegion;
+    }
+
+    void WindowCreationOptions::DisplayRegion(Windows::UI::WindowManagement::DisplayRegion const& value)
+    {
+        m_displayRegion = value;
     }
 }
