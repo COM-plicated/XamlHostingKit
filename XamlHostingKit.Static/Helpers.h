@@ -8,6 +8,7 @@
 #include <wil/resource.h>
 #include <ShellScalingApi.h>
 #include <winrt/Windows.Storage.Streams.h>
+#include <winrt/Windows.UI.WindowManagement.h>
 
 #if USE_PATH_HASH_FOR_TEMP_PRI // defined in the vcxproj file
 #include <bcrypt.h>
@@ -48,6 +49,7 @@ namespace winrt::XamlHostingKit
     static const auto PrivateCreateCoreWindowOld = reinterpret_cast<HRESULT(WINAPI*)(CoreWindowType, const wchar_t*, int, int, int, int, HWND, REFGUID, void**)>(GetProcAddress(WinUIModule.get(), MAKEINTRESOURCEA(1500)));
     static const auto CoSetASTATestMode = reinterpret_cast<void(WINAPI*)(ASTA_TEST_MODE_FLAGS)>(GetProcAddress(COMBaseModule, MAKEINTRESOURCEA(100)));
     static const auto GetDpiForWindowMethod = reinterpret_cast<decltype(&GetDpiForWindow)>(GetProcAddress(User32Module.get(), "GetDpiForWindow"));
+    static const auto AdjustWindowRectExForDpiMethod = reinterpret_cast<decltype(&AdjustWindowRectExForDpi)>(GetProcAddress(User32Module.get(), "AdjustWindowRectExForDpi"));
     static const auto NtUserRegisterTouchPadCapable = reinterpret_cast<BOOL(WINAPI*)(BOOL)>(GetProcAddress(Win32UModule, "NtUserRegisterTouchPadCapable"));
     static const auto RegisterTouchPadCapable = reinterpret_cast<BOOL(WINAPI*)(BOOL)>(GetProcAddress(User32Module.get(), MAKEINTRESOURCEA(2546)));
     static const auto RegisterTouchpadCapableWindowMethod = reinterpret_cast<BOOL(WINAPI*)(HWND, BOOL)>(GetProcAddress(User32Module.get(), MAKEINTRESOURCEA(2689)));
@@ -286,14 +288,45 @@ namespace winrt::XamlHostingKit
 
         inline static const float GetDpiScaleForWindow(HWND hwnd)
         {
+            return GetDpiForWindow(hwnd) / 96.0f;
+        }
+
+        inline static const uint32_t GetDpiForWindow(HWND hwnd)
+        {
             if (GetDpiForWindowMethod) [[likely]]
-                return GetDpiForWindowMethod(hwnd) / 96.0f;
+                return GetDpiForWindowMethod(hwnd);
 
             uint32_t dpi = 96;
             HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
             GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi, &dpi);
 
-            return dpi / 96.0f;
+            return dpi;
+        }
+
+        inline static void GetDisplayRegionInfo(winrt::Windows::UI::WindowManagement::DisplayRegion const& displayRegion, POINT* offset, uint32_t* dpi)
+        {
+            auto drOffset = displayRegion.WorkAreaOffset();
+            *offset = { static_cast<LONG>(drOffset.X), static_cast<LONG>(drOffset.Y) };
+
+            HMONITOR monitor;
+            if (auto displayRegion2 = displayRegion.try_as<IDisplayRegion2>()) [[likely]]
+            {
+                winrt::Windows::Graphics::DisplayId display;
+                winrt::check_hresult(displayRegion2->get_DisplayId(&display));
+                monitor = reinterpret_cast<HMONITOR>(display.Value);
+            }
+            else if (auto displayRegionPartner = displayRegion.try_as<IDisplayRegionPartner>())
+            {
+                uint64_t hmon;
+                winrt::check_hresult(displayRegionPartner->get_HMonitor(&hmon));
+                monitor = reinterpret_cast<HMONITOR>(hmon);
+            }
+            else
+            {
+                monitor = MonitorFromPoint(*offset, MONITOR_DEFAULTTONEAREST);
+            }
+
+            GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, dpi, dpi);
         }
 
         inline static SWITCH_CONTEXT* GetSwitchContext(APPCOMPAT_EXE_DATA* pShim)
@@ -543,6 +576,33 @@ namespace winrt::XamlHostingKit
 
             return handle;
         }
+
+        inline static const BOOL AdjustWindowRectExForDpi(LPRECT lpRect, DWORD dwStyle, BOOL bMenu, DWORD dwExStyle, UINT dpi)
+        {
+            if (AdjustWindowRectExForDpiMethod) [[likely]]
+                return AdjustWindowRectExForDpiMethod(lpRect, dwStyle, bMenu, dwExStyle, dpi);
+
+            auto res = AdjustWindowRectEx(lpRect, dwStyle, bMenu, dwExStyle);
+            auto scale = dpi / 96.f;
+
+            lpRect->left = static_cast<LONG>(lpRect->left * scale);
+            lpRect->top = static_cast<LONG>(lpRect->top * scale);
+            lpRect->right = static_cast<LONG>(lpRect->right * scale);
+            lpRect->bottom = static_cast<LONG>(lpRect->bottom * scale);
+
+            return res;
+        }
+
+        inline static const void ThrowIfValueIsNotZeroOrPositive(float value)
+        {
+            if (std::isinf(value)) [[unlikely]]
+                throw winrt::hresult_invalid_argument(L"Value cannot be infinity.");
+            if (std::isnan(value)) [[unlikely]]
+                throw winrt::hresult_invalid_argument(L"Value cannot be NaN.");
+            if (value < 0) [[unlikely]]
+                throw winrt::hresult_invalid_argument(L"Value cannot be negative.");
+        }
+
     };
 
     namespace detail

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <winternl.h>
+#include <winrt/Windows.Graphics.h>
 
 namespace
 {
@@ -324,6 +325,18 @@ namespace
     {
         STDMETHOD(LCIEGetRedirectionPolicyForURL)(LPCWSTR, int, int, unsigned int, unsigned int*, int*) PURE;
         STDMETHOD(IsRedirectToBrokerNeeded)(LPCWSTR, void*) PURE;
+    };
+
+    MIDL_INTERFACE("4D008E5E-E2D5-5E99-BAE7-E66D5F3A87C8")
+    IDisplayRegion2 : public ::IInspectable
+    {
+        STDMETHOD(get_DisplayId)(winrt::Windows::Graphics::DisplayId* pValue) PURE;
+    };
+
+    MIDL_INTERFACE("09A694F3-844E-5D8E-9BE5-1C7142A30AB8")
+    IDisplayRegionPartner : public ::IInspectable
+    {
+        STDMETHOD(get_HMonitor)(uint64_t* pValue) PURE;
     };
 
     struct DefaultUrlRedirectionPolicyManager : winrt::implements<DefaultUrlRedirectionPolicyManager, IUrlRedirectionPolicyManager>
