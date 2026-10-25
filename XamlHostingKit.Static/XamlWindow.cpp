@@ -455,7 +455,7 @@ namespace winrt::XamlHostingKit::implementation
 
     void XamlWindow::Close()
     {
-        CloseWindow(m_hwnd);
+        PostMessageW(m_hwnd, WM_CLOSE, 0, 0);
     }
 
     void XamlWindow::Move(winrt::Windows::Foundation::Point const& topleft)
