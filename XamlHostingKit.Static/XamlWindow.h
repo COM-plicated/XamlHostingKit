@@ -26,6 +26,7 @@ namespace winrt::XamlHostingKit::implementation
         bool m_isMain { false };
         bool m_isSyncObjEnabled { false };
         bool m_isDestroyed { false };
+        bool m_isAppClosing { false };
         HWND m_hwnd { nullptr };
         HWND m_coreWindowHwnd { nullptr };
         hstring m_title;
@@ -115,6 +116,7 @@ namespace winrt::XamlHostingKit::implementation
         HRESULT STDMETHODCALLTYPE get_WindowHandle(HWND* hwnd);
 
         void RunMessageLoop();
+        void Close(bool isAppClosing);
     };
 }
 

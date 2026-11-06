@@ -26,6 +26,7 @@ namespace winrt::XamlHostingKit::implementation
         inline static bool s_usingDefaultResPri { false };
         inline static bool s_isWebViewAvailable { false };
         inline static bool s_mrmHookedSuccessfully { false };
+        inline static volatile bool s_appClosed { false };
         inline static wil::unique_handle s_priTempFile { nullptr };
         inline static std::wstring s_priFileName { };
         inline static winrt::XamlHostingKit::XamlWindow s_mainWindow { nullptr };
@@ -87,7 +88,7 @@ namespace winrt::XamlHostingKit::implementation
         
         static void Close();
 
-        static void RemoveWindow(winrt::XamlHostingKit::XamlWindow const& window);
+        static void RemoveWindow(winrt::XamlHostingKit::XamlWindow const& window, bool isClosing = false);
     };
 }
 

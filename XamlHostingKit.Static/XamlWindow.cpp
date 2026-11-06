@@ -591,7 +591,13 @@ namespace winrt::XamlHostingKit::implementation
             }
         }
 
-        XamlApplication::RemoveWindow(*this);
+        XamlApplication::RemoveWindow(*this, m_isAppClosing);
+    }
+
+    void XamlWindow::Close(bool isAppClosing)
+    {
+        m_isAppClosing = isAppClosing;
+        Close();
     }
 
     HRESULT XamlWindow::get_WindowHandle(HWND* hwnd)

@@ -192,6 +192,8 @@ MakeWindow:
             }
         }
 
+        s_appClosed = true;
+
         HMODULE edgeModule;
         HMODULE threadpoolModule;
         if (XamlConfig::s_enableWebView &&
@@ -276,6 +278,11 @@ MakeWindow:
             throw hresult_illegal_method_call(L"XamlApplication.CreateWindow() can only be called after XamlApplication.Start().");
         }
 
+        if (s_appClosed) [[unlikely]]
+        {
+            throw hresult_illegal_method_call(L"XamlApplication.CreateWindow() cannot be called after the application is closed.");
+        }
+
         com_ptr<XamlWindow> window = nullptr;
         std::exception_ptr exception = nullptr;
         wil::unique_event windowCreated { wil::EventOptions::ManualReset };
@@ -343,22 +350,31 @@ MakeWindow:
 
     void XamlApplication::Close()
     {
+        s_appClosed = true;
+
         std::lock_guard lock(s_windowsMutex);
-        for (auto i = s_windows.Size(); i-- > 0;)
+        for (auto i = s_windows.Size(); i --> 0;)
         {
             if (auto window = s_windows.GetAt(i)) [[likely]]
             {
-                window.Close();
+                winrt::get_self<XamlWindow>(window)->Close(true);
             }
         }
 
-        std::lock_guard main_lock(s_mainWindowMutex);
-        s_mainWindow = nullptr;
+        {
+            std::lock_guard main_lock(s_mainWindowMutex);
+            s_mainWindow = nullptr;
+        }
     }
 
-    void XamlApplication::RemoveWindow(winrt::XamlHostingKit::XamlWindow const& window)
+    void XamlApplication::RemoveWindow(winrt::XamlHostingKit::XamlWindow const& window, bool isClosing)
     {
-        std::lock_guard lock(s_windowsMutex);
+        std::unique_lock lock(s_windowsMutex, std::defer_lock);
+
+        if (!isClosing) [[likely]]
+        {
+            lock.lock();
+        }
 
         uint32_t idx = 0;
         if (s_windows.IndexOf(window, idx)) [[likely]]
