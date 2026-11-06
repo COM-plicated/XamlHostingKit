@@ -523,7 +523,7 @@ MakeWindow:
                 LOG_IF_FAILED(Helpers::XWinePatchImport(XAMLModule.get(), Kernel32Module, "AppPolicyGetWindowingModel", &AppPolicyGetWindowingModelHook));
             }
 
-            if (Helpers::CurrentPackageFamilyName.empty()) [[likely]]
+            if (Helpers::CurrentPackageFullName.empty()) [[likely]]
             {
                 if (FAILED_LOG(Helpers::XWinePatchImport(XAMLModule.get(), AppCoreModule.get(), "GetCurrentPackageInfo", &GetCurrentPackageInfoHook))) [[unlikely]]
                 {
@@ -614,7 +614,7 @@ MakeWindow:
         HANDLE handle;
         if (lpFileName &&
             s_priTempFile &&
-            _wcsicmp(lpFileName, s_priFileName.c_str()) == 0 &&
+            CompareStringOrdinal(lpFileName, -1, s_priFileName.c_str(), -1, TRUE) == CSTR_EQUAL &&
             DuplicateHandle(GetCurrentProcess(),
                 s_priTempFile.get(),
                 GetCurrentProcess(),
@@ -632,7 +632,7 @@ MakeWindow:
     {
         if (lpFileName &&
             !Helpers::PriTempFilePath.empty() &&
-            _wcsicmp(lpFileName, s_priFileName.c_str()) == 0) [[likely]]
+            CompareStringOrdinal(lpFileName, -1, s_priFileName.c_str(), -1, TRUE) == CSTR_EQUAL) [[likely]]
         {
             lpFileName = Helpers::PriTempFilePath.c_str();
         }
@@ -743,7 +743,7 @@ MakeWindow:
 
     void XamlApplication::CreateResourceManager(PCWSTR priPath)
     {
-        if (!Helpers::CurrentPackageFamilyName.empty() && s_usingDefaultResPri) [[unlikely]]
+        if (!Helpers::CurrentPackageFullName.empty() && s_usingDefaultResPri) [[unlikely]]
         {
             try
             {
@@ -826,8 +826,10 @@ MakeWindow:
             {
                 if (packageInfo[i].path) [[likely]]
                 {
-                    if (!Helpers::CurrentPackageFamilyName.empty() &&
-                        _wcsicmp(packageInfo[i].packageFamilyName, Helpers::CurrentPackageFamilyName.c_str()) == 0) [[unlikely]]
+                    if (!Helpers::CurrentPackageFullName.empty() &&
+                        CompareStringOrdinal(packageInfo[i].packageFullName, -1,
+                                             Helpers::CurrentPackageFullName.c_str(), -1,
+                                             TRUE) == CSTR_EQUAL) [[unlikely]]
                     {
                         continue;
                     }

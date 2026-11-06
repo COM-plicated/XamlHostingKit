@@ -21,6 +21,6 @@ namespace Constants
     
     // RUNTIME CONSTANTS
 
-    static const bool CanUseMrmAppInit = (!Helpers::CurrentPackageFamilyName.empty()) || (Helpers::OSBuild >= Constants::MrmAppInitMinimumBuild);
+    static const bool CanUseMrmAppInit = (!Helpers::CurrentPackageFullName.empty()) || (Helpers::OSBuild >= Constants::MrmAppInitMinimumBuild);
     static const bool ShouldUseMrmAppInit = CanUseMrmAppInit && !XamlConfig::s_alwaysUseCustomPriLoader;
 }

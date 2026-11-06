@@ -192,13 +192,13 @@ namespace winrt::XamlHostingKit
 
         inline static std::wstring PriTempFilePath { };
 
-        inline static std::wstring CurrentPackageFamilyName = []() -> std::wstring
+        inline static std::wstring CurrentPackageFullName = []() -> std::wstring
         {
             uint32_t length = 0;
-            if (GetCurrentPackageFamilyName(&length, nullptr) == ERROR_INSUFFICIENT_BUFFER) [[unlikely]]
+            if (GetCurrentPackageFullName(&length, nullptr) == ERROR_INSUFFICIENT_BUFFER) [[unlikely]]
             {
                 std::wstring pfn(length - 1, L'\0');
-                LOG_IF_WIN32_ERROR(GetCurrentPackageFamilyName(&length, pfn.data()));
+                LOG_IF_WIN32_ERROR(GetCurrentPackageFullName(&length, pfn.data()));
                 return pfn;
             }
 
