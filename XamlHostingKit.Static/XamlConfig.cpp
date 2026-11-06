@@ -14,6 +14,7 @@ namespace winrt::XamlHostingKit::implementation
     bool XamlConfig::s_enableArbitraryPathsInMsAppxWeb = false;
     bool XamlConfig::s_enableSmoothResize = true;
     bool XamlConfig::s_ensureSmoothResizeSyncObject = false;
+    bool XamlConfig::s_setIsMainOnCoreAppView = true;
 
     bool XamlConfig::EnableWebView()
     {
@@ -135,5 +136,21 @@ namespace winrt::XamlHostingKit::implementation
         }
 
         s_ensureSmoothResizeSyncObject = value;
+    }
+
+    bool XamlConfig::SetIsMainOnCoreAppView()
+    {
+        return s_setIsMainOnCoreAppView;
+    }
+
+    void XamlConfig::SetIsMainOnCoreAppView(bool value)
+    {
+        if (s_isInitialized) [[unlikely]]
+        {
+            throw hresult_illegal_method_call
+            (L"Changing SetIsMainOnCoreAppView after calling XamlApplication.Start() is not supported.");
+        }
+
+        s_setIsMainOnCoreAppView = value;
     }
 }

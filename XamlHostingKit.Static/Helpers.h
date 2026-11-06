@@ -34,6 +34,7 @@ namespace winrt::XamlHostingKit
     static const auto UrlMonModule = wil::unique_hmodule(LoadLibraryW(L"UrlMon.dll"));
     static const auto TWinAPICoreModule = wil::unique_hmodule(LoadLibraryW(L"twinapi.appcore.dll"));
     static const auto ThreadPoolModule = wil::unique_hmodule(LoadLibraryW(L"threadpoolwinrt.dll"));
+    static const auto QuirksModule = wil::unique_hmodule(LoadLibraryW(L"api-ms-win-core-quirks-l1-1-0.dll"));
     static const auto COMBaseModule = GetModuleHandleW(L"combase.dll");
     static const auto KernelBaseModule = GetModuleHandleW(L"kernelbase.dll");
     static const auto Kernel32Module = GetModuleHandleW(L"kernel32.dll");
@@ -67,6 +68,8 @@ namespace winrt::XamlHostingKit
     static auto IEConfiguration_GetBool = reinterpret_cast<bool(WINAPI*)(int)>(GetProcAddress(IERTUtilModule.get(), MAKEINTRESOURCEA(791)));
     static auto IEConfiguration_GetDWORD = reinterpret_cast<uint32_t(WINAPI*)(int)>(GetProcAddress(IERTUtilModule.get(), MAKEINTRESOURCEA(793)));
     static auto IEConfiguration_GetString = reinterpret_cast<const wchar_t*(WINAPI*)(int)>(GetProcAddress(IERTUtilModule.get(), MAKEINTRESOURCEA(795)));
+    static auto QuirkIsEnabled = reinterpret_cast<BOOL(WINAPI*)(uint32_t)>(GetProcAddress(QuirksModule ? QuirksModule.get() : Kernel32Module, "QuirkIsEnabled"));
+    static auto QuirkIsEnabled2 = reinterpret_cast<BOOL(WINAPI*)(uint32_t, uint64_t)>(GetProcAddress(QuirksModule ? QuirksModule.get() : Kernel32Module, "QuirkIsEnabled2"));
 
     static wil::unique_hkey PersonalizeKey;
     static const auto PersonalizeKeyResult = wil::reg::open_unique_key_nothrow(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", PersonalizeKey);

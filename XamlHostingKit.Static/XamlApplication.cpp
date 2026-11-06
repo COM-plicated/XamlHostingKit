@@ -58,6 +58,37 @@ namespace winrt::XamlHostingKit::implementation
 
         std::call_once(s_appInitFlag, []
         {
+            if (XamlConfig::s_setIsMainOnCoreAppView) [[likely]]
+            {
+                if (QuirkIsEnabled || QuirkIsEnabled2) [[likely]]
+                {
+                    // TODO:
+                    // 1. Should we use IAT patching for these?
+                    // 2. Should we also hook 3 and Data variants?
+
+                    DetourTransactionBegin();
+                    DetourUpdateThread(GetCurrentThread());
+
+                    if (QuirkIsEnabled) [[likely]]
+                    {
+                        DetourAttach(&(PVOID&)QuirkIsEnabled, QuirkIsEnabledHook);
+                    }
+
+                    if (QuirkIsEnabled2) [[likely]]
+                    {
+                        DetourAttach(&(PVOID&)QuirkIsEnabled2, QuirkIsEnabledHook);
+                    }
+
+                    XamlConfig::s_setIsMainOnCoreAppView =
+                        LOG_IF_WIN32_ERROR_MSG(DetourTransactionCommit(), "Cannot hook QuirkIsEnabled or QuirkIsEnabled2, disabling SetIsMainOnCoreAppView...") == 0;
+                }
+                else
+                {
+                    XamlConfig::s_setIsMainOnCoreAppView = false;
+                    LOG_HR_MSG(E_FAIL, "Cannot find QuirkIsEnabled or QuirkIsEnabled2, disabling SetIsMainOnCoreAppView...");
+                }
+            }
+
             LOG_IF_FAILED(InitializeCoreApplicationHooks());
 
             if (XamlConfig::s_enableWebView) [[likely]]
@@ -899,5 +930,41 @@ MakeWindow:
         RETURN_IF_WIN32_ERROR(DetourTransactionCommit());
 
         return S_OK;
+    }
+
+    bool XamlApplication::GetQuirkOverride(uint32_t quirk, BOOL& result)
+    {
+        // Source: C:\Windows\apppatch\sysmain.sdb
+        static const constexpr auto XAML_ApplicationDotCurrentKeepAlive = 0x000200fe; // XAML.ApplicationDotCurrentKeepAlive
+
+        if (quirk == XAML_ApplicationDotCurrentKeepAlive) [[unlikely]]
+        {
+            result = true;
+            return true;
+        }
+
+        return false;
+    }
+
+    BOOL WINAPI XamlApplication::QuirkIsEnabledHook(uint32_t quirk)
+    {
+        BOOL override;
+        if (GetQuirkOverride(quirk, override)) [[unlikely]]
+        {
+            return override;
+        }
+
+        return QuirkIsEnabled(quirk);
+    }
+
+    BOOL WINAPI XamlApplication::QuirkIsEnabled2Hook(uint32_t quirk, uint64_t unk)
+    {
+        BOOL override;
+        if (GetQuirkOverride(quirk, override)) [[unlikely]]
+        {
+            return override;
+        }
+
+        return QuirkIsEnabled2(quirk, unk);
     }
 }

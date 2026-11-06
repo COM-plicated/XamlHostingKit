@@ -208,7 +208,7 @@ namespace winrt::XamlHostingKit::implementation
             LOG_IF_FAILED(cap2->CreateNonImmersiveView((void**)&pView));
         }
 
-        m_view = winrt::make<LegacyNonImmersiveView>(m_coreWindow, isMain, pView)
+        m_view = winrt::make<LegacyNonImmersiveView>(m_coreWindow, isMain && XamlConfig::s_setIsMainOnCoreAppView, pView)
             .as<winrt::Windows::ApplicationModel::Core::CoreApplicationView>();
 
         m_frameworkView = { };

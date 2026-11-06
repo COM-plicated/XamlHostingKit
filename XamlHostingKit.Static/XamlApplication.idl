@@ -14,6 +14,7 @@ namespace XamlHostingKit
             static Boolean EnableArbitraryPathsInMsAppxWeb { get; set; };
             static Boolean EnableSmoothResize              { get; set; };
             static Boolean EnsureSmoothResizeSyncObject    { get; set; };
+            static Boolean SetIsMainOnCoreAppView          { get; set; };
         }
     }
 

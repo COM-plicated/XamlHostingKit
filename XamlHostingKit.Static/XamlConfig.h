@@ -14,6 +14,7 @@ namespace winrt::XamlHostingKit::implementation
         static bool s_enableArbitraryPathsInMsAppxWeb;
         static bool s_enableSmoothResize;
         static bool s_ensureSmoothResizeSyncObject;
+        static bool s_setIsMainOnCoreAppView;
 
         XamlConfig() = default;
 
@@ -40,6 +41,9 @@ namespace winrt::XamlHostingKit::implementation
 
         static bool EnsureSmoothResizeSyncObject();
         static void EnsureSmoothResizeSyncObject(bool value);
+
+        static bool SetIsMainOnCoreAppView();
+        static void SetIsMainOnCoreAppView(bool value);
     };
 }
 

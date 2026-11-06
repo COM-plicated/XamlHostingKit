@@ -63,6 +63,9 @@ namespace winrt::XamlHostingKit::implementation
         static HRESULT WINAPI get_MainViewHook(void* _this, void** pView);
         //static HRESULT WINAPI GetCurrentViewHook(void* _this, void** pView);
         static HRESULT InitializeCoreApplicationHooks();
+        static bool GetQuirkOverride(uint32_t quirk, BOOL& result);
+        static BOOL WINAPI QuirkIsEnabledHook(uint32_t quirk);
+        static BOOL WINAPI QuirkIsEnabled2Hook(uint32_t quirk, uint64_t unk);
         inline static void WINAPI SubmitThreadpoolWorkHook([[maybe_unused]] PTP_WORK work) { };
 
     public:
