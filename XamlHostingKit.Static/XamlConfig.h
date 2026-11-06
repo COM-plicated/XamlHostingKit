@@ -15,6 +15,7 @@ namespace winrt::XamlHostingKit::implementation
         static bool s_enableSmoothResize;
         static bool s_ensureSmoothResizeSyncObject;
         static bool s_setIsMainOnCoreAppView;
+        static bool s_alwaysUseCustomPriLoader;
 
         XamlConfig() = default;
 
@@ -44,6 +45,9 @@ namespace winrt::XamlHostingKit::implementation
 
         static bool SetIsMainOnCoreAppView();
         static void SetIsMainOnCoreAppView(bool value);
+
+        static bool AlwaysUseCustomPriLoader();
+        static void AlwaysUseCustomPriLoader(bool value);
     };
 }
 

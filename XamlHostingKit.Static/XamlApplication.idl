@@ -15,6 +15,7 @@ namespace XamlHostingKit
             static Boolean EnableSmoothResize              { get; set; };
             static Boolean EnsureSmoothResizeSyncObject    { get; set; };
             static Boolean SetIsMainOnCoreAppView          { get; set; };
+            static Boolean AlwaysUseCustomPriLoader        { get; set; };
         }
     }
 

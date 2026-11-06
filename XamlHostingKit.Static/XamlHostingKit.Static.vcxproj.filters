@@ -42,6 +42,7 @@
     </ClInclude>
     <ClInclude Include="FileProtocolHandler.h" />
     <ClInclude Include="version.h" />
+    <ClInclude Include="Constants.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="XamlApplication.idl" />

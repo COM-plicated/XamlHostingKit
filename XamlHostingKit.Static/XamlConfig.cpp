@@ -15,6 +15,7 @@ namespace winrt::XamlHostingKit::implementation
     bool XamlConfig::s_enableSmoothResize = true;
     bool XamlConfig::s_ensureSmoothResizeSyncObject = false;
     bool XamlConfig::s_setIsMainOnCoreAppView = true;
+    bool XamlConfig::s_alwaysUseCustomPriLoader = false;
 
     bool XamlConfig::EnableWebView()
     {
@@ -152,5 +153,21 @@ namespace winrt::XamlHostingKit::implementation
         }
 
         s_setIsMainOnCoreAppView = value;
+    }
+
+    bool XamlConfig::AlwaysUseCustomPriLoader()
+    {
+        return s_alwaysUseCustomPriLoader;
+    }
+
+    void XamlConfig::AlwaysUseCustomPriLoader(bool value)
+    {
+        if (s_isInitialized) [[unlikely]]
+        {
+            throw hresult_illegal_method_call
+            (L"Changing AlwaysUseCustomPriLoader after calling XamlApplication.Start() is not supported.");
+        }
+
+        s_alwaysUseCustomPriLoader = value;
     }
 }

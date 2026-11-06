@@ -233,6 +233,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Constants.h" />
     <ClInclude Include="Features.h" />
     <ClInclude Include="FileProtocolHandler.h" />
     <ClInclude Include="Helpers.h" />
