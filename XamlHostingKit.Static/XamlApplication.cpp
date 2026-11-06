@@ -430,10 +430,10 @@ MakeWindow:
 
         if (!settingsPFN.empty()) [[likely]]
         {
-            PACKAGE_INFO_REFERENCE pir{ NULL };
+            PACKAGE_INFO_REFERENCE pir { NULL };
             if (LOG_IF_WIN32_ERROR(OpenPackageInfoByFullName(settingsPFN.c_str(), 0, &pir)) == ERROR_SUCCESS) [[likely]]
             {
-                auto result = LOG_IF_WIN32_ERROR(GetPackageInfo(pir, flags, bufferLength, buffer, count));
+                auto result = GetPackageInfo(pir, flags, bufferLength, buffer, count);
                 LOG_IF_WIN32_ERROR(ClosePackageInfo(pir));
                 return result;
             }
@@ -499,6 +499,18 @@ MakeWindow:
         return IEConfiguration_GetString(config);
     }
 
+    static bool TrySetBrowserAppProfile()
+    {
+        __try
+        {
+            return SUCCEEDED_LOG(IEConfiguration_SetBrowserAppProfile(L"MicrosoftEdge", 2, 0));
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER)
+        {
+            return false;
+        }
+    }
+
     HRESULT XamlApplication::InitializeWebView()
     {
         if (AppCoreModule &&
@@ -527,7 +539,7 @@ MakeWindow:
             
             if (IEConfiguration_SetBrowserAppProfile) [[likely]]
             {
-                if (FAILED_LOG(IEConfiguration_SetBrowserAppProfile(L"MicrosoftEdge", 2, 0))) [[unlikely]]
+                if (!TrySetBrowserAppProfile()) [[unlikely]]
                 {
                     // we can reach here if someone already set the browser app profile (MessageBoxW/A can do that for whatever reason),
                     // in which case we have to hook IEConfiguration_* functions to return the correct values

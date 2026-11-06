@@ -445,7 +445,7 @@ namespace winrt::XamlHostingKit
             }
 
             *pThunk = nullptr;
-            RETURN_HR(E_FAIL);
+            return E_FAIL;
         }
 
         // Originally written by @DaZombieKiller for the XWine1 project
