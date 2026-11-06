@@ -614,7 +614,7 @@ MakeWindow:
         HANDLE handle;
         if (lpFileName &&
             s_priTempFile &&
-            CompareStringOrdinal(lpFileName, -1, s_priFileName.c_str(), -1, TRUE) == CSTR_EQUAL &&
+            CompareStringOrdinal(lpFileName, -1, s_priFileName.c_str(), (int)s_priFileName.length(), TRUE) == CSTR_EQUAL &&
             DuplicateHandle(GetCurrentProcess(),
                 s_priTempFile.get(),
                 GetCurrentProcess(),
@@ -632,7 +632,7 @@ MakeWindow:
     {
         if (lpFileName &&
             !Helpers::PriTempFilePath.empty() &&
-            CompareStringOrdinal(lpFileName, -1, s_priFileName.c_str(), -1, TRUE) == CSTR_EQUAL) [[likely]]
+            CompareStringOrdinal(lpFileName, -1, s_priFileName.c_str(), (int)s_priFileName.length(), TRUE) == CSTR_EQUAL) [[likely]]
         {
             lpFileName = Helpers::PriTempFilePath.c_str();
         }
@@ -828,7 +828,7 @@ MakeWindow:
                 {
                     if (!Helpers::CurrentPackageFullName.empty() &&
                         CompareStringOrdinal(packageInfo[i].packageFullName, -1,
-                                             Helpers::CurrentPackageFullName.c_str(), -1,
+                                             Helpers::CurrentPackageFullName.c_str(), (int)Helpers::CurrentPackageFullName.length(),
                                              TRUE) == CSTR_EQUAL) [[unlikely]]
                     {
                         continue;
