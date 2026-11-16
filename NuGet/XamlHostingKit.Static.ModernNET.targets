@@ -60,4 +60,12 @@
                                 Condition="'$(PublishAot)' == 'true' and '$(_IsPublishing)' != '' and '%(WindowsMetadataReference.Filename)' == 'XamlHostingKit'" />
     </ItemGroup>
   </Target>
+
+  <PropertyGroup>
+    <XHKUseActivationHooks Condition="'$(XHKUseActivationHooks)' == ''">false</XHKUseActivationHooks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="XamlHostingKit.UseActivationHooks" Value="$(XHKUseActivationHooks)" Trim="true" />
+  </ItemGroup>
 </Project>

@@ -1,17 +1,24 @@
 ﻿#include "pch.h"
-//#include <xhk/xhk.h> // uncomment when using XamlHostingKit.Static[.DynCRT]
+
+//
+// uncomment when using XamlHostingKit.Static[.DynCRT]
+// 
+//#define XHK_OVERRIDE_ACTIVATION_HANDLER // uses C++/WinRT's built-in activation handler (winrt_activation_handler)
+// OR
+//#define XHK_USE_ACTIVATION_HOOKS        // detours RoGetActivationFactory and RoActivateInstance
+//#include <xhk/xhk.h>
 
 #include "App.h"
 #include "MainPage.h"
 
 using namespace winrt;
 using namespace XamlHostingKit;
-using namespace Windows::UI::Xaml;
-using namespace Windows::Foundation;
-using namespace Windows::ApplicationModel;
-using namespace Windows::UI::Xaml::Controls;
-using namespace Windows::UI::Xaml::Navigation;
-using namespace Windows::ApplicationModel::Activation;
+using namespace winrt::Windows::UI::Xaml;
+using namespace winrt::Windows::Foundation;
+using namespace winrt::Windows::ApplicationModel;
+using namespace winrt::Windows::UI::Xaml::Controls;
+using namespace winrt::Windows::UI::Xaml::Navigation;
+using namespace winrt::Windows::ApplicationModel::Activation;
 
 namespace winrt::XamlHostingKit::NativeSample::implementation
 {

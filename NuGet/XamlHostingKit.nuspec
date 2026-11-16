@@ -41,9 +41,11 @@
       <file target="runtimes\win-x86\native\XamlHostingKit.pdb"                   src="..\Release\XamlHostingKit\XamlHostingKit.pdb" />
       <file target="runtimes\win-x64\native\XamlHostingKit.dll"                   src="..\x64\Release\XamlHostingKit\XamlHostingKit.dll" />
       <file target="runtimes\win-x64\native\XamlHostingKit.pdb"                   src="..\x64\Release\XamlHostingKit\XamlHostingKit.pdb" />
-      <file target="runtimes\win-arm\native\XamlHostingKit.dll"                   src="..\ARM\Release\XamlHostingKit\XamlHostingKit.dll" />
-      <file target="runtimes\win-arm\native\XamlHostingKit.pdb"                   src="..\ARM\Release\XamlHostingKit\XamlHostingKit.pdb" />
+      <file target="runtimes\win10-arm\native\XamlHostingKit.dll"                 src="..\ARM\Release\XamlHostingKit\XamlHostingKit.dll" />
+      <file target="runtimes\win10-arm\native\XamlHostingKit.pdb"                 src="..\ARM\Release\XamlHostingKit\XamlHostingKit.pdb" />
       <file target="runtimes\win-arm64\native\XamlHostingKit.dll"                 src="..\ARM64\Release\XamlHostingKit\XamlHostingKit.dll" />
       <file target="runtimes\win-arm64\native\XamlHostingKit.pdb"                 src="..\ARM64\Release\XamlHostingKit\XamlHostingKit.pdb" />
+
+      <file target="include\xhk"                                                  src="include\generated\*.h" />
   </files>
 </package>

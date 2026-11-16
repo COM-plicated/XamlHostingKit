@@ -352,7 +352,6 @@ MakeWindow:
     {
         s_appClosed = true;
 
-        std::lock_guard lock(s_windowsMutex);
         for (auto i = s_windows.Size(); i --> 0;)
         {
             if (auto window = s_windows.GetAt(i)) [[likely]]
@@ -369,12 +368,12 @@ MakeWindow:
 
     void XamlApplication::RemoveWindow(winrt::XamlHostingKit::XamlWindow const& window, bool isClosing)
     {
-        std::unique_lock lock(s_windowsMutex, std::defer_lock);
-
-        if (!isClosing) [[likely]]
+        if (s_appClosed && !isClosing) [[unlikely]]
         {
-            lock.lock();
+            return;
         }
+
+        std::lock_guard lock(s_windowsMutex);
 
         uint32_t idx = 0;
         if (s_windows.IndexOf(window, idx)) [[likely]]

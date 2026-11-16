@@ -608,6 +608,16 @@ namespace winrt::XamlHostingKit
 
     };
 
+    /*
+    // kept in case it's needed in the future
+    // maybe use in has_iid when std::is_constant_evaluated is true?
+    // or maybe in a has_iid overload with a GUID template param?
+    using guid_words = std::array<uint32_t, 4>;
+
+    template <GUID A, GUID B>
+    inline constexpr bool is_same_guid_v = std::bit_cast<guid_words>(A) == std::bit_cast<guid_words>(B);
+    */
+
     namespace detail
     {
 #if !USE_FULL_CLASS_FACTORY

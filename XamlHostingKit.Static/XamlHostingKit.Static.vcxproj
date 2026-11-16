@@ -292,6 +292,45 @@
   <ItemGroup>
     <None Include="PropertySheet.props" />
   </ItemGroup>
+  
+  <PropertyGroup>
+    <_AbiIdlDir>$(MSBuildThisFileDirectory)$(IntDir)abi_idl</_AbiIdlDir>
+    <_AbiHeadersDir>$(MSBuildThisFileDirectory)..\NuGet\include\generated</_AbiHeadersDir>
+  </PropertyGroup>
+
+  <Target Name="GenerateAbiHeaders" AfterTargets="CppWinRTCopyWinMDToOutputDirectory" Condition="'$(ConfigurationType)' != 'Utility'">
+    <PropertyGroup>
+      <_SdkBinDir>$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\</_SdkBinDir>
+      <_SdkWinRTInc>$(WindowsSdkDir)Include\$(TargetPlatformVersion)\winrt</_SdkWinRTInc>
+	  <_SdkMetadata>$(WindowsSdkDir)UnionMetadata\$(TargetPlatformVersion)</_SdkMetadata>
+      <_FinalWinmd>$(OutDir)$(CppWinRTProjectWinMDFileName)</_FinalWinmd>
+    </PropertyGroup>
+
+    <MakeDir Directories="$(_AbiIdlDir)" />
+
+    <Exec Command="&quot;$(_SdkBinDir)winmdidl.exe&quot; /nologo /metadata_dir:&quot;$(_SdkMetadata)&quot; /outdir:&quot;$(_AbiIdlDir)&quot; &quot;$(_FinalWinmd)&quot;" />
+
+    <ItemGroup>
+      <_AbiIdl Remove="@(_AbiIdl)" />
+      <_AbiIdl Include="$(_AbiIdlDir)\*.idl" />
+    </ItemGroup>
+
+    <Exec Command="&quot;$(_SdkBinDir)midlrt.exe&quot; /winrt /ns_prefix /nomidl /nologo /I &quot;$(_SdkWinRTInc)&quot; /I &quot;$(_AbiIdlDir)&quot; /h &quot;$(_AbiHeadersDir)\%(_AbiIdl.Filename).h&quot; /out &quot;$(_AbiHeadersDir)&quot; &quot;%(_AbiIdl.FullPath)&quot; /metadata_dir &quot;$(_SdkMetadata)&quot;" Condition="'@(_AbiIdl)' != ''" />
+
+    <RemoveDir Directories="$(_AbiIdlDir)" />
+	<Delete Files="$(_AbiHeadersDir)\%(_AbiIdl.Filename).winmd" />
+    
+    <ItemGroup>
+      <FileWrites Include="$(_AbiHeadersDir)\*.h" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="AddAbiToClean" BeforeTargets="CoreClean;BeforeClean">
+    <ItemGroup>
+      <Clean Include="$(_AbiIdlDir)\**\*;$(_AbiHeadersDir)\**\*" />
+    </ItemGroup>
+  </Target>
+
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\Microsoft.Windows.ImplementationLibrary.1.0.260126.7\build\native\Microsoft.Windows.ImplementationLibrary.targets" Condition="Exists('..\packages\Microsoft.Windows.ImplementationLibrary.1.0.260126.7\build\native\Microsoft.Windows.ImplementationLibrary.targets')" />
